@@ -1,0 +1,96 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: tourist-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: touristdb
+    volumes:
+      - ./data:/data/db
+      - ./data/logs:/var/log/mongodb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tourist-network
+
+  backend:
+    build: 
+      context: ../backend-api
+      dockerfile: Dockerfile
+    container_name: tourist-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017/touristdb
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-change_this_secret_in_production}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      TWILIO_SID: ${TWILIO_SID:-}
+      TWILIO_AUTH: ${TWILIO_AUTH:-}
+      TWILIO_PHONE: ${TWILIO_PHONE:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@example.com}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: curl -f http://localhost:5000/ || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - tourist-network
+    volumes:
+      - ../backend-api:/app
+      - /app/node_modules
+
+  ai:
+    build: 
+      context: ../ai-services
+      dockerfile: Dockerfile
+    container_name: tourist-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      BACKEND_URL: http://backend:5000
+    depends_on:
+      - backend
+    networks:
+      - tourist-network
+    volumes:
+      - ../ai-services:/app
+
+  frontend:
+    build: 
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: tourist-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
+      REACT_APP_AI_URL: http://localhost:8000
+    depends_on:
+      - backend
+      - ai
+    networks:
+      - tourist-network
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+
+networks:
+  tourist-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local

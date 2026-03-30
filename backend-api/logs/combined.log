@@ -1,0 +1,92 @@
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T19:38:14.858Z"}
+{"level":"info","message":"Server running on port 5000","service":"tourist-safety-api","timestamp":"2026-02-12T19:38:15.091Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T19:42:43.983Z"}
+{"level":"info","message":"Server running on port 5000","service":"tourist-safety-api","timestamp":"2026-02-12T19:42:44.228Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T19:43:45.143Z"}
+{"level":"info","message":"Server running on port 5000","service":"tourist-safety-api","timestamp":"2026-02-12T19:43:45.307Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T19:44:54.266Z"}
+{"level":"info","message":"Server running on port 5000","service":"tourist-safety-api","timestamp":"2026-02-12T19:44:54.599Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T19:52:24.111Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T19:52:24.381Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:16:38.319Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:16:38.683Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:19:23.117Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:19:23.326Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:21:18.318Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:21:18.631Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:26:35.122Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:26:35.693Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:28:44.964Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:28:45.196Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T20:39:34.036Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T20:39:34.197Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T21:14:55.441Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T21:14:55.678Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-12T21:25:27.304Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-12T21:25:27.541Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-13T04:56:59.626Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-13T04:56:59.803Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-13T05:06:59.343Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-13T05:06:59.562Z"}
+{"level":"info","message":"User connected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"r-p9ZWqE73Dh-ctgAAAB","timestamp":"2026-02-13T05:13:37.058Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User connected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"_t3uTgJnDxSOPbVDAAAD","timestamp":"2026-02-13T05:20:09.673Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User connected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"u0z2KpaatVuxwYzlAAAF","timestamp":"2026-02-13T05:20:17.575Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User disconnected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"u0z2KpaatVuxwYzlAAAF","timestamp":"2026-02-13T08:48:09.804Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User went offline","service":"tourist-safety-api","timestamp":"2026-02-13T08:48:09.902Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User disconnected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"r-p9ZWqE73Dh-ctgAAAB","timestamp":"2026-02-13T08:48:09.923Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User went offline","service":"tourist-safety-api","timestamp":"2026-02-13T08:48:09.924Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User disconnected: 698e423424551e385da3cb7f","service":"tourist-safety-api","socketId":"_t3uTgJnDxSOPbVDAAAD","timestamp":"2026-02-13T08:48:09.927Z","userId":"698e423424551e385da3cb7f"}
+{"level":"info","message":"User went offline","service":"tourist-safety-api","timestamp":"2026-02-13T08:48:09.932Z","userId":"698e423424551e385da3cb7f"}
+{"expiredAt":"2026-02-13T06:58:02.000Z","level":"error","message":"Socket authentication error: jwt expired","name":"TokenExpiredError","service":"tourist-safety-api","stack":"TokenExpiredError: jwt expired\n    at C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:190:21\n    at getSecret (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:101:10)\n    at Array.<anonymous> (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\utils\\websocket.js:36:29)\n    at run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:133:19)\n    at Namespace.run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:144:9)\n    at Namespace._add (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:221:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2026-02-13T08:48:13.156Z"}
+{"expiredAt":"2026-02-13T06:58:02.000Z","level":"error","message":"Socket authentication error: jwt expired","name":"TokenExpiredError","service":"tourist-safety-api","stack":"TokenExpiredError: jwt expired\n    at C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:190:21\n    at getSecret (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:101:10)\n    at Array.<anonymous> (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\utils\\websocket.js:36:29)\n    at run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:133:19)\n    at Namespace.run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:144:9)\n    at Namespace._add (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:221:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2026-02-13T08:48:13.185Z"}
+{"expiredAt":"2026-02-13T06:58:02.000Z","level":"error","message":"Socket authentication error: jwt expired","name":"TokenExpiredError","service":"tourist-safety-api","stack":"TokenExpiredError: jwt expired\n    at C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:190:21\n    at getSecret (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:97:14)\n    at module.exports [as verify] (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\jsonwebtoken\\verify.js:101:10)\n    at Array.<anonymous> (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\utils\\websocket.js:36:29)\n    at run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:133:19)\n    at Namespace.run (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:144:9)\n    at Namespace._add (C:\\Users\\Venkatesh Inamdar\\Desktop\\smart-tourist-safety-system\\backend-api\\node_modules\\socket.io\\dist\\namespace.js:221:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2026-02-13T08:48:13.190Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-24T14:39:30.666Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-24T14:39:31.158Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-24T14:53:39.521Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-24T14:53:39.794Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-25T14:03:36.659Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-25T14:03:36.849Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-25T14:44:18.543Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-25T14:44:18.730Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-26T06:31:38.255Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-26T06:31:38.584Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-26T06:42:26.888Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-26T06:42:27.135Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-26T13:40:19.130Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-26T13:40:19.384Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-26T13:44:53.644Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-26T13:44:53.812Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T05:39:44.460Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-27T05:39:44.896Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T08:33:54.704Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-27T08:33:55.006Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T11:09:54.913Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-27T11:09:55.093Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T11:11:27.588Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T11:16:31.523Z"}
+{"level":"info","message":"Server running on port 5000 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-27T11:16:31.636Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T11:17:37.629Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-27T11:17:37.744Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-27T11:49:23.326Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-28T05:49:15.515Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-28T05:49:15.803Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-28T17:18:08.889Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-02-28T17:18:09.161Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-28T18:58:24.877Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-02-28T18:59:35.571Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-04T13:55:56.312Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-04T13:55:56.503Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-26T20:34:54.745Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-26T20:34:55.348Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-27T06:05:59.954Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-27T06:06:00.260Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-27T06:33:55.808Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-27T06:33:56.189Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-27T06:48:28.223Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-27T06:48:28.792Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-27T06:52:58.021Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-27T06:52:58.334Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-27T06:55:27.371Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-27T06:55:27.776Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"tourist-safety-api","timestamp":"2026-03-28T02:51:11.187Z"}
+{"level":"info","message":"Server running on port 3001 with WebSocket support","service":"tourist-safety-api","timestamp":"2026-03-28T02:51:11.453Z"}

@@ -1,0 +1,90 @@
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-12T20:42:08.625Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-12T20:42:20.186Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-12T20:44:05.830Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-12T20:44:30.558Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-12T20:46:39.552Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-12T21:12:20.911Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-12T21:12:39.507Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-12T21:15:44.405Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-12T21:16:28.495Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-12T21:16:39.335Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-12T21:19:29.192Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-12T21:19:36.910Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-12T21:26:16.141Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-13T04:58:02.164Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-24T14:55:06.998Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-24T14:55:25.620Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-24T14:55:57.318Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-24T14:56:13.327Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-25T14:04:39.715Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-25T14:04:53.647Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-25T14:05:03.930Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-25T14:05:16.512Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-25T14:21:25.259Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-25T14:21:39.778Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-25T14:22:08.598Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Too many failed login attempts. Please try again later.","method":"POST","service":"response-handler","statusCode":429,"timestamp":"2026-02-25T14:22:29.495Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-25T14:23:17.592Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Too many failed login attempts. Please try again later.","method":"POST","service":"response-handler","statusCode":429,"timestamp":"2026-02-25T14:42:23.920Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Too many failed login attempts. Please try again later.","method":"POST","service":"response-handler","statusCode":429,"timestamp":"2026-02-25T14:42:31.129Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-25T14:44:59.794Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-25T14:45:19.508Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-25T14:50:44.632Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-25T14:51:06.197Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-25T14:59:41.640Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T06:32:27.828Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T06:43:01.354Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T13:36:39.708Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T13:36:51.573Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T13:45:32.283Z"}
+{"endpoint":"/api/auth/login","level":"warn","message":"API Warning: Route /api/auth/login not found not found","method":"POST","service":"response-handler","statusCode":404,"timestamp":"2026-02-26T13:45:32.368Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T13:49:25.527Z"}
+{"endpoint":"/api/auth/login","level":"warn","message":"API Warning: Route /api/auth/login not found not found","method":"POST","service":"response-handler","statusCode":404,"timestamp":"2026-02-26T13:49:25.563Z"}
+{"endpoint":"/api/auth/login","level":"warn","message":"API Warning: Route /api/auth/login not found not found","method":"POST","service":"response-handler","statusCode":404,"timestamp":"2026-02-26T13:53:17.337Z"}
+{"endpoint":"/api/auth/login","level":"warn","message":"API Warning: Route /api/auth/login not found not found","method":"POST","service":"response-handler","statusCode":404,"timestamp":"2026-02-26T13:53:36.168Z"}
+{"endpoint":"/api/auth/login","level":"warn","message":"API Warning: Route /api/auth/login not found not found","method":"POST","service":"response-handler","statusCode":404,"timestamp":"2026-02-26T13:55:32.105Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T13:56:36.759Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T14:01:32.603Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T14:07:01.020Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T18:42:31.456Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-26T18:46:23.556Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T05:40:29.131Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T08:34:25.041Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T11:18:48.003Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T11:49:53.183Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T14:48:34.951Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T14:56:12.483Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T14:57:35.357Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T14:57:50.481Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T15:21:06.119Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-02-27T16:36:09.336Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T16:36:18.387Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T17:32:12.791Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T17:35:05.096Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-27T17:35:47.108Z"}
+{"endpoint":"/api/register","level":"warn","message":"API Warning: Email already registered.","method":"POST","service":"response-handler","statusCode":400,"timestamp":"2026-02-27T17:36:09.521Z"}
+{"endpoint":"/api/register","level":"info","message":"API Success: User registered successfully!","method":"POST","service":"response-handler","statusCode":201,"timestamp":"2026-02-27T17:38:28.237Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T17:39:11.575Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T19:21:52.808Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T20:14:54.763Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-27T20:24:32.829Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-28T05:50:38.652Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-28T05:50:57.542Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-28T06:00:19.982Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-28T06:00:43.398Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-02-28T17:18:56.666Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-04T13:57:36.919Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-04T13:58:20.755Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-03-04T19:47:11.374Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-03-26T20:35:22.985Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-26T20:44:18.501Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:07:04.373Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:11:49.753Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:19:21.664Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:29:08.742Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:41:31.228Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:47:59.471Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:49:31.666Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:53:27.151Z"}
+{"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:55:58.128Z"}
+{"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-03-28T02:52:42.717Z"}
