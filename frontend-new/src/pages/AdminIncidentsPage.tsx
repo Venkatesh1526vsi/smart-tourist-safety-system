@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { AlertTriangle, Filter, Search, MoreHorizontal, Loader2, Eye, Edit, Trash2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { AlertTriangle, Filter, Search, MoreHorizontal, Loader2, Eye, Edit, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,6 @@ const AdminIncidentsPage = () => {
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchIncidents = async () => {

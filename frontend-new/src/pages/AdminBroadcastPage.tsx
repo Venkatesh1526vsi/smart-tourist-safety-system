@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { Radio, Send, Bell, Users, MapPin, Calendar, Filter, Search, Loader2 } from "lucide-react";
+import { Radio, Send, Bell, Users, MapPin, Calendar, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +23,50 @@ interface Broadcast {
   createdAt: string;
 }
 
+function createMockBroadcasts(): Broadcast[] {
+  return [
+    {
+      _id: '1',
+      title: 'Heavy Rain Alert',
+      message: 'Heavy rainfall expected in Pune region. Please avoid unnecessary travel and stay safe.',
+      type: 'warning',
+      targetAudience: 'region',
+      status: 'sent',
+      sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      recipients: 5234,
+      regions: ['Pune', 'Kothrud', 'Shivajinagar'],
+      createdBy: 'Admin',
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      _id: '2',
+      title: 'System Maintenance',
+      message: 'Emergency services will be temporarily unavailable for maintenance from 2AM to 4AM.',
+      type: 'maintenance',
+      targetAudience: 'all',
+      status: 'scheduled',
+      scheduledFor: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+      recipients: 0,
+      createdBy: 'Admin',
+      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      _id: '3',
+      title: 'Safety Update',
+      message: 'New safety features have been added to the app including improved emergency alerts.',
+      type: 'info',
+      targetAudience: 'all',
+      status: 'sent',
+      sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      recipients: 12456,
+      createdBy: 'Admin',
+      createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
+    }
+  ];
+}
+
 const AdminBroadcastPage = () => {
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>(createMockBroadcasts);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -39,52 +79,6 @@ const AdminBroadcastPage = () => {
     targetAudience: 'all' as Broadcast['targetAudience'],
     regions: [] as string[]
   });
-
-  useEffect(() => {
-    // Mock data - replace with real API call
-    const mockBroadcasts: Broadcast[] = [
-      {
-        _id: '1',
-        title: 'Heavy Rain Alert',
-        message: 'Heavy rainfall expected in Pune region. Please avoid unnecessary travel and stay safe.',
-        type: 'warning',
-        targetAudience: 'region',
-        status: 'sent',
-        sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        recipients: 5234,
-        regions: ['Pune', 'Kothrud', 'Shivajinagar'],
-        createdBy: 'Admin',
-        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        _id: '2',
-        title: 'System Maintenance',
-        message: 'Emergency services will be temporarily unavailable for maintenance from 2AM to 4AM.',
-        type: 'maintenance',
-        targetAudience: 'all',
-        status: 'scheduled',
-        scheduledFor: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-        recipients: 0,
-        createdBy: 'Admin',
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        _id: '3',
-        title: 'Safety Update',
-        message: 'New safety features have been added to the app including improved emergency alerts.',
-        type: 'info',
-        targetAudience: 'all',
-        status: 'sent',
-        sentAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        recipients: 12456,
-        createdBy: 'Admin',
-        createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
-      }
-    ];
-    
-    setBroadcasts(mockBroadcasts);
-    setLoading(false);
-  }, []);
 
   const handleSendBroadcast = () => {
     if (!newBroadcast.title || !newBroadcast.message) return;
@@ -137,17 +131,6 @@ const AdminBroadcastPage = () => {
     
     return matchesSearch && matchesStatus && matchesType;
   });
-
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-muted-foreground">Loading broadcasts...</span>
-        </div>
-      </AdminDashboardLayout>
-    );
-  }
 
   return (
     <AdminDashboardLayout>
@@ -204,8 +187,8 @@ const AdminBroadcastPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">Type</label>
-                <Select value={newBroadcast.type} onValueChange={(value: Broadcast['type']) => 
-                  setNewBroadcast(prev => ({ ...prev, type: value }))
+                <Select value={newBroadcast.type} onValueChange={(value) =>
+                setNewBroadcast({ ...newBroadcast, type: value as Broadcast['type'] })
                 }>
                   <SelectTrigger>
                     <SelectValue />
@@ -233,9 +216,12 @@ const AdminBroadcastPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Target Audience</label>
-                <Select value={newBroadcast.targetAudience} onValueChange={(value: Broadcast['targetAudience']) => 
-                  setNewBroadcast(prev => ({ ...prev, targetAudience: value }))
-                }>
+                <Select
+                  value={newBroadcast.targetAudience}
+                  onValueChange={(value) =>
+                    setNewBroadcast(prev => ({ ...prev, targetAudience: value as Broadcast['targetAudience'] }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

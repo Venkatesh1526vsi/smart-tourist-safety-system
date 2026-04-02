@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { BarChart3, TrendingUp, Users, AlertTriangle, Calendar, Download, Filter, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Users, AlertTriangle, Calendar, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllIncidents } from "@/services/api";
+import { getAllIncidents, type Incident } from "@/services/api";
+
 
 interface AnalyticsData {
   totalIncidents: number;
@@ -19,7 +20,6 @@ interface AnalyticsData {
 
 const AdminAnalyticsPage = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('30d');
@@ -31,8 +31,7 @@ const AdminAnalyticsPage = () => {
         setError(null);
         
         const response = await getAllIncidents();
-        const incidentsData = response.data || [];
-        setIncidents(incidentsData);
+        const incidentsData: Incident[] = response.data ?? [];
         
         // Calculate analytics from real data
         const totalIncidents = incidentsData.length;
@@ -221,7 +220,7 @@ const AdminAnalyticsPage = () => {
           <div className="space-y-4">
             {analytics && (
               <div className="flex items-end justify-between h-32">
-                {analytics.monthlyTrend.map((month, index) => {
+                {analytics.monthlyTrend.map((month) => {
                   const maxCount = Math.max(...analytics.monthlyTrend.map(m => m.count));
                   const height = maxCount > 0 ? (month.count / maxCount) * 100 : 0;
                   
@@ -248,7 +247,7 @@ const AdminAnalyticsPage = () => {
           <div className="space-y-4">
             {analytics && (
               <div className="flex items-end justify-between h-32">
-                {analytics.userActivity.map((day, index) => {
+                {analytics.userActivity.map((day,) => {
                   const maxUsers = Math.max(...analytics.userActivity.map(d => d.activeUsers));
                   const height = maxUsers > 0 ? (day.activeUsers / maxUsers) * 100 : 0;
                   
