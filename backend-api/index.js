@@ -1,20 +1,27 @@
+require('./config');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http');
-require('dotenv').config();
+const { PORT, MONGO_URI, JWT_SECRET } = require('./config');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
-const winston = require('winston');
 const multer = require('multer');
 const path = require('path');
 const User = require('./models/User');
 const Location = require('./models/Location');
 const Incident = require('./models/Incident');
 const Notification = require('./models/Notification');
-const nodemailer = require('nodemailer');
-const twilio = require('twilio');
+
+if (!MONGO_URI) {
+  console.error('MONGO_URI is required');
+  process.exit(1);
+}
+if (!JWT_SECRET) {
+  console.error('JWT_SECRET is required');
+  process.exit(1);
+}
 
 // Routers
 const riskZonesRouter = require('./routes/riskZones');
@@ -152,11 +159,8 @@ const incidentLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// CORS - MUST be first, before any other middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "http://localhost:4173"],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: true,
   credentials: true
 }));
 
@@ -173,7 +177,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Apply input sanitization
@@ -199,13 +203,6 @@ app.use('/api/profile', profilesRouter);
 app.use('/api/advanced', advancedRouter);
 app.use('/api/admin', adminRouter);
 
-// JWT secret
-const JWT_SECRET = process.env.JWT_SECRET || 'replace_this_with_a_strong_secret_key';
-
-// Prefer env MONGO_URI (from Docker), else fallback to docker host "mongo"
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/touristdb';
-
-
 // MongoDB Connect (only once!)
 mongoose
   .connect(MONGO_URI)
@@ -224,8 +221,7 @@ mongoose
     const { seedProfiles } = require('./models/profiles');
     await seedProfiles(User);
 
-    const PORT = process.env.PORT || 3001;
-    server.listen(PORT, 'localhost', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       logger.info(`Server running on port ${PORT} with WebSocket support`);
     });
   })
@@ -233,7 +229,7 @@ mongoose
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('Smart Tourist Safety System API is running!');
+  res.send('Server running');
 });
 
 // SYSTEM HEALTH CHECK
@@ -1270,19 +1266,10 @@ app.get('/api/external/news', authenticateToken, async (req, res) => {
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
-// Mount route modules
-app.use('/api/risk-zones', riskZonesRouter);
-app.use('/api/incidents', incidentsRouter);
-app.use('/api/profile', profilesRouter);
-app.use('/api/advanced', advancedRouter);
-app.use('/api/admin', adminRouter);
-
 // Error handling middleware (must be last)
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
-
-// const PORT = process.env.PORT || 5000;
-
-// app.listen(PORT, "0.0.0.0", () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong' });
+});

@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'replace_this_with_a_strong_secret_key';
+const { JWT_SECRET } = require('../config');
 
 // General auth middleware: verifies JWT and attaches `user` to req
 function auth(req, res, next) {

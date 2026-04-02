@@ -2,6 +2,7 @@ const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('./logger');
+const { JWT_SECRET } = require('../config');
 
 /**
  * WebSocket Server Configuration
@@ -12,7 +13,7 @@ class WebSocketServer {
   constructor(server) {
     this.io = socketIO(server, {
       cors: {
-        origin: ["http://localhost:3000", "http://localhost:3001"],
+        origin: true,
         methods: ["GET", "POST"],
         credentials: true
       }
@@ -33,7 +34,7 @@ class WebSocketServer {
           return next(new Error('Authentication error: No token provided'));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'replace_this_with_a_strong_secret_key');
+        const decoded = jwt.verify(token, JWT_SECRET);
         const user = await User.findById(decoded.userId);
         
         if (!user) {
