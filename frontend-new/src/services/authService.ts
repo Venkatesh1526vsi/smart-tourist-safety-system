@@ -28,7 +28,7 @@ interface WrappedAuthResponse {
 }
 
 // Backend configuration
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'https://smart-tourist-safety-system-2-u5yv.onrender.com/api';
 
 // Authentication service functions
 export async function login(data: LoginRequest): Promise<WrappedAuthResponse> {

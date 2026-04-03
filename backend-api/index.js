@@ -15,12 +15,10 @@ const Incident = require('./models/Incident');
 const Notification = require('./models/Notification');
 
 if (!MONGO_URI) {
-  console.error('MONGO_URI is required');
-  process.exit(1);
+  console.error('MONGO_URI is required (Render env var). MongoDB connection will be skipped.');
 }
 if (!JWT_SECRET) {
-  console.error('JWT_SECRET is required');
-  process.exit(1);
+  console.error('JWT_SECRET is required (Render env var). Authenticated routes will likely fail.');
 }
 
 // Routers
@@ -70,9 +68,6 @@ if (!fs.existsSync(uploadsDir)) {
 //     )
 //   }));
 // }
-
-// Export logger for use in other modules
-module.exports = { logger };
 
 const app = express(); // ----> Must be BEFORE app.use()
 
@@ -203,34 +198,39 @@ app.use('/api/profile', profilesRouter);
 app.use('/api/advanced', advancedRouter);
 app.use('/api/admin', adminRouter);
 
-// MongoDB Connect (only once!)
-mongoose
-  .connect(MONGO_URI)
-  .then(async () => {
-    logger.info('MongoDB connected successfully');
-
-    const { riskZones, seedRiskZones } = require('./models/riskZones');
-    const RiskZone = require('./models/RiskZone');
-    await seedRiskZones(RiskZone);
-
-    // Seed incidents (Option A feature)
-    const { seedIncidents } = require('./models/incidents');
-    await seedIncidents(Incident, User);
-
-    // Seed profiles (Option B feature)
-    const { seedProfiles } = require('./models/profiles');
-    await seedProfiles(User);
-
-    server.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Server running on port ${PORT} with WebSocket support`);
-    });
-  })
-  .catch((err) => logger.error('MongoDB connection error:', err));
-
 // Routes
 app.get('/', (req, res) => {
   res.send('Server running');
 });
+
+// Start listening immediately so Render can verify the app is alive.
+server.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server running on port ${PORT} with WebSocket support`);
+});
+
+// MongoDB Connect (only once!)
+if (MONGO_URI) {
+  mongoose
+    .connect(MONGO_URI)
+    .then(async () => {
+      logger.info('MongoDB connected successfully');
+
+      const { riskZones, seedRiskZones } = require('./models/riskZones');
+      const RiskZone = require('./models/RiskZone');
+      await seedRiskZones(RiskZone);
+
+      // Seed incidents (Option A feature)
+      const { seedIncidents } = require('./models/incidents');
+      await seedIncidents(Incident, User);
+
+      // Seed profiles (Option B feature)
+      const { seedProfiles } = require('./models/profiles');
+      await seedProfiles(User);
+    })
+    .catch((err) => logger.error('MongoDB connection error:', err));
+} else {
+  logger.error('Skipping MongoDB connection: MONGO_URI missing.');
+}
 
 // SYSTEM HEALTH CHECK
 app.get('/health', async (req, res) => {

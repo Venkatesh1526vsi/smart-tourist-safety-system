@@ -8,6 +8,8 @@ function auth(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Token missing' });
 
+  if (!JWT_SECRET) return res.status(500).json({ error: 'JWT_SECRET not configured' });
+
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = decoded;
@@ -20,6 +22,8 @@ async function adminAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Token missing' });
+
+  if (!JWT_SECRET) return res.status(500).json({ error: 'JWT_SECRET not configured' });
 
   jwt.verify(token, JWT_SECRET, async (err, decoded) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });

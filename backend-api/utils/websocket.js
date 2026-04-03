@@ -34,6 +34,10 @@ class WebSocketServer {
           return next(new Error('Authentication error: No token provided'));
         }
 
+        if (!JWT_SECRET) {
+          return next(new Error('Authentication error: JWT_SECRET not configured'));
+        }
+
         const decoded = jwt.verify(token, JWT_SECRET);
         const user = await User.findById(decoded.userId);
         
