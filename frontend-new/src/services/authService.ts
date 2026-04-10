@@ -28,7 +28,7 @@ interface WrappedAuthResponse {
 }
 
 // Backend configuration
-const BASE_URL = 'https://smart-tourist-safety-system-2-u5yv.onrender.com/api';
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
 // Authentication service functions
 export async function login(data: LoginRequest): Promise<WrappedAuthResponse> {

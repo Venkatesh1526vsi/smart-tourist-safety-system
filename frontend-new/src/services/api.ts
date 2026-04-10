@@ -1,5 +1,5 @@
 // API Service for SAFEYATRA
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-tourist-safety-system-2-u5yv.onrender.com';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // TypeScript Interfaces for API Responses
 export interface ApiResponse<T> {

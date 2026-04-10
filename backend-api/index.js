@@ -16,9 +16,13 @@ const Notification = require('./models/Notification');
 
 if (!MONGO_URI) {
   console.error('MONGO_URI is required (Render env var). MongoDB connection will be skipped.');
+  console.error('Set MONGO_URI in your Render environment variables.');
+  process.exit(1); // Exit with error to prevent app from starting
 }
 if (!JWT_SECRET) {
   console.error('JWT_SECRET is required (Render env var). Authenticated routes will likely fail.');
+  console.error('Set JWT_SECRET in your Render environment variables.');
+  process.exit(1); // Exit with error to prevent app from starting
 }
 
 // Routers
@@ -155,8 +159,33 @@ const incidentLimiter = rateLimit({
 });
 
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Allow localhost for development
+    if (origin.includes('localhost')) return callback(null, true);
+
+    // Allow Vercel deployments
+    if (origin.includes('vercel.app')) return callback(null, true);
+
+    // Allow your specific domains
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://your-frontend-domain.vercel.app' // Replace with actual Vercel domain
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log('CORS blocked origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Middleware
@@ -171,6 +200,26 @@ app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
+
+// Global request logger middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${ip}`);
+  next();
+});
+
+// MongoDB connection validation middleware
+const validateMongoConnection = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    console.error('MongoDB not connected. Ready state:', mongoose.connection.readyState);
+    return res.status(500).json({
+      error: 'Database connection error',
+      message: 'Unable to connect to database. Please try again later.'
+    });
+  }
+  next();
+};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -205,31 +254,45 @@ app.get('/', (req, res) => {
 
 // Start listening immediately so Render can verify the app is alive.
 server.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on port ${PORT} with WebSocket support`);
+  console.log(`🚀 Server running on port ${PORT} with WebSocket support`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Root URL: http://localhost:${PORT}/`);
+  console.log(`🔐 JWT_SECRET configured: ${JWT_SECRET ? 'Yes' : 'No'}`);
+  console.log(`🗄️  MONGO_URI configured: ${MONGO_URI ? 'Yes' : 'No'}`);
 });
 
 // MongoDB Connect (only once!)
 if (MONGO_URI) {
+  console.log('Attempting to connect to MongoDB...');
   mongoose
     .connect(MONGO_URI)
     .then(async () => {
-      logger.info('MongoDB connected successfully');
+      console.log('✅ MongoDB connected successfully');
+      console.log('MongoDB URI:', MONGO_URI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials in logs
 
       const { riskZones, seedRiskZones } = require('./models/riskZones');
       const RiskZone = require('./models/RiskZone');
       await seedRiskZones(RiskZone);
+      console.log('✅ Risk zones seeded');
 
       // Seed incidents (Option A feature)
       const { seedIncidents } = require('./models/incidents');
       await seedIncidents(Incident, User);
+      console.log('✅ Incidents seeded');
 
       // Seed profiles (Option B feature)
       const { seedProfiles } = require('./models/profiles');
       await seedProfiles(User);
+      console.log('✅ Profiles seeded');
     })
-    .catch((err) => logger.error('MongoDB connection error:', err));
+    .catch((err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+      console.error('Full error:', err);
+      process.exit(1); // Exit if DB connection fails
+    });
 } else {
-  logger.error('Skipping MongoDB connection: MONGO_URI missing.');
+  console.error('❌ MONGO_URI not provided. Cannot connect to database.');
+  process.exit(1);
 }
 
 // SYSTEM HEALTH CHECK
@@ -296,11 +359,13 @@ app.get('/health', async (req, res) => {
 });
 
 // USER REGISTRATION
-app.post('/api/register', validatePasswordStrength, async (req, res) => {
+app.post('/api/register', validateMongoConnection, validatePasswordStrength, async (req, res) => {
 
   try {
+    console.log('Registration attempt:', req.body);
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
+      console.log('Registration failed: Missing required fields');
       return ResponseHandler.validationError(res, [
         { path: 'name', message: 'Name is required' },
         { path: 'email', message: 'Email is required' },
@@ -309,12 +374,14 @@ app.post('/api/register', validatePasswordStrength, async (req, res) => {
     }
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('Registration failed: Email already exists:', email);
       return ResponseHandler.error(res, 400, 'Email already registered.');
     }
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const user = new User({ name, email, password: hashedPassword });
     await user.save();
+    console.log('User registered successfully:', { id: user._id, email: user.email });
 
     // Issue JWT token for immediate login
     const token = jwt.sign(
@@ -328,7 +395,8 @@ app.post('/api/register', validatePasswordStrength, async (req, res) => {
       token
     }, 'User registered successfully!');
   } catch (err) {
-    return ResponseHandler.error(res, 500, 'Server error during registration.', err);
+    console.error('Registration error:', err);
+    return ResponseHandler.error(res, 500, 'Server error during registration.', err.message);
   }
 });
 
@@ -350,12 +418,14 @@ const getFailedAttempts = (ipAddress) => {
 };
 
 // USER LOGIN (JWT returned on success)
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', validateMongoConnection, async (req, res) => {
   try {
+    console.log('Login attempt:', req.body);
     const { email, password } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
 
     if (!email || !password) {
+      console.log('Login failed: Missing email or password');
       return ResponseHandler.validationError(res, [
         { path: 'email', message: 'Email is required' },
         { path: 'password', message: 'Password is required' }
@@ -365,11 +435,13 @@ app.post('/api/login', async (req, res) => {
     // Check if IP is blocked due to too many failed attempts
     const failedAttempts = getFailedAttempts(ipAddress);
     if (failedAttempts >= 5) {
+      console.log('Login blocked: Too many failed attempts from IP:', ipAddress);
       return ResponseHandler.error(res, 429, 'Too many failed login attempts. Please try again later.');
     }
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('Login failed: User not found:', email);
       // Increment failed attempts for invalid email
       incrementFailedAttempts(ipAddress);
       return ResponseHandler.unauthorized(res, 'Invalid email or password.');
@@ -377,6 +449,7 @@ app.post('/api/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('Login failed: Invalid password for user:', email);
       // Increment failed attempts for invalid password
       incrementFailedAttempts(ipAddress);
       return ResponseHandler.unauthorized(res, 'Invalid email or password.');
@@ -384,6 +457,7 @@ app.post('/api/login', async (req, res) => {
 
     // Reset failed attempts on successful login
     resetFailedAttempts(ipAddress);
+    console.log('Login successful for user:', email);
 
     // Issue JWT token
     const token = jwt.sign(
@@ -397,7 +471,8 @@ app.post('/api/login', async (req, res) => {
       token
     }, 'Login successful!');
   } catch (err) {
-    return ResponseHandler.error(res, 500, 'Server error during login.', err);
+    console.error('Login error:', err);
+    return ResponseHandler.error(res, 500, 'Server error during login.', err.message);
   }
 });
 
