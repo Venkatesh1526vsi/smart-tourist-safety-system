@@ -23,28 +23,45 @@ const Select = ({
 
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
+    const childElement = child as React.ReactElement;
 
-    if (child.type === SelectTrigger) {
-      triggerClassName = child.props.className ?? "";
-      React.Children.forEach(child.props.children, (triggerChild) => {
+    if (childElement.type === SelectTrigger) {
+      triggerClassName = childElement.props.className ?? "";
+      React.Children.forEach(childElement.props.children, (triggerChild) => {
         if (!React.isValidElement(triggerChild)) return;
-        if (triggerChild.type === SelectValue) {
-          placeholder = triggerChild.props.placeholder;
+        const triggerChildElement = triggerChild as React.ReactElement;
+        if (triggerChildElement.type === SelectValue) {
+          placeholder = triggerChildElement.props.placeholder;
         }
       });
     }
 
-    if (child.type === SelectContent) {
-      React.Children.forEach(child.props.children, (contentChild) => {
+    if (childElement.type === SelectContent) {
+      React.Children.forEach(childElement.props.children, (contentChild) => {
         if (!React.isValidElement(contentChild)) return;
-        if (contentChild.type === SelectItem) {
-          options.push(<option key={contentChild.props.value} value={contentChild.props.value}>{contentChild.props.children}</option>);
+        const contentChildElement = contentChild as React.ReactElement;
+        if (contentChildElement.type === SelectItem) {
+          options.push(
+            <option
+              key={contentChildElement.props.value}
+              value={contentChildElement.props.value}
+            >
+              {contentChildElement.props.children}
+            </option>
+          );
         }
       });
     }
 
-    if (child.type === SelectItem) {
-      options.push(<option key={child.props.value} value={child.props.value}>{child.props.children}</option>);
+    if (childElement.type === SelectItem) {
+      options.push(
+        <option
+          key={childElement.props.value}
+          value={childElement.props.value}
+        >
+          {childElement.props.children}
+        </option>
+      );
     }
   });
 
