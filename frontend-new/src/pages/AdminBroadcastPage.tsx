@@ -82,6 +82,7 @@ const AdminBroadcastPage = () => {
       }
     ];
     
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBroadcasts(mockBroadcasts);
     setLoading(false);
   }, []);
@@ -264,7 +265,8 @@ const AdminBroadcastPage = () => {
     </Button>
   </div>
 </div>
-
+        </div>
+      </DashboardCard>
         {/* Filters */}
         <DashboardCard title="Filters" icon={<Filter className="h-5 w-5 text-primary" />}>
           <div className="flex flex-col sm:flex-row gap-4">
