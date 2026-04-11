@@ -23,13 +23,13 @@ const Select = ({
 
   React.Children.forEach(children, (child) => {
     if (!React.isValidElement(child)) return;
-    const childElement = child as React.ReactElement;
+    const childElement = child as React.ReactElement<any>;
 
     if (childElement.type === SelectTrigger) {
       triggerClassName = childElement.props.className ?? "";
       React.Children.forEach(childElement.props.children, (triggerChild) => {
         if (!React.isValidElement(triggerChild)) return;
-        const triggerChildElement = triggerChild as React.ReactElement;
+        const triggerChildElement = triggerChild as React.ReactElement<any>;
         if (triggerChildElement.type === SelectValue) {
           placeholder = triggerChildElement.props.placeholder;
         }
@@ -39,7 +39,7 @@ const Select = ({
     if (childElement.type === SelectContent) {
       React.Children.forEach(childElement.props.children, (contentChild) => {
         if (!React.isValidElement(contentChild)) return;
-        const contentChildElement = contentChild as React.ReactElement;
+        const contentChildElement = contentChild as React.ReactElement<any>;
         if (contentChildElement.type === SelectItem) {
           options.push(
             <option
