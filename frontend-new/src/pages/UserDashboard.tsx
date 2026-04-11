@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { MapPin, AlertTriangle, FileText, Bell, Loader2, Calendar, MapPinIcon } from "lucide-react";
+import { MapPin, AlertTriangle, FileText, Bell, Loader2, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useSafetySimulation } from "@/hooks/useSafetySimulation";
 import EmergencySOSWidget from "@/components/widgets/EmergencySOSWidget";
@@ -148,7 +148,7 @@ const UserDashboard = () => {
             <DashboardCard title="Incident History" icon={<FileText className="h-5 w-5 text-blue-500" />}>
               <div className="space-y-3">
                 {incidents.length > 0 ? (
-                  incidents.map((incident) => {
+                  incidents.slice(0, 3).map((incident) => {
                     let dateStr = '-';
                     try {
                       if (incident.created_at) {
@@ -162,24 +162,24 @@ const UserDashboard = () => {
                     }
 
                     return (
-                      <div key={incident._id} className="border border-border rounded-lg p-3 space-y-2 hover:bg-muted/50 transition-colors">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm truncate">{incident?.type || 'Unknown'}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{incident?.description || 'No description'}</p>
+                      <div key={incident._id} className="border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{incident?.type || 'Unknown incident'}</p>
+                            <p className="text-xs text-muted-foreground truncate">{incident?.description || 'No description available'}</p>
                           </div>
                           <Badge className={getSeverityBadgeColor(incident.severity)}>
                             {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
                           </Badge>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
-                          {incident.latitude && incident.longitude && (
-                            <span className="flex items-center gap-1">
-                              <MapPinIcon className="h-3 w-3" />
-                              {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                          {typeof incident.latitude === 'number' && typeof incident.longitude === 'number' && (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {incident.latitude.toFixed(3)}, {incident.longitude.toFixed(3)}
                             </span>
                           )}
-                          <span className="flex items-center gap-1">
+                          <span className="inline-flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             {dateStr}
                           </span>
@@ -202,7 +202,7 @@ const UserDashboard = () => {
                   </button>
                   {incidents.length > 0 && (
                     <button
-                      onClick={() => navigate('/incident-history')}
+                      onClick={() => navigate('/dashboard/user/incidents')}
                       className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors flex-1"
                     >
                       View All Reports

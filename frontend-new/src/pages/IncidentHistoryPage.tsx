@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 
@@ -6,97 +6,43 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
 
-import { Button } from "@/components/ui/button";
+import { getMyIncidents, type Incident } from "@/services/api";
 
+import { FileText, MapPin, Calendar, AlertTriangle } from "lucide-react";
 
+import { motion } from "framer-motion";
 
-import { FileText, MapPin, Calendar, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
-
-import { motion, AnimatePresence } from "framer-motion";
-
-import { cn } from "@/lib/utils";
-
-type IncidentStatus = "pending" | "approved" | "rejected";
-
-interface Incident {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  date: string;
-  status: IncidentStatus;
-  details: string;
-}
-
-const statusConfig: Record<IncidentStatus, { label: string; className: string }> = {
-  pending: {
-    label: "Pending",
-    className: "bg-accent/15 text-accent border-accent/30",
-  },
-  approved: {
-    label: "Approved",
-    className: "bg-primary/15 text-primary border-primary/30",
-  },
-  rejected: {
-    label: "Rejected",
-    className: "bg-destructive/15 text-destructive border-destructive/30",
-  },
+const getSeverityBadgeClass = (severity: string) => {
+  switch (severity?.toLowerCase()) {
+    case "critical":
+      return "bg-red-500 text-white";
+    case "high":
+      return "bg-orange-500 text-white";
+    case "medium":
+      return "bg-yellow-500 text-black";
+    case "low":
+      return "bg-green-500 text-white";
+    default:
+      return "bg-gray-500 text-white";
+  }
 };
 
-const mockIncidents: Incident[] = [
-  {
-    id: "1",
-    title: "Theft reported near Jama Masjid",
-    description: "A tourist reported pickpocketing near the main gate entrance during evening hours.",
-    location: "Jama Masjid, Old Delhi",
-    date: "2026-02-25",
-    status: "approved",
-    details:
-      "The victim reported losing a wallet containing cash and identification documents. Local authorities were notified and CCTV footage is being reviewed. Tourists are advised to keep valuables secured and remain vigilant in crowded areas.",
-  },
-  {
-    id: "2",
-    title: "Scam alert at Red Fort area",
-    description: "Multiple reports of fake tour guides charging exorbitant fees to unsuspecting visitors.",
-    location: "Red Fort, Delhi",
-    date: "2026-02-24",
-    status: "pending",
-    details:
-      "At least 5 tourists have filed complaints about unauthorized guides demanding ₹2000–₹5000 for brief tours. Official guides carry government-issued ID badges. Visitors should only engage verified personnel at the ticket counter.",
-  },
-  {
-    id: "3",
-    title: "Road closure on NH-44",
-    description: "Major highway section blocked due to construction work causing significant delays.",
-    location: "NH-44, Haryana",
-    date: "2026-02-23",
-    status: "approved",
-    details:
-      "A 12 km stretch between Panipat and Karnal is under repair. Expected completion by March 5. Alternate routes via state highways SH-1 and SH-6 are recommended. Travel time may increase by 45–60 minutes.",
-  },
-  {
-    id: "4",
-    title: "Aggressive street vendor confrontation",
-    description: "A traveler was harassed by street vendors near Chandni Chowk market.",
-    location: "Chandni Chowk, Delhi",
-    date: "2026-02-22",
-    status: "rejected",
-    details:
-      "The report was reviewed but could not be verified due to lack of corroborating evidence. The area remains a bustling market zone; travelers are advised to stay assertive and avoid engaging with overly persistent vendors.",
-  },
-  {
-    id: "5",
-    title: "Flooding near India Gate",
-    description: "Heavy monsoon rain caused waterlogging around the India Gate roundabout area.",
-    location: "India Gate, New Delhi",
-    date: "2026-02-20",
-    status: "approved",
-    details:
-      "Water levels reached up to 2 feet in some stretches. Municipal crews deployed pumps and the area was cleared within 6 hours. Travelers should check weather updates and avoid low-lying routes during heavy rainfall.",
-  },
-];
+const getIncidentLocation = (incident: Incident) => {
+  if (typeof incident.latitude === "number" && typeof incident.longitude === "number") {
+    return `Lat: ${incident.latitude.toFixed(4)}, Lng: ${incident.longitude.toFixed(4)}`;
+  }
+  return "Location unavailable";
+};
 
-function LoadingSkeleton() {
+const formatIncidentDate = (dateString?: string) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return isNaN(date.getTime())
+    ? "-"
+    : date.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const LoadingSkeleton = () => {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
@@ -116,7 +62,7 @@ function LoadingSkeleton() {
       ))}
     </div>
   );
-}
+};
 
 function EmptyState() {
   return (
@@ -131,69 +77,34 @@ function EmptyState() {
 }
 
 function IncidentCard({ incident }: { incident: Incident }) {
-  const [expanded, setExpanded] = useState(false);
-  const cfg = statusConfig[incident.status];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.25 }}
     >
       <Card className="glow-hover transition-colors">
         <CardContent className="p-5">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-            <h3 className="font-display font-semibold text-base">{incident.title}</h3>
-            <Badge variant="outline" className={cn("text-xs shrink-0", cfg.className)}>
-              {cfg.label}
+            <div>
+              <p className="font-display font-semibold text-base">{incident.type || 'Incident report'}</p>
+              <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{incident.description || 'No description provided.'}</p>
+            </div>
+            <Badge className={getSeverityBadgeClass(incident.severity)}>
+              {incident.severity?.charAt(0).toUpperCase() + incident.severity?.slice(1)}
             </Badge>
           </div>
-          <p className="text-muted-foreground text-sm mb-3">{incident.description}</p>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-3">
+
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5" />
-              {incident.location}
+              {getIncidentLocation(incident)}
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              {new Date(incident.date).toLocaleDateString("en-IN", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
+              {formatIncidentDate(incident.created_at)}
             </span>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-xs px-2 h-7"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? (
-              <>
-                Hide Details <ChevronUp className="h-3.5 w-3.5 ml-1" />
-              </>
-            ) : (
-              <>
-                View Details <ChevronDown className="h-3.5 w-3.5 ml-1" />
-              </>
-            )}
-          </Button>
-          <AnimatePresence initial={false}>
-            {expanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 pt-3 border-t border-border text-sm text-muted-foreground leading-relaxed">
-                  {incident.details}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </CardContent>
       </Card>
     </motion.div>
@@ -201,45 +112,57 @@ function IncidentCard({ incident }: { incident: Incident }) {
 }
 
 const IncidentHistoryPage = () => {
-  const [isLoading] = useState(false);
-  const incidents = mockIncidents;
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getMyIncidents();
+        setIncidents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to load incidents');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchIncidents();
+  }, []);
 
   return (
     <UserDashboardLayout>
       <div className="space-y-5">
         <div>
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" /> Incident History
+            <FileText className="h-6 w-6 text-primary" /> My Incident Reports
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Review past safety incidents and their resolution status
+            Review the incidents you have reported and their details.
           </p>
         </div>
 
         {isLoading ? (
           <LoadingSkeleton />
+        ) : error ? (
+          <Card>
+            <CardContent className="p-5 text-sm text-destructive">
+              {error}
+            </CardContent>
+          </Card>
         ) : incidents.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="space-y-3">
             {incidents.map((incident) => (
-              <IncidentCard key={incident.id} incident={incident} />
+              <IncidentCard key={incident._id} incident={incident} />
             ))}
           </div>
         )}
       </div>
-
-      {/*─ INTEGRATION INSTRUCTIONS─────────────────────────────
-       *
-       * 1. Add route in src/App.tsx:
-       *    import IncidentHistoryPage from "./pages/IncidentHistoryPage";
-       *    <Route path="/dashboard/user/incidents" element={<IncidentHistoryPage />} />
-       *
-       * 2. The sidebar already has an "Incidents" nav item pointing to
-       *    /dashboard/user/incidents in UserDashboardLayout.tsx, so no
-       *    additional linking is needed.
-       *
-       * ──────────────────────────────────────────────────────────── */}
     </UserDashboardLayout>
   );
 };
