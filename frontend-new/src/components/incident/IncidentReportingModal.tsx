@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import EvidenceUploadSection, {
   type EvidenceData,
@@ -58,8 +59,11 @@ const IncidentReportingModal = ({
   const [step, setStep] = useState(0);
   const [category, setCategory] = useState<string>("");
   const [location, setLocation] = useState("");
+  const [severity, setSeverity] = useState<string>("");
   const [description, setDescription] = useState("");
   const [time, setTime] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [isEmergency, setIsEmergency] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceData>({
     description: "",
     images: [],
@@ -72,7 +76,7 @@ const IncidentReportingModal = ({
 
   const canProceed = () => {
     if (step === 0) return !!category;
-    if (step === 1) return !!location && !!description;
+    if (step === 1) return !!location && !!description && !!severity;
     return true;
   };
 
@@ -81,19 +85,12 @@ const IncidentReportingModal = ({
     setSubmitError(null);
     
     try {
-      // Map frontend category to backend severity/category
-      const severityMap: Record<string, string> = {
-        theft: 'high',
-        medical: 'critical',
-        documents: 'medium',
-        suspicious: 'low',
-        others: 'medium',
-      };
-      
+      // Prepare incident data
       const incidentData = {
         type: category,
         description: description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : ''),
-        severity: severityMap[category] || 'medium',
+        severity: severity,
+        isEmergency: isEmergency,
         category: category,
         locationId: location,
         // Note: In production, get actual GPS coordinates
@@ -120,9 +117,62 @@ const IncidentReportingModal = ({
     setStep(0);
     setCategory("");
     setLocation("");
+    setSeverity("");
     setDescription("");
     setTime("");
+    setLocationLoading(false);
+    setIsEmergency(false);
     setEvidence({ description: "", images: [], video: null, voiceRecording: false });
+  };
+
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported");
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverse geocoding to get city name
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          
+          // Extract city name (prefer city, then town, then village)
+          const city = data.address?.city || data.address?.town || data.address?.village || '';
+          
+          if (city) {
+            setLocation(`${city} (Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)})`);
+          } else {
+            setLocation(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
+          }
+        } catch (error) {
+          // Fallback to coordinates only
+          setLocation(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
+        }
+        
+        setLocationLoading(false);
+      },
+      (error) => {
+        setLocationLoading(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          alert("Location access denied");
+        } else {
+          alert("Error getting location");
+        }
+      }
+    );
+  };
+
+  const handleEmergencyChange = (checked: boolean) => {
+    setIsEmergency(checked);
+    if (checked) {
+      setSeverity("critical");
+    }
   };
 
   const selectedCategory = CATEGORIES.find((c) => c.id === category);
@@ -211,11 +261,23 @@ const IncidentReportingModal = ({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Location</Label>
-                    <Input
-                      placeholder="Where did this happen?"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Where did this happen?"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={locationLoading}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {locationLoading ? "Fetching location..." : "📍 Use Current Location"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
@@ -233,6 +295,32 @@ const IncidentReportingModal = ({
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Severity *</Label>
+                    <Select value={severity} onValueChange={setSeverity}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select severity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="emergency"
+                      checked={isEmergency}
+                      onChange={(e) => handleEmergencyChange(e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="emergency" className="text-sm font-medium cursor-pointer">
+                      🚨 Mark as Emergency
+                    </Label>
                   </div>
                 </div>
               )}
@@ -253,6 +341,20 @@ const IncidentReportingModal = ({
                         {selectedCategory?.label}
                       </Badge>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">Severity</span>
+                      <Badge className="bg-orange-500 text-white">
+                        {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                      </Badge>
+                    </div>
+                    {isEmergency && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground">Emergency</span>
+                        <Badge className="bg-red-500 text-white">
+                          🚨 Yes
+                        </Badge>
+                      </div>
+                    )}
                     <div>
                       <span className="text-xs font-semibold uppercase text-muted-foreground">Location</span>
                       <p className="text-sm">{location}</p>

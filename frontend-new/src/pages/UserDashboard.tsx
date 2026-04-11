@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { MapPin, AlertTriangle, FileText, Bell, Loader2 } from "lucide-react";
+import { MapPin, AlertTriangle, FileText, Bell, Loader2, Calendar, MapPinIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useSafetySimulation } from "@/hooks/useSafetySimulation";
 import EmergencySOSWidget from "@/components/widgets/EmergencySOSWidget";
 import NearbyEmergencyContactsWidget from "@/components/widgets/NearbyEmergencyContactsWidget";
@@ -27,6 +28,21 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to get severity badge color
+  const getSeverityBadgeColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return 'bg-red-500 text-white';
+      case 'high':
+        return 'bg-orange-500 text-white';
+      case 'medium':
+        return 'bg-yellow-500 text-black';
+      case 'low':
+        return 'bg-green-500 text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
+  };
 
   useEffect(() => {
     console.log('[UserDashboard] useEffect - fetching data');
@@ -130,49 +146,68 @@ const UserDashboard = () => {
             </DashboardCard>
 
             <DashboardCard title="Incident History" icon={<FileText className="h-5 w-5 text-blue-500" />}>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {incidents.length > 0 ? (
-                  incidents.slice(0, 3).map((incident) => {
-                    // Safe date parsing
+                  incidents.map((incident) => {
                     let dateStr = '-';
                     try {
                       if (incident.created_at) {
                         const date = new Date(incident.created_at);
                         if (!isNaN(date.getTime())) {
-                          dateStr = date.toLocaleDateString();
+                          dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                         }
                       }
                     } catch {
                       dateStr = '-';
                     }
+
                     return (
-                      <div key={incident._id || Math.random()} className="flex items-center justify-between text-xs">
-                        <span className="truncate max-w-[180px]">{incident?.description || `${incident?.type || 'Unknown'} incident`}</span>
-                        <span className="text-muted-foreground">{dateStr}</span>
+                      <div key={incident._id} className="border border-border rounded-lg p-3 space-y-2 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm truncate">{incident?.type || 'Unknown'}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{incident?.description || 'No description'}</p>
+                          </div>
+                          <Badge className={getSeverityBadgeColor(incident.severity)}>
+                            {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
+                          {incident.latitude && incident.longitude && (
+                            <span className="flex items-center gap-1">
+                              <MapPinIcon className="h-3 w-3" />
+                              {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {dateStr}
+                          </span>
+                        </div>
                       </div>
                     );
                   })
                 ) : (
-                  <>
-                    <div className="flex items-center justify-between text-xs">
-                      <span>No recent incidents reported</span>
-                      <span className="text-muted-foreground">-</span>
-                    </div>
-                  </>
+                  <div className="text-center py-6">
+                    <p className="text-sm text-muted-foreground">No incidents reported yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Stay safe and report any incidents you encounter</p>
+                  </div>
                 )}
-                <div className="pt-3 flex flex-col sm:flex-row gap-2">
+                <div className="pt-3 flex flex-col sm:flex-row gap-2 border-t border-border">
                   <button
                     onClick={() => navigate('/report-incident')}
-                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors"
+                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors flex-1"
                   >
                     Report Incident
                   </button>
-                  <button
-                    onClick={() => navigate('/report-incident')}
-                    className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors"
-                  >
-                    View Reports
-                  </button>
+                  {incidents.length > 0 && (
+                    <button
+                      onClick={() => navigate('/incident-history')}
+                      className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors flex-1"
+                    >
+                      View All Reports
+                    </button>
+                  )}
                 </div>
               </div>
             </DashboardCard>
