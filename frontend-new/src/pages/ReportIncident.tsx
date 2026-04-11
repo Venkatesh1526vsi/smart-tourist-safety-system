@@ -16,6 +16,9 @@ const ReportIncident = () => {
     type: '',
     dateTime: new Date().toISOString().slice(0, 16), // Current datetime in local format
   });
+  const [severity, setSeverity] = useState('');
+  const [isEmergency, setIsEmergency] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +65,58 @@ const ReportIncident = () => {
     }
   };
 
+  const handleEmergencyToggle = (checked: boolean) => {
+    setIsEmergency(checked);
+    if (checked) {
+      setSeverity('critical');
+    }
+    if (errors.severity) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.severity;
+        return newErrors;
+      });
+    }
+  };
+
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported');
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        let resolvedLocation = `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`;
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const city = data.address?.city || data.address?.town || data.address?.village || '';
+          if (city) {
+            resolvedLocation = `${city} (Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)})`;
+          }
+        } catch (error) {
+          // fallback to coordinates only
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          location: resolvedLocation,
+        }));
+        setLocationLoading(false);
+      },
+      () => {
+        setLocationLoading(false);
+        alert('Unable to fetch current location');
+      }
+    );
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
@@ -87,6 +142,10 @@ const ReportIncident = () => {
       newErrors.type = 'Please select an incident type';
     }
     
+    if (!severity) {
+      newErrors.severity = 'Please select a severity level';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -102,7 +161,13 @@ const ReportIncident = () => {
     
     // Simulate API call with console.log
     const submissionData = {
-      ...formData,
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      type: formData.type,
+      severity,
+      isEmergency,
+      date: formData.dateTime,
       image: imageFile ? imageFile.name : null,
     };
     
@@ -122,6 +187,8 @@ const ReportIncident = () => {
       type: '',
       dateTime: new Date().toISOString().slice(0, 16),
     });
+    setSeverity('');
+    setIsEmergency(false);
     setImageFile(null);
     
     // Clear success message after 3 seconds
@@ -193,13 +260,23 @@ const ReportIncident = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    placeholder="Where did the incident occur?"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className={errors.location ? "border-red-500" : ""}
-                  />
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="location"
+                      placeholder="Where did the incident occur?"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className={errors.location ? "border-red-500" : ""}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleUseCurrentLocation}
+                      disabled={locationLoading}
+                      className="whitespace-nowrap"
+                    >
+                      {locationLoading ? 'Fetching location...' : '📍 Use Current Location'}
+                    </Button>
+                  </div>
                   {errors.location && (
                     <p className="text-red-500 text-sm">{errors.location}</p>
                   )}
@@ -233,6 +310,39 @@ const ReportIncident = () => {
                       value={formData.dateTime}
                       onChange={handleChange}
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="severity">Severity *</Label>
+                    <Select value={severity} onValueChange={setSeverity}>
+                      <SelectTrigger className={errors.severity ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select severity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.severity && (
+                      <p className="text-red-500 text-sm">{errors.severity}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="emergency"
+                      checked={isEmergency}
+                      onChange={(e) => handleEmergencyToggle(e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="emergency" className="text-sm font-medium cursor-pointer">
+                      🚨 Mark as Emergency
+                    </Label>
                   </div>
                 </div>
                 
