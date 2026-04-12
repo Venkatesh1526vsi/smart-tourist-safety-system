@@ -119,7 +119,11 @@ const ReportIncident = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setImages(files);
+    setImages(prev => [...prev, ...files]);
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = () => {
@@ -183,8 +187,12 @@ const ReportIncident = () => {
     });
     
     try {
-      const response = await fetch('/api/incidents', {
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://smart-tourist-safety-system-l724.onrender.com/api/incidents', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formDataToSend,
       });
 
@@ -365,6 +373,16 @@ const ReportIncident = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="image">Attach Evidence (Optional)</Label>
+                  {images.length > 0 && (
+                    <div className="space-y-2">
+                      {images.map((img, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                          <span className="text-sm">{img.name}</span>
+                          <Button type="button" onClick={() => removeImage(index)} size="sm" variant="destructive">❌</Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-center gap-4">
                     <label className="flex-1 flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
                       <Upload className="h-8 w-8 text-gray-400 mb-2" />
