@@ -20,7 +20,7 @@ const ReportIncident = () => {
   const [isEmergency, setIsEmergency] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -118,9 +118,8 @@ const ReportIncident = () => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-    }
+    const files = Array.from(e.target.files || []);
+    setImages(files);
   };
 
   const validateForm = () => {
@@ -159,42 +158,60 @@ const ReportIncident = () => {
     
     setIsSubmitting(true);
     
-    // Simulate API call with console.log
-    const submissionData = {
-      title: formData.title,
-      description: formData.description,
-      location: formData.location,
-      type: formData.type,
-      severity,
-      isEmergency,
-      date: formData.dateTime,
-      image: imageFile ? imageFile.name : null,
-    };
+    // Extract latitude and longitude from location string
+    const latMatch = formData.location?.match(/Lat:\s*([0-9.-]+)/);
+    const lngMatch = formData.location?.match(/Lng:\s*([0-9.-]+)/);
+    const latitude = latMatch ? parseFloat(latMatch[1]) : null;
+    const longitude = lngMatch ? parseFloat(lngMatch[1]) : null;
     
-    console.log('Submitting incident report:', submissionData);
+    // Prepare FormData for submission
+    const formDataToSend = new FormData();
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("type", formData.type);
+    formDataToSend.append("severity", severity);
+    formDataToSend.append("isEmergency", String(isEmergency));
+    if (latitude !== null) {
+      formDataToSend.append("latitude", String(latitude));
+    }
+    if (longitude !== null) {
+      formDataToSend.append("longitude", String(longitude));
+    }
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setSuccessMessage('Incident reported successfully!');
-    setIsSubmitting(false);
-    
-    // Clear form after successful submission
-    setFormData({
-      title: '',
-      description: '',
-      location: '',
-      type: '',
-      dateTime: new Date().toISOString().slice(0, 16),
+    images.forEach((img) => {
+      formDataToSend.append("images", img);
     });
-    setSeverity('');
-    setIsEmergency(false);
-    setImageFile(null);
     
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
+    try {
+      const response = await fetch('/api/incidents', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      if (response.ok) {
+        setSuccessMessage('Incident reported successfully!');
+        setFormData({
+          title: '',
+          description: '',
+          location: '',
+          type: '',
+          dateTime: new Date().toISOString().slice(0, 16),
+        });
+        setSeverity('');
+        setIsEmergency(false);
+        setImages([]);
+
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
+      } else {
+        console.error('Incident submission failed', response.statusText);
+      }
+    } catch (error) {
+      console.error('Incident submission error', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -352,12 +369,13 @@ const ReportIncident = () => {
                     <label className="flex-1 flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-amber-500 transition-colors">
                       <Upload className="h-8 w-8 text-gray-400 mb-2" />
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {imageFile ? imageFile.name : 'Click to upload image'}
+                        {images.length > 0 ? `${images.length} file(s) selected` : 'Click to upload image(s)'}
                       </span>
                       <input
                         id="image"
                         type="file"
                         accept="image/*"
+                        multiple
                         className="hidden"
                         onChange={handleImageChange}
                       />
