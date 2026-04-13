@@ -186,46 +186,60 @@ const ReportIncident = () => {
       formDataToSend.append("image", img);
     });
     
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error('No auth token found');
-        return;
-      }
+try {
+  const token = localStorage.getItem("token");
 
-      const response = await fetch("https://smart-tourist-safety-system-l724.onrender.com/api/incidents", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formDataToSend
-      });
+  console.log("TOKEN:", token); // 🔍 DEBUG
 
-      if (response.ok) {
-        setSuccessMessage('Incident reported successfully!');
-        setFormData({
-          title: '',
-          description: '',
-          location: '',
-          type: '',
-          dateTime: new Date().toISOString().slice(0, 16),
-        });
-        setSeverity('');
-        setIsEmergency(false);
-        setImages([]);
+  if (!token) {
+    console.error("No auth token found");
+    alert("Please login again");
+    return;
+  }
 
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
-      } else {
-        console.error('Incident submission failed', response.statusText);
-      }
-    } catch (error) {
-      console.error('Incident submission error', error);
-    } finally {
-      setIsSubmitting(false);
+  const response = await fetch(
+    "https://smart-tourist-safety-system-l724.onrender.com/api/incidents",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formDataToSend,
     }
-  };
+  );
+
+  const data = await response.json(); // 🔥 IMPORTANT
+
+  console.log("RESPONSE STATUS:", response.status);
+  console.log("RESPONSE DATA:", data);
+
+  if (response.ok) {
+    setSuccessMessage("Incident reported successfully!");
+
+    setFormData({
+      title: "",
+      description: "",
+      location: "",
+      type: "",
+      dateTime: new Date().toISOString().slice(0, 16),
+    });
+
+    setSeverity("");
+    setIsEmergency(false);
+    setImages([]);
+
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000);
+  } else {
+    console.error("❌ Backend error:", data);
+    alert(data.message || "Failed to submit incident");
+  }
+} catch (error) {
+  console.error("❌ Incident submission error", error);
+} finally {
+  setIsSubmitting(false);
+}
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
