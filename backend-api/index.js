@@ -74,7 +74,7 @@ if (!fs.existsSync(uploadsDir)) {
 // }
 
 const app = express(); // ----> Must be BEFORE app.use()
-
+app.set('trust proxy', 1);
 // Create HTTP server for WebSocket support
 const server = http.createServer(app);
 

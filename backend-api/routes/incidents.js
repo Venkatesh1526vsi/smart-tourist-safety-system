@@ -1,9 +1,44 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const Incident = require('../models/Incident');
 const User = require('../models/User');
 const RiskZone = require('../models/RiskZone');
 const { auth, adminAuth } = require('../middleware/auth');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../uploads/incident-images'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, 'incident-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter
+});
+
+const uploadImages = (req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.startsWith('multipart/form-data')) {
+    upload.array('image', 5)(req, res, next);
+  } else {
+    next();
+  }
+};
 
 // Admin authorization middleware
 async function isAdmin(req, res, next) {
@@ -77,29 +112,45 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // 3. POST /api/incidents - Create new incident (enhanced)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, uploadImages, async (req, res) => {
   try {
-    const { type, description, latitude, longitude, locationId, severity, category, risk_zone_id, witnesses, media_attachments } = req.body;
+    const {
+      title,
+      description,
+      type,
+      severity = 'medium',
+      category = 'other',
+      isEmergency = 'false',
+      latitude,
+      longitude
+    } = req.body;
 
     if (!type) return res.status(400).json({ error: 'type is required' });
+
+    const imagePaths = req.files ? req.files.map(file => file.path) : [];
 
     const incidentData = {
       userId: req.user.userId,
       type,
       description: description || '',
-      severity: severity || 'medium',
-      category: category || 'other',
+      severity,
+      category,
       priority_score: calculatePriority(severity, category),
       timestamp: new Date(),
-      status: 'reported'
+      status: 'reported',
+      isEmergency: isEmergency === 'true'
     };
 
-    if (typeof latitude === 'number') incidentData.latitude = latitude;
-    if (typeof longitude === 'number') incidentData.longitude = longitude;
-    if (locationId) incidentData.locationId = locationId;
-    if (risk_zone_id) incidentData.risk_zone_id = risk_zone_id;
-    if (witnesses && Array.isArray(witnesses)) incidentData.witnesses = witnesses;
-    if (media_attachments && Array.isArray(media_attachments)) incidentData.media_attachments = media_attachments;
+    if (latitude !== undefined && latitude !== null && latitude !== '') {
+      incidentData.latitude = Number(latitude);
+    }
+    if (longitude !== undefined && longitude !== null && longitude !== '') {
+      incidentData.longitude = Number(longitude);
+    }
+
+    if (imagePaths.length > 0) {
+      incidentData.media_attachments = imagePaths.map((url) => ({ url, type: 'photo' }));
+    }
 
     const incident = new Incident(incidentData);
     await incident.save();
@@ -112,7 +163,8 @@ router.post('/', auth, async (req, res) => {
       data: populatedIncident 
     });
   } catch (err) {
-    res.status(500).json({ error: 'Server error.', details: err.message });
+    console.error('Incident creation error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
