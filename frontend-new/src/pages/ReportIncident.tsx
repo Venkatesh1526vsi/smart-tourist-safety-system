@@ -100,7 +100,7 @@ const ReportIncident = () => {
           if (city) {
             resolvedLocation = `${city} (Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)})`;
           }
-        } catch (error) {
+        } catch {
           // fallback to coordinates only
         }
 
@@ -189,7 +189,7 @@ const ReportIncident = () => {
 try {
   const token = localStorage.getItem("token");
 
-  console.log("TOKEN:", token); // 🔍 DEBUG
+  console.log("TOKEN:", token);
 
   if (!token) {
     console.error("No auth token found");
@@ -208,7 +208,7 @@ try {
     }
   );
 
-  const data = await response.json(); // 🔥 IMPORTANT
+  const data = await response.json();
 
   console.log("RESPONSE STATUS:", response.status);
   console.log("RESPONSE DATA:", data);
@@ -235,11 +235,12 @@ try {
     console.error("❌ Backend error:", data);
     alert(data.message || "Failed to submit incident");
   }
-} catch (error) {
-  console.error("❌ Incident submission error", error);
+} catch (error: unknown) {
+  console.error("❌ Incident submission error:", error);
 } finally {
   setIsSubmitting(false);
 }
+  };
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
