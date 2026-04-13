@@ -209,6 +209,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files BEFORE auth middleware (public PWA files)
+app.use(express.static(path.join(__dirname, '../frontend-new/public'), {
+  maxAge: '1h',
+  setHeaders: (res, path) => {
+    // Cache manifest and service worker for 1 hour
+    if (path.endsWith('.webmanifest') || path.endsWith('.js')) {
+      res.set('Cache-Control', 'public, max-age=3600');
+    }
+    // Allow manifest and icons to be accessed without auth
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+}));
+
 // MongoDB connection validation middleware
 const validateMongoConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {

@@ -183,17 +183,22 @@ const ReportIncident = () => {
     }
     
     images.forEach((img) => {
-      formDataToSend.append("images", img);
+      formDataToSend.append("image", img);
     });
     
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('https://smart-tourist-safety-system-l724.onrender.com/api/incidents', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
+      const response = await fetch("https://smart-tourist-safety-system-l724.onrender.com/api/incidents", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
-        body: formDataToSend,
+        body: formDataToSend
       });
 
       if (response.ok) {
