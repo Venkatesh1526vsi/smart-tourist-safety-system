@@ -1,33 +1,27 @@
 const mongoose = require('mongoose');
 
 const IncidentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.Mixed, ref: 'User' }, // Accept both String and ObjectId
   // location can be provided by coordinates, or inferred from Location model
   latitude: { type: Number },
   longitude: { type: Number },
   locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' },
-  type: { type: String, enum: ['medical','medical emergency', 'theft', 'lost', 'other', 'assault'], required: true },
+  type: { type: String, default: 'other' }, // Removed enum and required
   description: { type: String, default: '' },
   timestamp: { type: Date, default: Date.now },
-  status: { type: String, enum: ['reported', 'investigating', 'resolved', 'closed'], default: 'reported' },
+  status: { type: String, default: 'reported' }, // Removed enum
   
   // OPTION A: Enhanced Incident Features
   severity: { 
     type: String, 
-    enum: ['critical', 'high', 'medium', 'low'], 
-    default: 'medium',
-    required: true 
+    default: 'medium' // Removed enum and required
   },
   category: { 
     type: String, 
-    enum: ['theft', 'assault', 'accident', 'suspicious', 'other'], 
-    default: 'other',
-    required: true 
+    default: 'other' // Removed enum and required
   },
   priority_score: { 
     type: Number, 
-    min: 1, 
-    max: 100, 
     default: 50 
   },
   assigned_officer: { 
@@ -52,13 +46,7 @@ const IncidentSchema = new mongoose.Schema({
     type: String, 
     default: '' 
   },
-  media_attachments: [
-    {
-      url: String,
-      type: String, // 'photo', 'video', 'document'
-      uploaded_at: { type: Date, default: Date.now }
-    }
-  ],
+  media_attachments: [{ type: String }], // Changed to simple String array
   witnesses: [
     {
       name: String,

@@ -42,7 +42,7 @@ const uploadImages = (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
   if (contentType.startsWith('multipart/form-data')) {
     // Frontend sends multiple "image" fields, multer handles this correctly
-    upload.array('images', 5)(req, res, next);
+    upload.array('image', 5)(req, res, next);
   } else {
     next();
   }
@@ -143,7 +143,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
     const imagePaths = req.files?.map(file => `/uploads/incident-images/${file.filename}`) || [];
 
     // Safe type normalization
-    const normalizedType = (type ? type.toLowerCase() : 'other');
+    const normalizedType = (type || 'other').toLowerCase();
 
     // Safe description handling
     const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : (description || '');
@@ -154,7 +154,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
 
     // Safe incident data
     const incidentData = {
-      userId: req.user?.userId,
+      userId: req.user?.userId || null,
       type: normalizedType,
       description: fullDescription,
       severity: severity || 'medium',
@@ -174,13 +174,17 @@ router.post('/', auth, uploadImages, async (req, res) => {
     }
 
     // Safe media attachments (simple string array)
-    if (imagePaths.length > 0) {
-      incidentData.media_attachments = imagePaths;
-    }
+    incidentData.media_attachments = imagePaths || [];
 
     // Create and save incident
+    console.log("DATA:", incidentData);
     const incident = new Incident(incidentData);
-    await incident.save();
+    try {
+      await incident.save();
+    } catch (err) {
+      console.error("SAVE ERROR:", err);
+      return res.status(500).json({ error: err.message });
+    }
 
     // Safe population with fallback
     let populatedIncident;
@@ -199,6 +203,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
 
   } catch (err) {
     console.error('Incident creation error:', err);
+    console.error('Error stack:', err.stack);
     res.status(500).json({
       message: 'Server error',
       error: err.message || 'Unknown error'

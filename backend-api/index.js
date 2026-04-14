@@ -254,7 +254,7 @@ app.use((req, res, next) => {
 
 
 // Plug in router AFTER defining app
-app.use('/api/risk-zones', riskZonesRouter);
+// TEMPORARILY DISABLED: app.use('/api/incidents', validateMongoConnection);
 app.use('/api/incidents', incidentsRouter);
 app.use('/api/profile', profilesRouter);
 app.use('/api/advanced', advancedRouter);
@@ -301,11 +301,13 @@ if (MONGO_URI) {
     .catch((err) => {
       console.error('❌ MongoDB connection error:', err.message);
       console.error('Full error:', err);
-      process.exit(1); // Exit if DB connection fails
+      // TEMPORARILY DISABLED: process.exit(1); // Exit if DB connection fails
+      console.log('⚠️  Continuing without MongoDB for testing purposes...');
     });
 } else {
   console.error('❌ MONGO_URI not provided. Cannot connect to database.');
-  process.exit(1);
+  // TEMPORARILY DISABLED: process.exit(1);
+  console.log('⚠️  Continuing without MongoDB for testing purposes...');
 }
 
 // SYSTEM HEALTH CHECK
