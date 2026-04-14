@@ -129,13 +129,24 @@ router.post('/', auth, uploadImages, async (req, res) => {
     if (!type) return res.status(400).json({ error: 'type is required' });
 
     // Fix 4: Safely handle req.files to avoid undefined crash
-const imagePaths = req.files?.map(file => file.filename) || [];
+    const imagePaths = req.files?.map(file => `/uploads/incident-images/${file.filename}`) || [];
 
-    // Fix: Convert type to lowercase to match model enum
-    const normalizedType = type ? type.toLowerCase() : 'other';
+    // Fix 5: Normalize type to lowercase but fallback if not in enum
+    const normalizedType = (() => {
+      const candidate = type ? type.toLowerCase() : 'other';
+      const allowedTypes = ['medical', 'medical emergency', 'theft', 'lost', 'other', 'assault'];
+      return allowedTypes.includes(candidate) ? candidate : 'other';
+    })();
 
     // Combine title and description for better incident description
     const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : description || '';
+
+    let priorityScore = 50;
+    try {
+      priorityScore = calculatePriority(severity, category);
+    } catch (priorityError) {
+      console.warn('Priority calculation failed, defaulting to 50', priorityError);
+    }
 
     const incidentData = {
       userId: req.user.userId,
@@ -143,7 +154,7 @@ const imagePaths = req.files?.map(file => file.filename) || [];
       description: fullDescription,
       severity,
       category,
-      priority_score: calculatePriority(severity, category),
+      priority_score: priorityScore,
       timestamp: new Date(),
       status: 'reported',
       isEmergency: isEmergency === 'true'
@@ -157,7 +168,7 @@ const imagePaths = req.files?.map(file => file.filename) || [];
       incidentData.longitude = Number(longitude);
     }
 
-    // Fix 6: Save uploaded files to media_attachments
+    // Fix 6: Save uploaded files to media_attachments using schema-compatible objects
     if (imagePaths.length > 0) {
       incidentData.media_attachments = imagePaths.map((url) => ({ url, type: 'photo' }));
     }
