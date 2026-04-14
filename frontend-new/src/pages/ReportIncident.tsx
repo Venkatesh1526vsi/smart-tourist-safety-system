@@ -186,60 +186,60 @@ const ReportIncident = () => {
       formDataToSend.append("image", img);
     });
     
-try {
-  const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-  console.log("TOKEN:", token);
+      console.log("TOKEN:", token);
 
-  if (!token) {
-    console.error("No auth token found");
-    alert("Please login again");
-    return;
-  }
+      if (!token) {
+        console.error("No auth token found");
+        alert("Please login again");
+        return;
+      }
 
-  const response = await fetch(
-    "https://smart-tourist-safety-system-l724.onrender.com/api/incidents",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formDataToSend,
+      const response = await fetch(
+        "https://smart-tourist-safety-system-l724.onrender.com/api/incidents",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataToSend,
+        }
+      );
+
+      const data = await response.json();
+
+      console.log("RESPONSE STATUS:", response.status);
+      console.log("RESPONSE DATA:", data);
+
+      if (response.ok) {
+        setSuccessMessage("Incident reported successfully!");
+
+        setFormData({
+          title: "",
+          description: "",
+          location: "",
+          type: "",
+          dateTime: new Date().toISOString().slice(0, 16),
+        });
+
+        setSeverity("");
+        setIsEmergency(false);
+        setImages([]);
+
+        setTimeout(() => {
+          setSuccessMessage("");
+        }, 3000);
+      } else {
+        console.error("❌ Backend error:", data);
+        alert(data.message || "Failed to submit incident");
+      }
+    } catch (error: unknown) {
+      console.error("❌ Incident submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-  );
-
-  const data = await response.json();
-
-  console.log("RESPONSE STATUS:", response.status);
-  console.log("RESPONSE DATA:", data);
-
-  if (response.ok) {
-    setSuccessMessage("Incident reported successfully!");
-
-    setFormData({
-      title: "",
-      description: "",
-      location: "",
-      type: "",
-      dateTime: new Date().toISOString().slice(0, 16),
-    });
-
-    setSeverity("");
-    setIsEmergency(false);
-    setImages([]);
-
-    setTimeout(() => {
-      setSuccessMessage("");
-    }, 3000);
-  } else {
-    console.error("❌ Backend error:", data);
-    alert(data.message || "Failed to submit incident");
-  }
-} catch (error: unknown) {
-  console.error("❌ Incident submission error:", error);
-} finally {
-  setIsSubmitting(false);
-}
   };
 
   return (
@@ -442,5 +442,4 @@ try {
     </div>
   );
 };
-
 export default ReportIncident;
