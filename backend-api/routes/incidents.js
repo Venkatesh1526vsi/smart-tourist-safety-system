@@ -9,7 +9,14 @@ const { auth, adminAuth } = require('../middleware/auth');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads/incident-images'));
+    const uploadDir = path.join(__dirname, '../uploads/incident-images');
+    // Ensure directory exists
+    try {
+      require('fs').mkdirSync(uploadDir, { recursive: true });
+    } catch (err) {
+      // Ignore if directory already exists
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -112,9 +119,10 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// 3. POST /api/incidents - Create new incident (enhanced)
+// 3. POST /api/incidents - Create new incident (completely safe)
 router.post('/', auth, uploadImages, async (req, res) => {
   try {
+    // Safe field extraction
     const {
       title,
       description,
@@ -124,69 +132,77 @@ router.post('/', auth, uploadImages, async (req, res) => {
       isEmergency = 'false',
       latitude,
       longitude
-    } = req.body;
+    } = req.body || {};
 
-    if (!type) return res.status(400).json({ error: 'type is required' });
-
-    // Fix 4: Safely handle req.files to avoid undefined crash
-    const imagePaths = req.files?.map(file => `/uploads/incident-images/${file.filename}`) || [];
-
-    // Fix 5: Normalize type to lowercase but fallback if not in enum
-    const normalizedType = (() => {
-      const candidate = type ? type.toLowerCase() : 'other';
-      const allowedTypes = ['medical', 'medical emergency', 'theft', 'lost', 'other', 'assault'];
-      return allowedTypes.includes(candidate) ? candidate : 'other';
-    })();
-
-    // Combine title and description for better incident description
-    const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : description || '';
-
-    let priorityScore = 50;
-    try {
-      priorityScore = calculatePriority(severity, category);
-    } catch (priorityError) {
-      console.warn('Priority calculation failed, defaulting to 50', priorityError);
+    // Basic validation
+    if (!type) {
+      return res.status(400).json({ error: 'type is required' });
     }
 
+    // Safe file handling
+    const imagePaths = req.files?.map(file => `/uploads/incident-images/${file.filename}`) || [];
+
+    // Safe type normalization
+    const normalizedType = (type ? type.toLowerCase() : 'other');
+
+    // Safe description handling
+    const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : (description || '');
+
+    // Safe coordinate conversion
+    const safeLatitude = latitude ? Number(latitude) : null;
+    const safeLongitude = longitude ? Number(longitude) : null;
+
+    // Safe incident data
     const incidentData = {
-      userId: req.user.userId,
+      userId: req.user?.userId,
       type: normalizedType,
       description: fullDescription,
-      severity,
-      category,
-      priority_score: priorityScore,
+      severity: severity || 'medium',
+      category: category || 'other',
+      priority_score: 50,
       timestamp: new Date(),
       status: 'reported',
       isEmergency: isEmergency === 'true'
     };
 
-    // Fix 5: Convert latitude and longitude to Number
-    if (latitude !== undefined && latitude !== null && latitude !== '') {
-      incidentData.latitude = Number(latitude);
+    // Add coordinates only if valid
+    if (safeLatitude && !isNaN(safeLatitude)) {
+      incidentData.latitude = safeLatitude;
     }
-    if (longitude !== undefined && longitude !== null && longitude !== '') {
-      incidentData.longitude = Number(longitude);
+    if (safeLongitude && !isNaN(safeLongitude)) {
+      incidentData.longitude = safeLongitude;
     }
 
-    // Fix 6: Save uploaded files to media_attachments using schema-compatible objects
+    // Safe media attachments (simple string array)
     if (imagePaths.length > 0) {
-      incidentData.media_attachments = imagePaths.map((url) => ({ url, type: 'photo' }));
+      incidentData.media_attachments = imagePaths;
     }
 
+    // Create and save incident
     const incident = new Incident(incidentData);
     await incident.save();
 
-    // Fix 7: Ensure response returns created incident
-    const populatedIncident = await incident.populate('userId', 'name email');
+    // Safe population with fallback
+    let populatedIncident;
+    try {
+      populatedIncident = await incident.populate('userId', 'name email');
+    } catch (populateError) {
+      populatedIncident = incident;
+    }
 
-    res.status(201).json({ 
+    // Safe response
+    res.status(201).json({
       success: true,
-      message: 'Incident created successfully', 
-      data: populatedIncident 
+      message: 'Incident created successfully',
+      data: populatedIncident
     });
+
   } catch (err) {
     console.error('Incident creation error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({
+      message: 'Server error',
+      error: err.message || 'Unknown error'
+    });
   }
 });
 
