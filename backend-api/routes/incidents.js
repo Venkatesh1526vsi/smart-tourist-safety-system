@@ -38,15 +38,7 @@ const upload = multer({
   fileFilter
 });
 
-const uploadImages = (req, res, next) => {
-  const contentType = req.headers['content-type'] || '';
-  if (contentType.startsWith('multipart/form-data')) {
-    // Frontend sends multiple "image" fields, multer handles this correctly
-    upload.array('image', 5)(req, res, next);
-  } else {
-    next();
-  }
-};
+const uploadImages = upload.array('image', 5);
 
 // Admin authorization middleware
 async function isAdmin(req, res, next) {
@@ -149,8 +141,8 @@ router.post('/', auth, uploadImages, async (req, res) => {
     const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : (description || '');
 
     // Safe coordinate conversion
-    const safeLatitude = latitude ? Number(latitude) : null;
-    const safeLongitude = longitude ? Number(longitude) : null;
+    const safeLatitude = latitude ? Number(latitude) : undefined;
+    const safeLongitude = longitude ? Number(longitude) : undefined;
 
     // Safe incident data
     const incidentData = {
@@ -166,18 +158,17 @@ router.post('/', auth, uploadImages, async (req, res) => {
     };
 
     // Add coordinates only if valid
-    if (safeLatitude && !isNaN(safeLatitude)) {
-      incidentData.latitude = safeLatitude;
-    }
-    if (safeLongitude && !isNaN(safeLongitude)) {
-      incidentData.longitude = safeLongitude;
-    }
+    if (!isNaN(safeLatitude)) incidentData.latitude = safeLatitude;
+    if (!isNaN(safeLongitude)) incidentData.longitude = safeLongitude;
 
-    // Safe media attachments (simple string array)
-    incidentData.media_attachments = imagePaths || [];
+    // Safe media attachments (CRITICAL: matches schema format)
+    incidentData.media_attachments = imagePaths.map(url => ({
+      url,
+      type: 'photo'
+    }));
 
     // Create and save incident
-    console.log("DATA:", incidentData);
+    console.log("FINAL INCIDENT DATA:", incidentData);
     const incident = new Incident(incidentData);
     try {
       await incident.save();
@@ -186,19 +177,10 @@ router.post('/', auth, uploadImages, async (req, res) => {
       return res.status(500).json({ error: err.message });
     }
 
-    // Safe population with fallback
-    let populatedIncident;
-    try {
-      populatedIncident = await incident.populate('userId', 'name email');
-    } catch (populateError) {
-      populatedIncident = incident;
-    }
-
     // Safe response
     res.status(201).json({
       success: true,
-      message: 'Incident created successfully',
-      data: populatedIncident
+      data: incident
     });
 
   } catch (err) {

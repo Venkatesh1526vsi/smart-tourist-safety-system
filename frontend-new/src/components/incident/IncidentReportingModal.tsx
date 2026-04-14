@@ -85,20 +85,45 @@ const IncidentReportingModal = ({
     setSubmitError(null);
     
     try {
-      // Prepare incident data
-      const incidentData = {
-        type: category,
-        description: description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : ''),
-        severity: severity,
-        isEmergency: isEmergency,
-        category: category,
-        locationId: location,
-        // Note: In production, get actual GPS coordinates
-        latitude: 18.5204, // Pune default
-        longitude: 73.8567, // Pune default
-      };
+      // Create FormData for multipart upload
+      const formData = new FormData();
       
-      await reportIncident(incidentData);
+      // Append text fields
+      formData.append('title', category);
+      formData.append('description', description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : ''));
+      formData.append('type', category);
+      formData.append('severity', severity);
+      formData.append('category', category);
+      formData.append('isEmergency', isEmergency.toString());
+      formData.append('latitude', '18.5204'); // Pune default
+      formData.append('longitude', '73.8567'); // Pune default
+      
+      // Append images with key "image" (not "images")
+      evidence.images.forEach((file) => {
+        formData.append('image', file);
+      });
+      
+      console.log("SENDING INCIDENT...");
+      
+      // Send with FormData (no Content-Type header)
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      console.log("STATUS:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit incident: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log("RESPONSE:", result);
       
       setSubmitSuccess(true);
       setTimeout(() => {
