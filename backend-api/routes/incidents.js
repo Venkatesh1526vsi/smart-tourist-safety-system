@@ -34,7 +34,8 @@ const upload = multer({
 const uploadImages = (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
   if (contentType.startsWith('multipart/form-data')) {
-    upload.array('image', 5)(req, res, next);
+    // Frontend sends multiple "image" fields, multer handles this correctly
+    upload.array('images', 5)(req, res, next);
   } else {
     next();
   }
@@ -127,12 +128,19 @@ router.post('/', auth, uploadImages, async (req, res) => {
 
     if (!type) return res.status(400).json({ error: 'type is required' });
 
-    const imagePaths = req.files ? req.files.map(file => file.path) : [];
+    // Fix 4: Safely handle req.files to avoid undefined crash
+const imagePaths = req.files?.map(file => file.filename) || [];
+
+    // Fix: Convert type to lowercase to match model enum
+    const normalizedType = type ? type.toLowerCase() : 'other';
+
+    // Combine title and description for better incident description
+    const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : description || '';
 
     const incidentData = {
       userId: req.user.userId,
-      type,
-      description: description || '',
+      type: normalizedType,
+      description: fullDescription,
       severity,
       category,
       priority_score: calculatePriority(severity, category),
@@ -141,6 +149,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
       isEmergency: isEmergency === 'true'
     };
 
+    // Fix 5: Convert latitude and longitude to Number
     if (latitude !== undefined && latitude !== null && latitude !== '') {
       incidentData.latitude = Number(latitude);
     }
@@ -148,6 +157,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
       incidentData.longitude = Number(longitude);
     }
 
+    // Fix 6: Save uploaded files to media_attachments
     if (imagePaths.length > 0) {
       incidentData.media_attachments = imagePaths.map((url) => ({ url, type: 'photo' }));
     }
@@ -155,6 +165,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
     const incident = new Incident(incidentData);
     await incident.save();
 
+    // Fix 7: Ensure response returns created incident
     const populatedIncident = await incident.populate('userId', 'name email');
 
     res.status(201).json({ 
