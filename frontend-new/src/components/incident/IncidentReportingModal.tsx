@@ -88,14 +88,14 @@ const IncidentReportingModal = ({
       const formData = new FormData();
       
       // Append text fields
-      formData.append('title', category);
-      formData.append('description', description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : ''));
-      formData.append('type', category);
-      formData.append('severity', severity);
-      formData.append('category', category);
-      formData.append('isEmergency', isEmergency.toString());
-      formData.append('latitude', '18.5204'); // Pune default
-      formData.append('longitude', '73.8567'); // Pune default
+      formData.append("title", category || "");
+      formData.append("description", description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : "") || "");
+      formData.append("type", category);
+      formData.append("severity", severity);
+      formData.append("category", category);
+      formData.append("isEmergency", isEmergency.toString());
+      formData.append("latitude", "18.5204");
+      formData.append("longitude", "73.8567");
       
       // Append images with key "image" (not "images")
       evidence.images.forEach((file) => {
