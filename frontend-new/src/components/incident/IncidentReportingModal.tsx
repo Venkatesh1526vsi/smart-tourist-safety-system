@@ -29,7 +29,6 @@ import {
   Loader2,
   CheckCircle,
 } from "lucide-react";
-import { reportIncident } from "@/services/api";
 
 interface IncidentReportingModalProps {
   open: boolean;
