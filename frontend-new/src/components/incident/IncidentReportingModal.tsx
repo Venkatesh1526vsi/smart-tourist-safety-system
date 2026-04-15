@@ -84,27 +84,41 @@ const IncidentReportingModal = ({
     setSubmitError(null);
     
     try {
-      // Create FormData for multipart upload
       const formData = new FormData();
-      
-      // Append text fields
+
+      // Required field
+      if (!category) {
+        alert("Type is required");
+        return;
+      }
+
+      // Safe appending (avoid undefined/null)
       formData.append("title", category || "");
-      formData.append("description", description + (evidence.description ? `\n\nEvidence Notes: ${evidence.description}` : "") || "");
-      formData.append("type", category);
-      formData.append("severity", severity);
-      formData.append("category", category);
-      formData.append("isEmergency", isEmergency.toString());
+      if (description) formData.append("description", description);
+      formData.append("type", type);
+
+      if (severity) formData.append("severity", severity);
+      if (category) formData.append("category", category);
+
+      // Use hardcoded coordinates for now
       formData.append("latitude", "18.5204");
       formData.append("longitude", "73.8567");
-      
-      // Append images with key "image" (not "images")
-      evidence.images.forEach((file) => {
-        formData.append('image', file);
-      });
-      
-      console.log("SENDING INCIDENT...");
-      
-      // Send with FormData (no Content-Type header)
+
+      // Append images ONLY if valid
+      if (evidence.images && evidence.images.length > 0) {
+        evidence.images.forEach((file) => {
+          if (file instanceof File) {
+            formData.append("image", file); // MUST be "image"
+          }
+        });
+      }
+
+      // Debug (keep this)
+      console.log("FORM DATA:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
       const token = localStorage.getItem('token');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
@@ -113,7 +127,7 @@ const IncidentReportingModal = ({
         },
         body: formData
       });
-      
+
       console.log("STATUS:", response.status);
       
       if (!response.ok) {
