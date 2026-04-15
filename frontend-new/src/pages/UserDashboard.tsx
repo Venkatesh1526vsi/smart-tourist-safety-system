@@ -54,7 +54,7 @@ const UserDashboard = () => {
 
         const incidents = await getMyIncidents();
 
-        let zones = [];
+        let zones: RiskZone[] = [];
         try {
           zones = await getRiskZones();
         } catch (err) {
