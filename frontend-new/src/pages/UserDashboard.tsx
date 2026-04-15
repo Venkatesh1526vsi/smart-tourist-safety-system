@@ -51,15 +51,20 @@ const UserDashboard = () => {
         setLoading(true);
         setError(null);
         console.log('[UserDashboard] Calling getMyIncidents and getRiskZones...');
-        
-        const [incidentsData, zonesData] = await Promise.all([
-          getMyIncidents(),
-          getRiskZones(),
-        ]);
-        
-        console.log('[UserDashboard] Data fetched - incidents:', incidentsData?.length, 'zones:', zonesData?.length);
-        setIncidents(Array.isArray(incidentsData) ? incidentsData : []);
-        setRiskZones(Array.isArray(zonesData) ? zonesData : []);
+
+        const incidents = await getMyIncidents();
+
+        let zones = [];
+        try {
+          zones = await getRiskZones();
+        } catch (err) {
+          console.warn("Risk zones failed, continuing without it");
+          zones = [];
+        }
+
+        console.log('[UserDashboard] Data fetched - incidents:', incidents?.length, 'zones:', zones?.length);
+        setIncidents(Array.isArray(incidents) ? incidents : []);
+        setRiskZones(Array.isArray(zones) ? zones : []);
       } catch (err) {
         console.error('[UserDashboard] Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
@@ -68,7 +73,7 @@ const UserDashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []); // Empty deps = run once on mount
 
