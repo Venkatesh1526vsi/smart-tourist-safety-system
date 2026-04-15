@@ -95,7 +95,7 @@ const IncidentReportingModal = ({
       // Safe appending (avoid undefined/null)
       formData.append("title", category || "");
       if (description) formData.append("description", description);
-      formData.append("type", type);
+      formData.append("type", category);
 
       if (severity) formData.append("severity", severity);
       if (category) formData.append("category", category);
