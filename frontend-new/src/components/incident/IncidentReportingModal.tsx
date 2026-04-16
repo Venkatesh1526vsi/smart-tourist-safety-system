@@ -84,44 +84,33 @@ const IncidentReportingModal = ({
     setSubmitError(null);
     
     try {
-      const formData = new FormData();
-      const type = category;
-
       if (!category) {
         alert("Type is required");
+        setIsSubmitting(false);
         return;
       }
 
-      if (category) formData.append("title", category);
-      if (description) formData.append("description", description);
-      if (type) formData.append("type", category);
-      if (severity) formData.append("severity", severity);
-      if (category) formData.append("category", category);
+      const latitude = "18.5204";
+      const longitude = "73.8567";
+      const payload = {
+        type: category,
+        description: description || "",
+        severity: severity || "medium",
+        category: category || "other",
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
+      };
 
-      // Use hardcoded coordinates for now
-      formData.append("latitude", "18.5204");
-      formData.append("longitude", "73.8567");
-
-      if (evidence.images && evidence.images.length > 0) {
-        evidence.images.forEach((file) => {
-          if (file instanceof File) {
-            formData.append("image", file); // IMPORTANT: field name must be "image"
-          }
-        });
-      }
-
-      console.log("FORM DATA SENT");
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
+      console.log("PAYLOAD:", payload);
 
       const token = localStorage.getItem('token');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: JSON.stringify(payload),
       });
 
       console.log("STATUS:", response.status);
