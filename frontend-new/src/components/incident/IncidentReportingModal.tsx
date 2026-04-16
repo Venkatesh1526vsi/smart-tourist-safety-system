@@ -80,6 +80,9 @@ const IncidentReportingModal = ({
   };
 
   const handleSubmit = async () => {
+    // Guard: prevent multiple submissions
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     setSubmitError(null);
     
@@ -101,6 +104,7 @@ const IncidentReportingModal = ({
         longitude: longitude || undefined,
       };
 
+      console.log("SUBMIT CALLED");
       console.log("PAYLOAD:", payload);
 
       const token = localStorage.getItem('token');
@@ -116,8 +120,8 @@ const IncidentReportingModal = ({
       console.log("STATUS:", response.status);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to submit incident: ${errorText}`);
+        const data = await response.json();
+        throw new Error(data?.message || `Failed to submit incident: HTTP ${response.status}`);
       }
       
       const result = await response.json();
