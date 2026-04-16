@@ -137,15 +137,12 @@ const IncidentReportingModal = ({
         });
       }
 
-    setIsSubmitting(true);
-
-    try {
-      const token = localStorage.getItem("token");
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+
       const res = await response.json();
       if (!response.ok) throw new Error(res.message || "Failed to submit incident");
 
@@ -160,9 +157,10 @@ const IncidentReportingModal = ({
 
         setTimeout(() => setSubmitSuccess(false), 500);
       }
-
     } catch (error) {
       console.error("Incident submission error:", error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to submit incident. Please try again.';
+      setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
