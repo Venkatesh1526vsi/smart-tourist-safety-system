@@ -178,24 +178,38 @@ const IncidentHistoryPage = () => {
                     <p><strong className="text-muted-foreground mr-1">Description:</strong> {incident.description}</p>
                     <p>
                       <strong className="text-muted-foreground mr-1">Location:</strong>
-                      {typeof incident.latitude === 'number' && typeof incident.longitude === 'number'
-                        ? `Lat: ${incident.latitude.toFixed(4)}, Lng: ${incident.longitude.toFixed(4)}`
+                      {incident.latitude != null && incident.longitude != null && !isNaN(Number(incident.latitude)) && !isNaN(Number(incident.longitude))
+                        ? `Lat: ${Number(incident.latitude).toFixed(4)}, Lng: ${Number(incident.longitude).toFixed(4)}`
                         : "Unavailable"}
                     </p>
-                    {incident.images && incident.images.length > 0 && (
+                    <p>
+                      <strong className="text-muted-foreground mr-1">Reported At:</strong>
+                      {incident.created_at ? new Date(incident.created_at).toLocaleString() : "Unavailable"}
+                    </p>
+                    {Array.isArray(incident.images) && incident.images.length > 0 ? (
                       <div className="mt-3">
                         <div className="flex flex-wrap gap-2 mt-2">
                           {incident.images.map((img: string, idx: number) => (
                             <img
                               key={idx}
                               src={img}
-                              alt="Incident Evidence"
+                              alt={`Incident Evidence ${idx + 1}`}
                               className="w-24 h-24 object-cover rounded-md border"
                             />
                           ))}
                         </div>
                       </div>
-                    )}
+                    ) : incident.evidence_image ? (
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <img
+                            src={incident.evidence_image}
+                            alt="Incident Evidence"
+                            className="w-24 h-24 object-cover rounded-md border"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>
