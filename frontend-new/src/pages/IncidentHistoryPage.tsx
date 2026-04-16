@@ -128,8 +128,9 @@ const IncidentHistoryPage = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getMyIncidents();
-        setIncidents(Array.isArray(data) ? data : []);
+        const response: any = await getMyIncidents();
+        const finalData = response?.data?.data || [];
+        setIncidents(Array.isArray(finalData) ? finalData : []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load incidents');
       } finally {
@@ -138,6 +139,8 @@ const IncidentHistoryPage = () => {
     };
 
     fetchIncidents();
+    window.addEventListener("incident-reported", fetchIncidents);
+    return () => window.removeEventListener("incident-reported", fetchIncidents);
   }, []);
 
   return (

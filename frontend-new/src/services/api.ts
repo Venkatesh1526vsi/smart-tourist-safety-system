@@ -329,16 +329,25 @@ export const getMyLocation = () =>
   apiGet<ApiResponse<LocationData>>('/location/me');
 
 // Incident APIs - Aligned with backend routes
-export const reportIncident = (data: { 
-  type: string; 
-  description: string; 
-  severity: string; 
-  category: string;
-  latitude?: number;
-  longitude?: number;
-  locationId?: string;
-}) => 
-  apiPost<ApiResponse<Incident>>('/api/incidents', data);
+export const reportIncident = async (formData: FormData): Promise<ApiResponse<Incident>> => {
+  const token = getToken() || '';
+  const url = `${BASE_URL}/api/incidents`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Incident submission failed: ${errorText}`);
+  }
+
+  return response.json();
+};
 
 export const getAllIncidents = (params?: { status?: string; severity?: string; category?: string }) => {
   const queryParams = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';

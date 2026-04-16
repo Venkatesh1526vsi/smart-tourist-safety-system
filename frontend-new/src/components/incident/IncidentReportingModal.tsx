@@ -137,35 +137,32 @@ const IncidentReportingModal = ({
         });
       }
 
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // DO NOT set Content-Type manually - browser will set it with boundary for FormData
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+      const res = await response.json();
+      if (!response.ok) throw new Error(res.message || "Failed to submit incident");
 
-      const data = await response.json();
+      if (res?.success) {
+        setSubmitSuccess(true);
 
-      if (!response.ok) {
-        console.error("Backend error:", data);
-        throw new Error(data.message || "Failed to submit incident");
+        // trigger refresh
+        window.dispatchEvent(new Event("incident-reported"));
+
+        resetForm();
+        onOpenChange(false);
+
+        setTimeout(() => setSubmitSuccess(false), 500);
       }
 
-      console.log("STATUS:", response.status);
-      console.log("SUCCESS:", data);
-
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        onOpenChange(false);
-        resetForm();
-        setSubmitSuccess(false);
-      }, 2000);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to submit incident. Please try again.';
-      console.error("❌ Error:", errorMsg);
-      setSubmitError(errorMsg);
+      console.error("Incident submission error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -407,20 +404,15 @@ const IncidentReportingModal = ({
                         />
                       </div>
                       {previewUrls.length > 0 && (
-                        <div className="mt-4">
-                          <div className="flex flex-wrap gap-2">
-                            {previewUrls.map((url, index) => (
-                              <img
-                                key={index}
-                                src={url}
-                                alt={`Preview ${index + 1}`}
-                                className="w-24 h-24 object-cover rounded-md border"
-                              />
-                            ))}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {selectedImages.length} image(s) selected
-                          </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {previewUrls.map((url, index) => (
+                            <img
+                              key={index}
+                              src={url}
+                              alt="preview"
+                              className="w-24 h-24 object-cover rounded-md border"
+                            />
+                          ))}
                         </div>
                       )}
                     </div>
