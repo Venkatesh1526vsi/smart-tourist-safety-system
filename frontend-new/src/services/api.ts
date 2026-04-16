@@ -47,6 +47,7 @@ export interface Incident {
   latitude: number;
   longitude: number;
   evidence_image?: string;
+  images?: string[];
   created_at: string;
 }
 

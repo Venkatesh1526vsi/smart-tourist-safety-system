@@ -115,6 +115,13 @@ const IncidentHistoryPage = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+
+  const handleIncidentClick = (id: string | undefined) => {
+    if (!id) return;
+
+    setSelectedIncidentId((prev) => (prev === id ? null : id));
+  };
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -158,7 +165,40 @@ const IncidentHistoryPage = () => {
         ) : (
           <div className="space-y-3">
             {incidents.map((incident) => (
-              <IncidentCard key={incident._id} incident={incident} />
+              <div key={incident._id}>
+                <div
+                  onClick={() => handleIncidentClick(incident._id)}
+                  className="cursor-pointer hover:opacity-90 transition"
+                >
+                  <IncidentCard incident={incident} />
+                </div>
+                {selectedIncidentId === incident._id && (
+                  <div className="mt-3 p-4 bg-muted/40 border rounded-lg text-sm space-y-2">
+                    <p><strong className="text-muted-foreground mr-1">Type:</strong> {incident.type}</p>
+                    <p><strong className="text-muted-foreground mr-1">Description:</strong> {incident.description}</p>
+                    <p>
+                      <strong className="text-muted-foreground mr-1">Location:</strong>
+                      {typeof incident.latitude === 'number' && typeof incident.longitude === 'number'
+                        ? `Lat: ${incident.latitude.toFixed(4)}, Lng: ${incident.longitude.toFixed(4)}`
+                        : "Unavailable"}
+                    </p>
+                    {incident.images && incident.images.length > 0 && (
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {incident.images.map((img: string, idx: number) => (
+                            <img
+                              key={idx}
+                              src={img}
+                              alt="Incident Evidence"
+                              className="w-24 h-24 object-cover rounded-md border"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
