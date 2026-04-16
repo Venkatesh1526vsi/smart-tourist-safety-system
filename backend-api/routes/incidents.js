@@ -76,17 +76,36 @@ router.get('/', auth, async (req, res) => {
       .populate('risk_zone_id', 'name riskLevel')
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ created_at: -1 });
+      .sort({ created_at: -1 })
+      .lean();
+
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const mappedIncidents = incidents.map(incident => {
+      let images = incident.media_attachments || [];
+      images = images.map(file => {
+        if (!file) return file;
+        const normalizedFile = file.replace(/\\/g, '/');
+        const filePath = normalizedFile.startsWith('/') ? normalizedFile : '/' + normalizedFile;
+        return filePath.startsWith('http') ? filePath : baseUrl + filePath;
+      });
+
+      return {
+        ...incident,
+        latitude: incident.location?.latitude,
+        longitude: incident.location?.longitude,
+        images
+      };
+    });
 
     const total = await Incident.countDocuments(filter);
 
     res.json({
       success: true,
-      count: incidents.length,
+      count: mappedIncidents.length,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
-      data: incidents
+      data: mappedIncidents
     });
   } catch (err) {
     console.log("Error in GET /api/incidents:", err);
@@ -130,6 +149,8 @@ router.post('/', auth, uploadImages, async (req, res) => {
       });
     }
 
+    const media = req.files?.map(file => '/uploads/incident-images/' + file.filename) || [];
+
     // SAFE INCIDENT OBJECT
     const incidentData = {
       type,
@@ -139,7 +160,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
         longitude: longitude ? Number(longitude) : undefined,
       },
       userId: req.user?.userId || null,
-      media_attachments: [],
+      media_attachments: media,
     };
 
     // SAFE SAVE BLOCK

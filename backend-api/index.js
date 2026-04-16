@@ -223,6 +223,9 @@ app.use(express.static(path.join(__dirname, '../frontend-new/public'), {
   }
 }));
 
+// Serve uploads directory 
+app.use('/uploads', express.static('uploads'));
+
 // MongoDB connection validation middleware
 const validateMongoConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
