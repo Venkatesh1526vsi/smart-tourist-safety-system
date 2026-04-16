@@ -79,53 +79,51 @@ const IncidentReportingModal = ({
     return true;
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    
     // Guard: prevent multiple submissions
     if (isSubmitting) return;
-    
+
+    console.log("SUBMIT TRIGGERED");
+
     setIsSubmitting(true);
     setSubmitError(null);
     
     try {
-      if (!category) {
-        alert("Type is required");
+      // Clean and validate payload
+      const cleanPayload = {
+        type: category?.trim(),
+        description: description?.trim(),
+      };
+
+      if (!cleanPayload.type || !cleanPayload.description) {
+        alert("Type and Description are required");
         setIsSubmitting(false);
         return;
       }
 
-      const latitude = "18.5204";
-      const longitude = "73.8567";
-      const payload = {
-        type: category,
-        description: description || "",
-        severity: severity || "medium",
-        category: category || "other",
-        latitude: latitude || undefined,
-        longitude: longitude || undefined,
-      };
+      const token = localStorage.getItem("token");
 
-      console.log("SUBMIT CALLED");
-      console.log("PAYLOAD:", payload);
-
-      const token = localStorage.getItem('token');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(cleanPayload),
       });
 
-      console.log("STATUS:", response.status);
-      
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data?.message || `Failed to submit incident: HTTP ${response.status}`);
+        console.error("Backend error:", data);
+        alert(data?.message || "Failed to submit incident");
+        setIsSubmitting(false);
+        return;
       }
-      
-      const result = await response.json();
-      console.log("RESPONSE:", result);
+
+      console.log("SUCCESS:", data);
       
       setSubmitSuccess(true);
       setTimeout(() => {
@@ -134,7 +132,9 @@ const IncidentReportingModal = ({
         setSubmitSuccess(false);
       }, 2000);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Failed to submit incident. Please try again.');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to submit incident. Please try again.';
+      console.error("❌ Error:", errorMsg);
+      setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -177,7 +177,7 @@ const IncidentReportingModal = ({
           } else {
             setLocation(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
           }
-        } catch (error) {
+        } catch {
           // Fallback to coordinates only
           setLocation(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
         }
@@ -207,12 +207,13 @@ const IncidentReportingModal = ({
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetForm(); }}>
       <DialogContent className="max-w-lg dark:bg-secondary/80 dark:backdrop-blur-sm overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Report Incident</DialogTitle>
-          <DialogDescription>
-            Complete the steps below to submit your report.
-          </DialogDescription>
-        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Report Incident</DialogTitle>
+            <DialogDescription>
+              Complete the steps below to submit your report.
+            </DialogDescription>
+          </DialogHeader>
         
         {submitError && (
           <Alert variant="destructive" className="mt-2">
@@ -435,7 +436,7 @@ const IncidentReportingModal = ({
             </Button>
           ) : (
             <Button
-              onClick={handleSubmit}
+              type="submit"
               size="sm"
               disabled={isSubmitting || submitSuccess}
               className="bg-emerald text-emerald-foreground hover:bg-emerald/90 dark:bg-cyan dark:text-cyan-foreground dark:hover:bg-cyan/90"
@@ -456,6 +457,7 @@ const IncidentReportingModal = ({
             </Button>
           )}
         </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

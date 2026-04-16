@@ -114,74 +114,53 @@ router.get('/:id', auth, async (req, res) => {
 // 3. POST /api/incidents - Create new incident (completely safe)
 router.post('/', auth, uploadImages, async (req, res) => {
   try {
-    // Safe field extraction
+    // SAFE BODY EXTRACTION
     const {
-      title,
-      description,
       type,
-      severity = 'medium',
-      category = 'other',
-      isEmergency = 'false',
+      description,
       latitude,
-      longitude
+      longitude,
     } = req.body || {};
 
-    // Basic validation
-    if (!type) {
-      return res.status(400).json({ error: 'type is required' });
+    // REQUIRED FIELD VALIDATION
+    if (!type || !description) {
+      return res.status(400).json({
+        success: false,
+        message: "Type and description are required",
+      });
     }
 
-    // Safe file handling
-    const imagePaths = req.files?.map(file => `/uploads/incident-images/${file.filename}`) || [];
-
-    // Safe type normalization
-    const normalizedType = (type || 'other').toLowerCase();
-
-    // Safe description handling
-    const fullDescription = title ? `${title}${description ? ': ' + description : ''}` : (description || '');
-
-    // Safe coordinate conversion
-    const safeLatitude = latitude ? Number(latitude) : undefined;
-    const safeLongitude = longitude ? Number(longitude) : undefined;
-
-    // Safe incident data
+    // SAFE INCIDENT OBJECT
     const incidentData = {
+      type,
+      description,
+      location: {
+        latitude: latitude ? Number(latitude) : undefined,
+        longitude: longitude ? Number(longitude) : undefined,
+      },
       userId: req.user?.userId || null,
-      type: normalizedType,
-      description: fullDescription,
-      severity: severity || 'medium',
-      category: category || 'other',
-      priority_score: 50,
-      timestamp: new Date(),
-      status: 'reported',
-      isEmergency: isEmergency === 'true'
+      media_attachments: [],
     };
 
-    // Add coordinates only if valid
-    if (!isNaN(safeLatitude)) incidentData.latitude = safeLatitude;
-    if (!isNaN(safeLongitude)) incidentData.longitude = safeLongitude;
-
-    // Safe media attachments (CRITICAL: matches schema format)
-    incidentData.media_attachments = imagePaths.map(url => ({
-      url,
-      type: 'photo'
-    }));
-
-    // Create and save incident
-    console.log("FINAL INCIDENT DATA:", incidentData);
-    const incident = new Incident(incidentData);
+    // SAFE SAVE BLOCK
     try {
+      const incident = new Incident(incidentData);
       await incident.save();
-    } catch (err) {
-      console.error("SAVE ERROR:", err);
-      return res.status(500).json({ error: err.message });
-    }
 
-    // Safe response
-    res.status(201).json({
-      success: true,
-      data: incident
-    });
+      console.log("FINAL INCIDENT DATA:", incidentData);
+
+      return res.status(201).json({
+        success: true,
+        data: incident,
+      });
+    } catch (error) {
+      console.error("INCIDENT SAVE ERROR:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create incident",
+      });
+    }
 
   } catch (err) {
     console.error('Incident creation error:', err);
