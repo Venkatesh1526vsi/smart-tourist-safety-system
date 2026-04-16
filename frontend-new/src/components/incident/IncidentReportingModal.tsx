@@ -371,17 +371,31 @@ const handleSubmit = async (event: React.FormEvent) => {
               {step === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Upload Evidence Images (Optional)</Label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        setSelectedImages(files);
-                      }}
-                    />
+                    <div>
+                      <label className="block font-medium mb-2">Upload Image</label>
+
+                      <p className="text-sm text-gray-500">Upload from device</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setSelectedImages((prev) => [...prev, ...files]);
+                        }}
+                      />
+
+                      <p className="text-sm text-gray-500 mt-2">Or capture from camera</p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setSelectedImages((prev) => [...prev, ...files]);
+                        }}
+                      />
+                    </div>
                     {selectedImages.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         {selectedImages.length} image(s) selected
