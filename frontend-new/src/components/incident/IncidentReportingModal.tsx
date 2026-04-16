@@ -13,9 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import EvidenceUploadSection, {
-  type EvidenceData,
-} from "./EvidenceUploadSection";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldAlert,
@@ -63,12 +60,7 @@ const IncidentReportingModal = ({
   const [time, setTime] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [isEmergency, setIsEmergency] = useState(false);
-  const [evidence, setEvidence] = useState<EvidenceData>({
-    description: "",
-    images: [],
-    video: null,
-    voiceRecording: false,
-  });
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -92,12 +84,10 @@ const handleSubmit = async (event: React.FormEvent) => {
     
     try {
       // Clean and validate payload
-      const cleanPayload = {
-        type: category?.trim(),
-        description: description?.trim(),
-      };
+      const cleanType = category?.trim();
+      const cleanDescription = description?.trim();
 
-      if (!cleanPayload.type || !cleanPayload.description) {
+      if (!cleanType || !cleanDescription) {
         alert("Type and Description are required");
         setIsSubmitting(false);
         return;
@@ -105,24 +95,49 @@ const handleSubmit = async (event: React.FormEvent) => {
 
       const token = localStorage.getItem("token");
 
+      // Extract coordinates from location string if available
+      let latitude: number | undefined;
+      let longitude: number | undefined;
+      const coordMatch = location.match(/Lat:\s*(-?\d+\.\d+).*Lng:\s*(-?\d+\.\d+)/);
+      if (coordMatch) {
+        latitude = parseFloat(coordMatch[1]);
+        longitude = parseFloat(coordMatch[2]);
+      }
+
+      // Build FormData for image upload support
+      const formData = new FormData();
+      formData.append("type", cleanType);
+      formData.append("description", cleanDescription);
+
+      if (latitude) formData.append("latitude", latitude.toString());
+      if (longitude) formData.append("longitude", longitude.toString());
+
+      // Append images ONLY if they exist
+      if (selectedImages && selectedImages.length > 0) {
+        selectedImages.forEach((file) => {
+          if (file instanceof File) {
+            formData.append("image", file);
+          }
+        });
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          // DO NOT set Content-Type manually - browser will set it with boundary for FormData
         },
-        body: JSON.stringify(cleanPayload),
+        body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         console.error("Backend error:", data);
-        alert(data?.message || "Failed to submit incident");
-        setIsSubmitting(false);
-        return;
+        throw new Error(data.message || "Failed to submit incident");
       }
 
+      console.log("STATUS:", response.status);
       console.log("SUCCESS:", data);
       
       setSubmitSuccess(true);
@@ -149,7 +164,7 @@ const handleSubmit = async (event: React.FormEvent) => {
     setTime("");
     setLocationLoading(false);
     setIsEmergency(false);
-    setEvidence({ description: "", images: [], video: null, voiceRecording: false });
+    setSelectedImages([]);
   };
 
   const handleUseCurrentLocation = async () => {
@@ -354,10 +369,26 @@ const handleSubmit = async (event: React.FormEvent) => {
               )}
 
               {step === 2 && (
-                <EvidenceUploadSection
-                  evidence={evidence}
-                  onEvidenceChange={setEvidence}
-                />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Upload Evidence Images (Optional)</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setSelectedImages(files);
+                      }}
+                    />
+                    {selectedImages.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {selectedImages.length} image(s) selected
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
 
               {step === 3 && (
@@ -397,16 +428,8 @@ const handleSubmit = async (event: React.FormEvent) => {
                         <p className="text-sm">{new Date(time).toLocaleString()}</p>
                       </div>
                     )}
-                    {evidence.description && (
-                      <div>
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">Evidence Notes</span>
-                        <p className="text-sm">{evidence.description}</p>
-                      </div>
-                    )}
                     <div className="flex gap-2 text-xs text-muted-foreground">
-                      {evidence.images.length > 0 && <span>{evidence.images.length} image(s)</span>}
-                      {evidence.video && <span>1 video</span>}
-                      {evidence.voiceRecording && <span>Voice recording</span>}
+                      {selectedImages.length > 0 && <span>{selectedImages.length} image(s) attached</span>}
                     </div>
                   </div>
                 </div>
