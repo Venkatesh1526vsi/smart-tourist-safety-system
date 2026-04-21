@@ -160,10 +160,7 @@ const incidentLimiter = rateLimit({
 });
 
 app.use(cors({
-  origin: [
-    "https://smart-tourist-safety-system-eie3et2yx.vercel.app"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: true,
   credentials: true
 }));
 
