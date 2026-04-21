@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -61,23 +61,7 @@ const IncidentReportingModal = ({
   const [locationLoading, setLocationLoading] = useState(false);
   const [isEmergency, setIsEmergency] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previewUrls]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedImages(files);
-
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(newPreviewUrls);
-    e.target.value = "";
-  };
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -89,7 +73,7 @@ const IncidentReportingModal = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
+    
     // Guard: prevent multiple submissions
     if (isSubmitting) return;
 
@@ -97,7 +81,7 @@ const IncidentReportingModal = ({
 
     setIsSubmitting(true);
     setSubmitError(null);
-
+    
     try {
       // Clean and validate payload
       const cleanType = category?.trim();
@@ -139,27 +123,32 @@ const IncidentReportingModal = ({
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // DO NOT set Content-Type manually - browser will set it with boundary for FormData
+        },
         body: formData,
       });
 
-      const res = await response.json();
-      if (!response.ok) throw new Error(res.message || "Failed to submit incident");
+      const data = await response.json();
 
-      if (res?.success) {
-        setSubmitSuccess(true);
-
-        // trigger refresh
-        window.dispatchEvent(new Event("incident-reported"));
-
-        resetForm();
-        onOpenChange(false);
-
-        setTimeout(() => setSubmitSuccess(false), 500);
+      if (!response.ok) {
+        console.error("Backend error:", data);
+        throw new Error(data.message || "Failed to submit incident");
       }
+
+      console.log("STATUS:", response.status);
+      console.log("SUCCESS:", data);
+      
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        onOpenChange(false);
+        resetForm();
+        setSubmitSuccess(false);
+      }, 2000);
     } catch (error) {
-      console.error("Incident submission error:", error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to submit incident. Please try again.';
+      console.error("❌ Error:", errorMsg);
       setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -176,7 +165,6 @@ const IncidentReportingModal = ({
     setLocationLoading(false);
     setIsEmergency(false);
     setSelectedImages([]);
-    setPreviewUrls([]);
   };
 
   const handleUseCurrentLocation = async () => {
@@ -188,17 +176,17 @@ const IncidentReportingModal = ({
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-
+        
         try {
           // Reverse geocoding to get city name
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
           const data = await response.json();
-
+          
           // Extract city name (prefer city, then town, then village)
           const city = data.address?.city || data.address?.town || data.address?.village || '';
-
+          
           if (city) {
             setLocation(`${city} (Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)})`);
           } else {
@@ -208,7 +196,7 @@ const IncidentReportingModal = ({
           // Fallback to coordinates only
           setLocation(`Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`);
         }
-
+        
         setLocationLoading(false);
       },
       (error) => {
@@ -241,271 +229,257 @@ const IncidentReportingModal = ({
               Complete the steps below to submit your report.
             </DialogDescription>
           </DialogHeader>
+        
+        {submitError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{submitError}</AlertDescription>
+          </Alert>
+        )}
+        
+        {submitSuccess && (
+          <Alert className="mt-2 bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
+            <AlertDescription className="text-emerald-700 dark:text-emerald-400">
+              Incident reported successfully!
+            </AlertDescription>
+          </Alert>
+        )}
 
-          {submitError && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertDescription>{submitError}</AlertDescription>
-            </Alert>
-          )}
-
-          {submitSuccess && (
-            <Alert className="mt-2 bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500">
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
-              <AlertDescription className="text-emerald-700 dark:text-emerald-400">
-                Incident reported successfully!
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Step Indicator */}
-          <div className="flex items-center gap-1">
-            {STEPS.map((label, i) => (
-              <div key={label} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className={`h-1.5 w-full rounded-full transition-colors ${i <= step ? "bg-emerald" : "bg-muted"
-                    }`}
-                />
-                <span
-                  className={`text-[10px] font-medium ${i <= step ? "text-emerald" : "text-muted-foreground"
-                    }`}
-                >
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Step Content */}
-          <div className="min-h-[280px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={step}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.2 }}
+        {/* Step Indicator */}
+        <div className="flex items-center gap-1">
+          {STEPS.map((label, i) => (
+            <div key={label} className="flex flex-1 flex-col items-center gap-1">
+              <div
+                className={`h-1.5 w-full rounded-full transition-colors ${
+                  i <= step ? "bg-emerald" : "bg-muted"
+                }`}
+              />
+              <span
+                className={`text-[10px] font-medium ${
+                  i <= step ? "text-emerald" : "text-muted-foreground"
+                }`}
               >
-                {step === 0 && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {CATEGORIES.map((cat) => {
-                      const Icon = cat.icon;
-                      const selected = category === cat.id;
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() => setCategory(cat.id)}
-                          className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${selected
-                              ? "border-emerald bg-emerald/10 dark:border-cyan dark:bg-cyan/10"
-                              : "border-border hover:border-emerald/40 dark:hover:border-cyan/40"
-                            }`}
-                        >
-                          <Icon className={`h-5 w-5 ${selected ? "text-emerald dark:text-cyan" : "text-muted-foreground"}`} />
-                          <span className="text-sm font-medium">{cat.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
 
-                {step === 1 && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Where did this happen?"
-                          value={location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          onClick={handleUseCurrentLocation}
-                          disabled={locationLoading}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {locationLoading ? "Fetching location..." : "📍 Use Current Location"}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <Textarea
-                        placeholder="What happened?"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="min-h-[80px] resize-none"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Time (optional)</Label>
-                      <Input
-                        type="datetime-local"
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Severity *</Label>
-                      <Select value={severity} onValueChange={setSeverity}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select severity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="critical">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="emergency"
-                        checked={isEmergency}
-                        onChange={(e) => handleEmergencyChange(e.target.checked)}
-                        className="rounded"
-                      />
-                      <Label htmlFor="emergency" className="text-sm font-medium cursor-pointer">
-                        🚨 Mark as Emergency
-                      </Label>
-                    </div>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div>
-                        <label className="block font-medium mb-2">Upload Image</label>
-
-                        <p className="text-sm text-gray-500">Upload from device</p>
-                        <input
-                          type="file"
-                          name="image"
-                          accept="image/*"
-                          multiple
-                          onChange={handleImageChange}
-                        />
-
-                        <p className="text-sm text-gray-500 mt-2">Or capture from camera</p>
-                        <input
-                          type="file"
-                          name="image"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={handleImageChange}
-                        />
-                      </div>
-                      {previewUrls.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {previewUrls.map((url, index) => (
-                            <img
-                              key={index}
-                              src={url}
-                              alt="preview"
-                              className="w-24 h-24 object-cover rounded-md border"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-3">
-                    <div className="rounded-lg border p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">Category</span>
-                        <Badge className="bg-emerald text-emerald-foreground dark:bg-cyan dark:text-cyan-foreground">
-                          {selectedCategory?.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">Severity</span>
-                        <Badge className="bg-orange-500 text-white">
-                          {severity.charAt(0).toUpperCase() + severity.slice(1)}
-                        </Badge>
-                      </div>
-                      {isEmergency && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold uppercase text-muted-foreground">Emergency</span>
-                          <Badge className="bg-red-500 text-white">
-                            🚨 Yes
-                          </Badge>
-                        </div>
-                      )}
-                      <div>
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">Location</span>
-                        <p className="text-sm">{location}</p>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">Description</span>
-                        <p className="text-sm">{description}</p>
-                      </div>
-                      {time && (
-                        <div>
-                          <span className="text-xs font-semibold uppercase text-muted-foreground">Time</span>
-                          <p className="text-sm">{new Date(time).toLocaleString()}</p>
-                        </div>
-                      )}
-                      <div className="flex gap-2 text-xs text-muted-foreground">
-                        {selectedImages.length > 0 && <span>{selectedImages.length} image(s) attached</span>}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex justify-between pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setStep((s) => s - 1)}
-              disabled={step === 0}
-              size="sm"
+        {/* Step Content */}
+        <div className="min-h-[280px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.2 }}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Back
+              {step === 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {CATEGORIES.map((cat) => {
+                    const Icon = cat.icon;
+                    const selected = category === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setCategory(cat.id)}
+                        className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                          selected
+                            ? "border-emerald bg-emerald/10 dark:border-cyan dark:bg-cyan/10"
+                            : "border-border hover:border-emerald/40 dark:hover:border-cyan/40"
+                        }`}
+                      >
+                        <Icon className={`h-5 w-5 ${selected ? "text-emerald dark:text-cyan" : "text-muted-foreground"}`} />
+                        <span className="text-sm font-medium">{cat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Location</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Where did this happen?"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={locationLoading}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {locationLoading ? "Fetching location..." : "📍 Use Current Location"}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="What happened?"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="min-h-[80px] resize-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time (optional)</Label>
+                    <Input
+                      type="datetime-local"
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Severity *</Label>
+                    <Select value={severity} onValueChange={setSeverity}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select severity" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="emergency"
+                      checked={isEmergency}
+                      onChange={(e) => handleEmergencyChange(e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="emergency" className="text-sm font-medium cursor-pointer">
+                      🚨 Mark as Emergency
+                    </Label>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Upload Evidence Images (Optional)</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setSelectedImages(files);
+                      }}
+                    />
+                    {selectedImages.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {selectedImages.length} image(s) selected
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-3">
+                  <div className="rounded-lg border p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">Category</span>
+                      <Badge className="bg-emerald text-emerald-foreground dark:bg-cyan dark:text-cyan-foreground">
+                        {selectedCategory?.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">Severity</span>
+                      <Badge className="bg-orange-500 text-white">
+                        {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                      </Badge>
+                    </div>
+                    {isEmergency && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground">Emergency</span>
+                        <Badge className="bg-red-500 text-white">
+                          🚨 Yes
+                        </Badge>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">Location</span>
+                      <p className="text-sm">{location}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">Description</span>
+                      <p className="text-sm">{description}</p>
+                    </div>
+                    {time && (
+                      <div>
+                        <span className="text-xs font-semibold uppercase text-muted-foreground">Time</span>
+                        <p className="text-sm">{new Date(time).toLocaleString()}</p>
+                      </div>
+                    )}
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      {selectedImages.length > 0 && <span>{selectedImages.length} image(s) attached</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex justify-between pt-2">
+          <Button
+            variant="outline"
+            onClick={() => setStep((s) => s - 1)}
+            disabled={step === 0}
+            size="sm"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          {step < 3 ? (
+            <Button
+              onClick={() => setStep((s) => s + 1)}
+              disabled={!canProceed() || isSubmitting}
+              size="sm"
+              className="bg-emerald text-emerald-foreground hover:bg-emerald/90 dark:bg-cyan dark:text-cyan-foreground dark:hover:bg-cyan/90"
+            >
+              Next <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-            {step < 3 ? (
-              <Button
-                onClick={() => setStep((s) => s + 1)}
-                disabled={!canProceed() || isSubmitting}
-                size="sm"
-                className="bg-emerald text-emerald-foreground hover:bg-emerald/90 dark:bg-cyan dark:text-cyan-foreground dark:hover:bg-cyan/90"
-              >
-                Next <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSubmitting || submitSuccess}
-                className="bg-emerald text-emerald-foreground hover:bg-emerald/90 dark:bg-cyan dark:text-cyan-foreground dark:hover:bg-cyan/90"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" /> Submitting...
-                  </>
-                ) : submitSuccess ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-1" /> Submitted
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-1" /> Submit
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+          ) : (
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting || submitSuccess}
+              className="bg-emerald text-emerald-foreground hover:bg-emerald/90 dark:bg-cyan dark:text-cyan-foreground dark:hover:bg-cyan/90"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" /> Submitting...
+                </>
+              ) : submitSuccess ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-1" /> Submitted
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" /> Submit
+                </>
+              )}
+            </Button>
+          )}
+        </div>
         </form>
       </DialogContent>
     </Dialog>

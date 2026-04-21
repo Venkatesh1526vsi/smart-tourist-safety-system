@@ -28,11 +28,11 @@ interface WrappedAuthResponse {
 }
 
 // Backend configuration
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const BASE_URL = import.meta.env.VITE_API_URL || "https://smart-tourist-safety-system-l724.onrender.com";
 
 // Authentication service functions
 export async function login(data: LoginRequest): Promise<WrappedAuthResponse> {
-  const response = await fetch(`${BASE_URL}/login`, {
+  const response = await fetch(`${BASE_URL}/api/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export async function login(data: LoginRequest): Promise<WrappedAuthResponse> {
 }
 
 export async function register(data: RegisterRequest): Promise<WrappedAuthResponse> {
-  const response = await fetch(`${BASE_URL}/register`, {
+  const response = await fetch(`${BASE_URL}/api/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
