@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllIncidents, updateIncident } from "@/services/api";
+import { getMyIncidents, updateIncident } from "@/services/api";
 
 interface Incident {
   _id: string;
@@ -39,26 +39,36 @@ const AdminIncidentsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await getAllIncidents();
-        let filteredIncidents = response.data || [];
-        
+
+        const response: any = await getMyIncidents();
+
+        const finalData = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : Array.isArray(response?.data?.data)
+              ? response.data.data
+              : [];
+
+        setIncidents(finalData as Incident[]);
+        let filteredIncidents: Incident[] = [...(finalData as Incident[])];
+
         // Apply filters
         if (search) {
-          filteredIncidents = filteredIncidents.filter(incident => 
+          filteredIncidents = filteredIncidents.filter(incident =>
             incident.description.toLowerCase().includes(search.toLowerCase()) ||
             incident.type.toLowerCase().includes(search.toLowerCase())
           );
         }
-        
+
         if (severityFilter !== 'all') {
           filteredIncidents = filteredIncidents.filter(incident => incident.severity === severityFilter);
         }
-        
+
         if (statusFilter !== 'all') {
           filteredIncidents = filteredIncidents.filter(incident => incident.status === statusFilter);
         }
-        
+
         setIncidents(filteredIncidents);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load incidents');
@@ -66,14 +76,14 @@ const AdminIncidentsPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchIncidents();
-  }, [search, severityFilter, statusFilter]);
+  }, []);
 
   const handleStatusUpdate = async (incidentId: string, newStatus: string) => {
     try {
       await updateIncident(incidentId, { status: newStatus });
-      setIncidents(prev => prev.map(incident => 
+      setIncidents(prev => prev.map(incident =>
         incident._id === incidentId ? { ...incident, status: newStatus } : incident
       ));
     } catch (err) {
@@ -126,21 +136,21 @@ const AdminIncidentsPage = () => {
             <div className="text-2xl font-bold">{incidents.length}</div>
             <p className="text-xs text-muted-foreground">All reported incidents</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Critical" icon={<AlertTriangle className="h-5 w-5 text-red-500" />}>
             <div className="text-2xl font-bold">
               {incidents.filter(i => i.severity === 'critical').length}
             </div>
             <p className="text-xs text-muted-foreground">Critical priority</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Under Investigation" icon={<Clock className="h-5 w-5 text-blue-500" />}>
             <div className="text-2xl font-bold">
               {incidents.filter(i => i.status === 'investigating').length}
             </div>
             <p className="text-xs text-muted-foreground">Being investigated</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Resolved" icon={<CheckCircle className="h-5 w-5 text-green-500" />}>
             <div className="text-2xl font-bold">
               {incidents.filter(i => i.status === 'resolved').length}
@@ -215,7 +225,7 @@ const AdminIncidentsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {incidents.map((incident) => (
+                  {(Array.isArray(incidents) ? incidents : []).map((incident) => (
                     <tr key={incident._id} className="border-b border-border hover:bg-muted/50">
                       <td className="p-3">
                         <div>
@@ -261,9 +271,9 @@ const AdminIncidentsPage = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                           {incident.status !== 'resolved' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleStatusUpdate(incident._id, 'resolved')}
                               className="text-green-600 hover:text-green-700"
                             >
