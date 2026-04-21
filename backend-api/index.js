@@ -76,6 +76,15 @@ if (!fs.existsSync(uploadsDir)) {
 const app = express(); // ----> Must be BEFORE app.use()
 app.set("trust proxy", 1);
 
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.options("*", cors());
+
 // Create HTTP server for WebSocket support
 const server = http.createServer(app);
 
@@ -159,10 +168,7 @@ const incidentLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+
 
 // Middleware
 // Apply general rate limiting to API routes only (NOT login/register)
