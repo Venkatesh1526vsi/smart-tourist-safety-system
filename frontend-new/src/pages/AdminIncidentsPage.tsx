@@ -332,6 +332,7 @@ const AdminIncidentsPage = () => {
                                                 : i
                                             )
                                           );
+                                          console.log("Updated:", newStatus);
 
                                         } catch (err) {
                                           console.error("Status update failed", err);

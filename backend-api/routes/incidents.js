@@ -193,6 +193,27 @@ router.post('/', auth, uploadImages, async (req, res) => {
   }
 });
 
+// 3.5 PATCH /api/incidents/:id - Update incident details (Admin only)
+router.patch('/:id', auth, isAdmin, async (req, res) => {
+  try {
+    const incident = await Incident.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updated_at: new Date() },
+      { new: true }
+    );
+
+    if (!incident) return res.status(404).json({ error: 'Incident not found' });
+
+    res.json({
+      success: true,
+      message: 'Incident updated successfully',
+      data: incident
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+});
+
 // 4. PATCH /api/incidents/:id/assign - Assign incident to officer (Admin only)
 router.patch('/:id/assign', auth, isAdmin, async (req, res) => {
   try {

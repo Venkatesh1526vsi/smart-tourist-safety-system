@@ -376,8 +376,8 @@ export const getAllIncidents = (params?: { status?: string; severity?: string; c
 export const getIncidentById = (id: string) =>
   apiGet<{ success: boolean; data: Incident }>(`/api/incidents/${id}`);
 
-export const updateIncident = (id: string, data: { status?: string; severity?: string; category?: string; resolution_notes?: string }) =>
-  apiPatch<{ success: boolean; data: Incident }>(`/api/incidents/${id}/update-severity`, data);
+export const updateIncident = (id: string, data: any) =>
+  apiPatch(`/api/incidents/${id}`, data);
 
 export const closeIncident = (id: string, resolution_notes?: string) =>
   apiPatch<{ success: boolean; data: Incident }>(`/api/incidents/${id}/close`, { resolution_notes });
