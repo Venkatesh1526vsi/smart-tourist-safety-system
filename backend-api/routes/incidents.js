@@ -462,4 +462,26 @@ function calculatePriority(severity, category) {
   return (severityScore[severity] || 20) + (categoryScore[category] || 10);
 }
 
+// 11. DELETE /api/incidents/:id - Delete incident (Admin only)
+router.delete('/:id', auth, isAdmin, async (req, res) => {
+  try {
+    const incident = await Incident.findByIdAndDelete(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ error: 'Incident not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Incident deleted successfully',
+      data: { id: req.params.id }
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: 'Server error',
+      details: err.message
+    });
+  }
+});
+
 module.exports = router;

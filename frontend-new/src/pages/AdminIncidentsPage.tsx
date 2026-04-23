@@ -33,6 +33,7 @@ const AdminIncidentsPage = () => {
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -89,6 +90,10 @@ const AdminIncidentsPage = () => {
     } catch (err) {
       console.error('Failed to update incident status:', err);
     }
+  };
+
+  const handleRowClick = (id: string) => {
+    setSelectedIncidentId(prev => prev === id ? null : id);
   };
 
   const getSeverityBadgeColor = (severity: string) => {
@@ -226,66 +231,142 @@ const AdminIncidentsPage = () => {
                 </thead>
                 <tbody>
                   {(Array.isArray(incidents) ? incidents : []).map((incident) => (
-                    <tr key={incident._id} className="border-b border-border hover:bg-muted/50">
-                      <td className="p-3">
-                        <div>
-                          <div className="font-medium">{incident.type}</div>
-                          <div className="text-sm text-muted-foreground line-clamp-2">
-                            {incident.description}
+                    <>
+                      <tr
+                        key={incident._id}
+                        className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                        onClick={() => handleRowClick(incident._id)}
+                      >
+                        <td className="p-3">
+                          <div>
+                            <div className="font-medium">{incident.type}</div>
+                            <div className="text-sm text-muted-foreground line-clamp-2">
+                              {incident.description}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <div className="font-medium">{incident.user?.name || 'Unknown'}</div>
-                          <div className="text-muted-foreground">{incident.user?.email || 'N/A'}</div>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getSeverityBadgeColor(incident.severity)}>
-                          {incident.severity}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(incident.status)}
-                          <Badge className={getStatusBadgeColor(incident.status)}>
-                            {incident.status}
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            <div className="font-medium">{incident.user?.name || 'Unknown'}</div>
+                            <div className="text-muted-foreground">{incident.user?.email || 'N/A'}</div>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={getSeverityBadgeColor(incident.severity)}>
+                            {incident.severity}
                           </Badge>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          {new Date(incident.created_at).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(incident.created_at).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {incident.status !== 'resolved' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleStatusUpdate(incident._id, 'resolved')}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4" />
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(incident.status)}
+                            <Badge className={getStatusBadgeColor(incident.status)}>
+                              {incident.status}
+                            </Badge>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {new Date(incident.created_at).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(incident.created_at).toLocaleTimeString()}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {incident.status !== 'resolved' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusUpdate(incident._id, 'resolved');
+                                }}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {selectedIncidentId === incident._id && (
+                        <tr className="bg-muted/20">
+                          <td colSpan={6} className="p-0">
+                            <div className="p-4 space-y-3 border-x border-b animate-in fade-in slide-in-from-top-1 duration-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Type:</strong> {incident.type}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Description:</strong> {incident.description}</p>
+                                  <p className="text-sm">
+                                    <strong className="text-muted-foreground mr-2">Location:</strong>
+                                    {incident.latitude != null && incident.longitude != null
+                                      ? `Lat: ${incident.latitude}, Lng: ${incident.longitude}`
+                                      : "Unavailable"}
+                                  </p>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <strong className="text-muted-foreground mr-2">Update Status:</strong>
+                                    <select
+                                      className="border rounded px-2 py-1 bg-background text-sm"
+                                      value={incident.status || "pending"}
+                                      onClick={(e) => e.stopPropagation()}
+                                      onChange={async (e) => {
+                                        const newStatus = e.target.value;
+                                        try {
+                                          await updateIncident(incident._id, { status: newStatus });
+                                          setIncidents(prev =>
+                                            prev.map(i =>
+                                              i._id === incident._id
+                                                ? { ...i, status: newStatus }
+                                                : i
+                                            )
+                                          );
+
+                                        } catch (err) {
+                                          console.error("Status update failed", err);
+                                        }
+                                      }}
+                                    >
+                                      <option value="reported">Reported</option>
+                                      <option value="investigating">Investigating</option>
+                                      <option value="resolved">Resolved</option>
+                                      <option value="pending">Pending</option>
+                                    </select>
+                                  </div>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Current Status:</strong> {incident.status}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Date:</strong> {new Date(incident.created_at).toLocaleString()}</p>
+
+                                  {((Array.isArray((incident as any).images) && (incident as any).images.length > 0) || incident.evidence_image) && (
+                                    <div className="mt-3">
+                                      <strong className="text-sm text-muted-foreground block mb-2">Evidence:</strong>
+                                      <div className="flex flex-wrap gap-2">
+                                        {Array.isArray((incident as any).images) && (incident as any).images.map((img: string, i: number) => (
+                                          <img key={i} src={img} className="w-20 h-20 object-cover rounded border" />
+                                        ))}
+                                        {incident.evidence_image && !Array.isArray((incident as any).images) && (
+                                          <img src={incident.evidence_image} className="w-20 h-20 object-cover rounded border" />
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>

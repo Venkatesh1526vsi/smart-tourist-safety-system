@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAdminUsers } from "@/services/api";
+import { getAdminUsers, deleteUser } from "@/services/api";
 
 interface User {
   _id: string;
@@ -194,7 +194,23 @@ const AdminUsersPage = () => {
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={async () => {
+                              if (window.confirm(`Are you sure you want to delete user ${user.name}?`)) {
+                                try {
+                                  await deleteUser(user._id);
+                                  setUsers(prev => prev.filter(u => u._id !== user._id));
+                                  setTotalUsers(prev => prev - 1);
+                                } catch (err) {
+                                  console.error('Failed to delete user:', err);
+                                  alert(err instanceof Error ? err.message : 'Failed to delete user');
+                                }
+                              }
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
