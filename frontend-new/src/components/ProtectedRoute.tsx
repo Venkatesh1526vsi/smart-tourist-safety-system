@@ -14,7 +14,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log('[ProtectedRoute] user:', user, 'token:', token ? 'exists' : 'null');
 
   if (loading) {
-    console.log('[ProtectedRoute] Showing loading state...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -24,8 +23,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    console.log('[ProtectedRoute] NOT AUTHENTICATED - Redirecting to login');
-    console.log('[ProtectedRoute] Location state:', location.state);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -103,25 +103,36 @@ const getToken = (): string | null => {
   }
 };
 
-// Build headers with optional Authorization
-const buildHeaders = (includeContentType = true, includeAuth = true): HeadersInit => {
-  const headers: HeadersInit = {};
+const handleAuthError = (status: number, endpoint?: string) => {
+  const isPublicEndpoint =
+    endpoint?.includes("/external/") ||
+    endpoint?.includes("/login") ||
+    endpoint?.includes("/register");
 
-  if (includeContentType) {
-    headers['Content-Type'] = 'application/json';
+  if (status === 401 || (status === 403 && !isPublicEndpoint)) {
+    console.warn("Invalid or expired token — clearing session");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
   }
+};
 
-  // Only attach Authorization if explicitly requested and token exists
-  if (includeAuth) {
-    const token = getToken();
-    console.log('[buildHeaders] Token from getToken():', token);
-    console.log('[buildHeaders] Token type:', typeof token);
-    if (token && token !== 'undefined' && token !== 'null') {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log('[buildHeaders] Added Authorization header');
-    } else {
-      console.log('[buildHeaders] No valid token found');
-    }
+// Build headers with optional Authorization - Step 1
+const buildHeaders = (endpoint?: string) => {
+  const headers: any = {
+    "Content-Type": "application/json"
+  };
+
+  const token = getToken();
+
+  // Public endpoints that don't need auth
+  const isPublic =
+    endpoint?.includes("/external/") ||
+    endpoint?.includes("/login") ||
+    endpoint?.includes("/register");
+
+  if (token && !isPublic) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   return headers;
@@ -131,40 +142,24 @@ const buildHeaders = (includeContentType = true, includeAuth = true): HeadersIni
 export const apiPost = async <T>(endpoint: string, data: unknown): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  console.log('[API POST]', url, data);
-  console.log('[API POST] Headers:', buildHeaders());
-
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: buildHeaders(),
+      headers: buildHeaders(endpoint),
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      let errorMessage = `POST ${endpoint} failed: ${response.status}`;
-
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.error || errorJson.message || errorMessage;
-      } catch {
-        // Use text as-is if not JSON
-        if (errorText) errorMessage = errorText;
-      }
-
-      throw new Error(errorMessage);
+      console.error(`API Error [POST ${endpoint}]:`, response.status, errorText);
+      handleAuthError(response.status, endpoint);
+      throw new Error(errorText || `POST ${endpoint} failed: ${response.status}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return result?.data?.data || result?.data || result;
   } catch (error) {
     console.error('[API POST] Fetch error:', error);
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error(`Cannot connect to backend at ${BASE_URL}. Please ensure:
-1. Backend server is running on port 3001
-2. CORS is configured to allow http://localhost:5173
-3. No firewall is blocking the connection`);
-    }
     throw error;
   }
 };
@@ -173,79 +168,61 @@ export const apiPost = async <T>(endpoint: string, data: unknown): Promise<T> =>
 export const apiGet = async <T>(endpoint: string): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  console.log('[API GET]', url);
-
-  const headers = buildHeaders();
-  console.log('[API GET] Built headers:', headers);
-
   const response = await fetch(url, {
     method: 'GET',
-    headers,
+    headers: buildHeaders(endpoint),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorMessage = `GET ${endpoint} failed: ${response.status}`;
-
-    try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.error || errorJson.message || errorMessage;
-    } catch {
-      if (errorText) errorMessage = errorText;
-    }
-
-    throw new Error(errorMessage);
+    console.error(`API Error [GET ${endpoint}]:`, response.status, errorText);
+    handleAuthError(response.status, endpoint);
+    throw new Error(errorText || `GET ${endpoint} failed: ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result?.data?.data || result?.data || result;
 };
 
 // Generic API DELETE request
 export const apiDelete = async <T>(endpoint: string): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  console.log('[API DELETE]', url);
-
   const response = await fetch(url, {
     method: 'DELETE',
-    headers: buildHeaders(),
+    headers: buildHeaders(endpoint),
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Delete failed");
+    const errorText = await response.text();
+    console.error(`API Error [DELETE ${endpoint}]:`, response.status, errorText);
+    handleAuthError(response.status, endpoint);
+    throw new Error(errorText || `DELETE ${endpoint} failed: ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result?.data?.data || result?.data || result;
 };
 
 // Generic API PATCH request
 export const apiPatch = async <T>(endpoint: string, data: unknown): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  console.log('[API PATCH]', url, data);
-
   const response = await fetch(url, {
     method: 'PATCH',
-    headers: buildHeaders(),
+    headers: buildHeaders(endpoint),
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorMessage = `PATCH ${endpoint} failed: ${response.status}`;
-
-    try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.error || errorJson.message || errorMessage;
-    } catch {
-      if (errorText) errorMessage = errorText;
-    }
-
-    throw new Error(errorMessage);
+    console.error(`API Error [PATCH ${endpoint}]:`, response.status, errorText);
+    handleAuthError(response.status, endpoint);
+    throw new Error(errorText || `PATCH ${endpoint} failed: ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result?.data?.data || result?.data || result;
 };
 
 // File upload with multipart/form-data (for incident images)
@@ -255,84 +232,35 @@ export const apiUploadFile = async <T>(
 ): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  console.log('[API UPLOAD]', url);
+  const headers = buildHeaders(endpoint);
+  delete headers["Content-Type"]; // browser will set it correctly for FormData
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${getToken() || ''}`,
-    },
+    headers,
     body: formData,
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Upload failed: ${errorText}`);
+    console.error(`API Error [UPLOAD ${endpoint}]:`, response.status, errorText);
+    handleAuthError(response.status, endpoint);
+    throw new Error(errorText || `Upload failed: ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  return result?.data?.data || result?.data || result;
 };
 
 // Specific API Functions
-// Login - NO auth header (we don't have a token yet)
+// Login - Step 1/2
 export const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
-  const url = `${BASE_URL}/api/login`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const responseData = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = responseData.message || responseData.error || `Login failed: ${response.status}`;
-    throw new Error(errorMessage);
-  }
-
-  // Backend wraps response in { success, message, data: { user, token } }
-  // We need to return data.data which contains { user, token }
-  if (responseData.data && responseData.data.token) {
-    return responseData.data;
-  }
-
-  // Fallback: if data is directly in response
-  if (responseData.token) {
-    return responseData;
-  }
-
-  throw new Error('Invalid response format from server');
+  return apiPost<LoginResponse>('/api/login', { email, password });
 };
 
-// Register - NO auth header (we don't have a token yet)
+// Register - Step 1/2
 export const registerUser = async (name: string, email: string, password: string): Promise<RegisterResponse> => {
-  const url = `${BASE_URL}/api/register`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
-  });
-
-  const responseData = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = responseData.message || responseData.error || `Registration failed: ${response.status}`;
-    throw new Error(errorMessage);
-  }
-
-  // Backend wraps response in { success, message, data: { user, token } }
-  if (responseData.data && responseData.data.token) {
-    return responseData.data;
-  }
-
-  // Fallback: if data is directly in response
-  if (responseData.token) {
-    return responseData;
-  }
-
-  throw new Error('Invalid response format from server');
+  return apiPost<RegisterResponse>('/api/register', { name, email, password });
 };
 
 export const getProfile = () =>
@@ -349,23 +277,7 @@ export const getMyLocation = () =>
 
 // Incident APIs - Aligned with backend routes
 export const reportIncident = async (formData: FormData): Promise<ApiResponse<Incident>> => {
-  const token = getToken() || '';
-  const url = `${BASE_URL}/api/incidents`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: formData
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Incident submission failed: ${errorText}`);
-  }
-
-  return response.json();
+  return apiUploadFile<ApiResponse<Incident>>('/api/incidents', formData);
 };
 
 export const getAllIncidents = (params?: { status?: string; severity?: string; category?: string }) => {
@@ -393,7 +305,7 @@ export const getHeatmapData = () =>
 
 // Legacy alias for backward compatibility
 export const getMyIncidents = () =>
-  apiGet<{ success: boolean; data: Incident[] }>('/api/incidents').then(res => res.data);
+  apiGet<Incident[]>('/api/incidents');
 
 export const getNotifications = () =>
   apiGet<Notification[]>('/notifications');

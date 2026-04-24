@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getMyIncidents, updateIncident } from "@/services/api";
+import { getMyIncidents, updateIncident, deleteIncident } from "@/services/api";
 
 interface Incident {
   _id: string;
@@ -43,6 +43,7 @@ const AdminIncidentsPage = () => {
 
         const response: any = await getMyIncidents();
 
+        // Step 5: Safe data extraction
         const finalData = Array.isArray(response)
           ? response
           : Array.isArray(response?.data)
@@ -51,27 +52,28 @@ const AdminIncidentsPage = () => {
               ? response.data.data
               : [];
 
-        setIncidents(finalData as Incident[]);
-        let filteredIncidents: Incident[] = [...(finalData as Incident[])];
+        const original = [...finalData];
+        let filtered = [...original];
 
-        // Apply filters
+        // Apply filters on copy
         if (search) {
-          filteredIncidents = filteredIncidents.filter(incident =>
+          filtered = filtered.filter(incident =>
             incident.description.toLowerCase().includes(search.toLowerCase()) ||
             incident.type.toLowerCase().includes(search.toLowerCase())
           );
         }
 
         if (severityFilter !== 'all') {
-          filteredIncidents = filteredIncidents.filter(incident => incident.severity === severityFilter);
+          filtered = filtered.filter(incident => incident.severity === severityFilter);
         }
 
         if (statusFilter !== 'all') {
-          filteredIncidents = filteredIncidents.filter(incident => incident.status === statusFilter);
+          filtered = filtered.filter(incident => incident.status === statusFilter);
         }
 
-        setIncidents(filteredIncidents);
+        setIncidents(filtered as Incident[]);
       } catch (err) {
+        console.error("API ERROR:", err);
         setError(err instanceof Error ? err.message : 'Failed to load incidents');
       } finally {
         setLoading(false);
@@ -79,16 +81,30 @@ const AdminIncidentsPage = () => {
     };
 
     fetchIncidents();
-  }, []);
+  }, [search, severityFilter, statusFilter]); // Re-run when filters change
 
-  const handleStatusUpdate = async (incidentId: string, newStatus: string) => {
+  const handleStatusUpdate = async (incident: Incident, newStatus: string) => {
     try {
-      await updateIncident(incidentId, { status: newStatus });
-      setIncidents(prev => prev.map(incident =>
-        incident._id === incidentId ? { ...incident, status: newStatus } : incident
+      await updateIncident(incident._id, {
+        status: newStatus,
+        severity: incident.severity,
+        category: incident.category || 'general'
+      });
+      setIncidents(prev => prev.map(i =>
+        i._id === incident._id ? { ...i, status: newStatus } : i
       ));
     } catch (err) {
-      console.error('Failed to update incident status:', err);
+      console.error('API ERROR:', err);
+    }
+  };
+
+  const handleDeleteIncident = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this incident?')) return;
+    try {
+      await deleteIncident(id);
+      setIncidents(prev => prev.filter(incident => incident._id !== id));
+    } catch (err) {
+      console.error('API ERROR:', err);
     }
   };
 
@@ -274,10 +290,24 @@ const AdminIncidentsPage = () => {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Open view modal or similar
+                              }}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Open edit modal or similar
+                              }}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             {incident.status !== 'resolved' && (
@@ -286,15 +316,23 @@ const AdminIncidentsPage = () => {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleStatusUpdate(incident._id, 'resolved');
+                                  handleStatusUpdate(incident, 'resolved');
                                 }}
                                 className="text-green-600 hover:text-green-700"
                               >
                                 <CheckCircle className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteIncident(incident._id);
+                              }}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
@@ -324,7 +362,11 @@ const AdminIncidentsPage = () => {
                                       onChange={async (e) => {
                                         const newStatus = e.target.value;
                                         try {
-                                          await updateIncident(incident._id, { status: newStatus });
+                                          await updateIncident(incident._id, {
+                                            status: newStatus,
+                                            severity: incident.severity,
+                                            category: incident.category || 'general'
+                                          });
                                           setIncidents(prev =>
                                             prev.map(i =>
                                               i._id === incident._id

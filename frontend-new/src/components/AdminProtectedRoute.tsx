@@ -7,7 +7,16 @@ interface AdminProtectedRouteProps {
 }
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Loading...</span>
+      </div>
+    );
+  }
 
   // Check if user exists and has admin role
   if (!user || user.role !== "admin") {

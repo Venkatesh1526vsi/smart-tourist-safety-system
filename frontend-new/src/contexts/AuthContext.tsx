@@ -28,64 +28,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing token and user on mount
+  // Stabilize initialization - Step 1
   useEffect(() => {
-    const initAuth = () => {
-      console.log('[AuthContext] Initializing auth...');
-      const storedToken = getToken();
-      const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-      console.log('[AuthContext] storedToken:', storedToken);
-      console.log('[AuthContext] storedUser:', storedUser);
-
-      if (storedToken) {
+    if (storedToken && storedUser) {
+      try {
         setToken(storedToken);
-        console.log('[AuthContext] Token set in state');
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Failed to parse user from localStorage:', e);
       }
+    }
 
-      if (storedUser) {
-        try {
-          const userObj = JSON.parse(storedUser);
-          setUser(userObj);
-          console.log('[AuthContext] User set in state:', userObj);
-        } catch (e) {
-          console.error('Failed to parse user from localStorage:', e);
-          // Clear invalid user data
-          localStorage.removeItem('user');
-        }
-      }
-
-      console.log('[AuthContext] Setting loading to false');
-      setLoading(false);
-    };
-
-    initAuth();
+    setLoading(false);
   }, []);
 
-  // Monitor authentication state changes
-  useEffect(() => {
-    console.log('[AuthContext] State changed - token:', token, 'user:', user, 'isAuthenticated:', !!(token && user));
-  }, [token, user]);
 
-  // Login method
+  // Login method - Step 3
   const login = async (email: string, password: string): Promise<void> => {
-    console.log('[AuthContext] login() called with:', { email });
     try {
       const response = await loginService({ email, password });
-      console.log('[AuthContext] loginService response:', response);
-
-      // Extract token and user from response.data (backend wraps response)
       const authData = response.data || response;
       const { token, user } = authData;
 
-      setToken(token);
-      setUser(user);
+      if (token && user) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      console.log('[AuthContext] After setting state - token:', token?.substring(0, 20) + '...');
-      console.log('[AuthContext] After setting state - user:', user);
+        setToken(token);
+        setUser(user);
+      }
     } catch (error) {
       console.error('[AuthContext] login error:', error);
       throw error;
@@ -94,23 +68,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Register method
   const register = async (name: string, email: string, password: string): Promise<void> => {
-    console.log('[AuthContext] register() called with:', { name, email });
     try {
       const response = await registerService({ name, email, password });
-      console.log('[AuthContext] registerService response:', response);
-
-      // Extract token and user from response.data (backend wraps response)
       const authData = response.data || response;
       const { token, user } = authData;
 
-      setToken(token);
-      setUser(user);
+      if (token && user) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      console.log('[AuthContext] After setting state - token:', token?.substring(0, 20) + '...');
-      console.log('[AuthContext] After setting state - user:', user);
+        setToken(token);
+        setUser(user);
+      }
     } catch (error) {
       console.error('[AuthContext] register error:', error);
       throw error;
@@ -127,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!(token && user && getToken()),
+    isAuthenticated: !!(token && user),
     loading,
     login,
     register,
