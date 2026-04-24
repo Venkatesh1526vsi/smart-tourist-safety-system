@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { Users, Search, Filter, MoreHorizontal, Loader2, UserPlus, Edit, Trash2, Shield, Ban } from "lucide-react";
+import { Users, Search, Filter, Loader2, UserPlus, Edit, Trash2, Shield, Ban } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,16 +33,16 @@ const AdminUsersPage = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Step 1: Safe extraction
         const response: any = await getAdminUsers({ page: currentPage, limit: 50 });
-        
-        const usersData = 
+
+        const usersData =
           Array.isArray(response) ? response :
-          Array.isArray(response?.data) ? response.data :
-          Array.isArray(response?.data?.users) ? response.data.users :
-          Array.isArray(response?.data?.data) ? response.data.data :
-          [];
+            Array.isArray(response?.data) ? response.data :
+              Array.isArray(response?.data?.users) ? response.data.users :
+                Array.isArray(response?.data?.data) ? response.data.data :
+                  [];
 
         setUsers(usersData);
         setTotalUsers(usersData.length);
@@ -53,7 +53,7 @@ const AdminUsersPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchUsers();
   }, [currentPage]);
 
@@ -102,7 +102,7 @@ const AdminUsersPage = () => {
             <h1 className="font-display text-2xl font-bold">User Management</h1>
             <p className="text-muted-foreground text-sm mt-1">Manage user accounts and permissions</p>
           </div>
-          <Button 
+          <Button
             className="flex items-center gap-2"
             onClick={() => console.log('Add user clicked')}
           >
@@ -117,21 +117,21 @@ const AdminUsersPage = () => {
             <div className="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Registered accounts</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Active Users" icon={<Shield className="h-5 w-5 text-green-500" />}>
             <div className="text-2xl font-bold">
               {users.filter(u => u.status === 'active' || !u.status).length}
             </div>
             <p className="text-xs text-muted-foreground">Currently active</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Admins" icon={<Users className="h-5 w-5 text-red-500" />}>
             <div className="text-2xl font-bold">
               {users.filter(u => u.role === 'admin').length}
             </div>
             <p className="text-xs text-muted-foreground">Administrators</p>
           </DashboardCard>
-          
+
           <DashboardCard title="Suspended" icon={<Ban className="h-5 w-5 text-orange-500" />}>
             <div className="text-2xl font-bold">
               {users.filter(u => u.status === 'suspended').length}
@@ -194,8 +194,8 @@ const AdminUsersPage = () => {
                 <tbody>
                   {filteredUsers.map((user) => (
                     <>
-                      <tr 
-                        key={user._id} 
+                      <tr
+                        key={user._id}
                         className="border-b border-border hover:bg-muted/50 cursor-pointer"
                         onClick={() => toggleUser(user._id)}
                       >
@@ -222,8 +222,8 @@ const AdminUsersPage = () => {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -232,8 +232,8 @@ const AdminUsersPage = () => {
                             >
                               <Shield className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -242,9 +242,9 @@ const AdminUsersPage = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               className="text-destructive hover:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -280,7 +280,7 @@ const AdminUsersPage = () => {
                   ))}
                 </tbody>
               </table>
-              
+
               {/* Pagination */}
               <div className="flex items-center justify-between p-4 border-t border-border">
                 <div className="text-sm text-muted-foreground">
