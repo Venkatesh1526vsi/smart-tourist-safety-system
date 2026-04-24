@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { login as loginService, register as registerService, logout as logoutService, getToken } from '@/services/authService';
+import { login as loginService, register as registerService, logout as logoutService } from '@/services/authService';
 
 // TypeScript Interfaces
 interface User {
