@@ -26,6 +26,7 @@ const AdminUsersPage = () => {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -33,18 +34,20 @@ const AdminUsersPage = () => {
         setLoading(true);
         setError(null);
         
-        const params: any = {
-          page: currentPage,
-          limit: 10
-        };
+        // Step 1: Safe extraction
+        const response: any = await getAdminUsers({ page: currentPage, limit: 50 });
         
-        if (search) params.search = search;
-        if (roleFilter !== 'all') params.role = roleFilter;
-        
-        const response = await getAdminUsers(params);
-        setUsers(response.data || []);
-        setTotalUsers(response.total || 0);
+        const usersData = 
+          Array.isArray(response) ? response :
+          Array.isArray(response?.data) ? response.data :
+          Array.isArray(response?.data?.users) ? response.data.users :
+          Array.isArray(response?.data?.data) ? response.data.data :
+          [];
+
+        setUsers(usersData);
+        setTotalUsers(usersData.length);
       } catch (err) {
+        console.error("API ERROR:", err);
         setError(err instanceof Error ? err.message : 'Failed to load users');
       } finally {
         setLoading(false);
@@ -52,7 +55,7 @@ const AdminUsersPage = () => {
     };
     
     fetchUsers();
-  }, [currentPage, search, roleFilter]);
+  }, [currentPage]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -71,6 +74,26 @@ const AdminUsersPage = () => {
     }
   };
 
+  const toggleUser = (id: string) => {
+    setExpandedUserId(prev => (prev === id ? null : id));
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Delete this user?')) return;
+    try {
+      await deleteUser(id);
+      setUsers(prev => prev.filter(u => u._id !== id));
+    } catch (err) {
+      console.error('Delete failed', err);
+    }
+  };
+
+  // Step 2: Local filtering
+  const filteredUsers = users.filter(user =>
+    user.name?.toLowerCase().includes(search.toLowerCase()) ||
+    user.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <AdminDashboardLayout>
       <div className="space-y-6">
@@ -79,7 +102,10 @@ const AdminUsersPage = () => {
             <h1 className="font-display text-2xl font-bold">User Management</h1>
             <p className="text-muted-foreground text-sm mt-1">Manage user accounts and permissions</p>
           </div>
-          <Button className="flex items-center gap-2">
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => console.log('Add user clicked')}
+          >
             <UserPlus className="h-4 w-4" />
             Add User
           </Button>
@@ -166,59 +192,91 @@ const AdminUsersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
-                    <tr key={user._id} className="border-b border-border hover:bg-muted/50">
-                      <td className="p-3">
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {user.role}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getStatusBadgeColor(user.status)}>
-                          {user.status || 'active'}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-destructive hover:text-destructive"
-                            onClick={async () => {
-                              if (window.confirm(`Are you sure you want to delete user ${user.name}?`)) {
-                                try {
-                                  await deleteUser(user._id);
-                                  setUsers(prev => prev.filter(u => u._id !== user._id));
-                                  setTotalUsers(prev => prev - 1);
-                                } catch (err) {
-                                  console.error('Failed to delete user:', err);
-                                  alert(err instanceof Error ? err.message : 'Failed to delete user');
-                                }
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                  {filteredUsers.map((user) => (
+                    <>
+                      <tr 
+                        key={user._id} 
+                        className="border-b border-border hover:bg-muted/50 cursor-pointer"
+                        onClick={() => toggleUser(user._id)}
+                      >
+                        <td className="p-3">
+                          <div>
+                            <div className="font-medium">{user.name}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={getRoleBadgeColor(user.role)}>
+                            {user.role}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={getStatusBadgeColor(user.status)}>
+                            {user.status || 'active'}
+                          </Badge>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleUser(user._id);
+                              }}
+                            >
+                              <Shield className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Edit user:', user._id);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-destructive hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(user._id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedUserId === user._id && (
+                        <tr className="bg-muted/10">
+                          <td colSpan={6} className="p-0">
+                            <div className="p-4 bg-muted/20 border-x border-b animate-in fade-in slide-in-from-top-1 duration-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Full Name:</strong> {user.name}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Email:</strong> {user.email}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">User ID:</strong> {user._id}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Role:</strong> {user.role}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Status:</strong> {user.status || 'active'}</p>
+                                  <p className="text-sm"><strong className="text-muted-foreground mr-2">Joined:</strong> {user.created_at ? new Date(user.created_at).toLocaleString() : 'N/A'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>
