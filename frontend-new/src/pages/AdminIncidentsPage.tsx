@@ -27,7 +27,10 @@ interface Incident {
 }
 
 const AdminIncidentsPage = () => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>(() => {
+    const stored = localStorage.getItem("incidents");
+    return stored ? JSON.parse(stored) : [];
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -39,8 +42,20 @@ const AdminIncidentsPage = () => {
     return stored ? JSON.parse(stored) : [];
   });
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
-  const [resolvedIncidents, setResolvedIncidents] = useState<Incident[]>([]);
+  const [resolvedIncidents, setResolvedIncidents] = useState<Incident[]>(() => {
+    const stored = localStorage.getItem("resolvedIncidents");
+    return stored ? JSON.parse(stored) : [];
+  });
   const [activeView, setActiveView] = useState("all");
+  const [filteredIncidents, setFilteredIncidents] = useState<Incident[]>([]);
+
+  useEffect(() => {
+    localStorage.setItem("incidents", JSON.stringify(incidents));
+  }, [incidents]);
+
+  useEffect(() => {
+    localStorage.setItem("resolvedIncidents", JSON.stringify(resolvedIncidents));
+  }, [resolvedIncidents]);
 
   useEffect(() => {
     localStorage.setItem("deletedIncidents", JSON.stringify(deletedIncidents));
@@ -101,11 +116,21 @@ const AdminIncidentsPage = () => {
         severity: incident.severity,
         category: incident.category || 'general'
       });
-      
-      const updatedIncident = { ...incident, status: newStatus };
-      
+
+      const updatedIncident = {
+        ...incident,
+        status: newStatus,
+        ...(newStatus === "resolved" && {
+          actionAt: new Date().toISOString()
+        })
+      };
+
       if (newStatus === 'resolved') {
-        setResolvedIncidents(prev => [...prev.filter(i => i._id !== incident._id), updatedIncident]);
+        setResolvedIncidents(prev =>
+          prev.find(i => i._id === incident._id)
+            ? prev
+            : [...prev, updatedIncident]
+        );
       }
 
       setIncidents(prev => prev.map(i =>
@@ -121,9 +146,16 @@ const AdminIncidentsPage = () => {
 
   const handleDeleteIncident = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this incident?')) return;
-    
-    const incidentToDelete = incidents.find(i => i._id === id);
-    if (!incidentToDelete) return;
+
+    const found = incidents.find(i => i._id === id);
+
+    if (!found) return;
+
+    const incidentToDelete = {
+      ...found,
+      actionAt: new Date().toISOString()
+    };
+    if (!incidentToDelete._id) return;
 
     try {
       await deleteIncident(id);
@@ -131,17 +163,33 @@ const AdminIncidentsPage = () => {
       console.log("Delete fallback applied", err);
     }
 
-    const updatedDeleted = [
-      ...deletedIncidents.filter(i => i._id !== id),
-      incidentToDelete
-    ];
-
-    setDeletedIncidents(updatedDeleted);
+    setDeletedIncidents(prev =>
+      prev.find(i => i._id === id)
+        ? prev
+        : [...prev, incidentToDelete as Incident]
+    );
     setIncidents(prev => prev.filter(incident => incident._id !== id));
   };
 
   const handleRowClick = (id: string) => {
     setSelectedIncidentId(prev => prev === id ? null : id);
+  };
+
+  const applyFilters = () => {
+    let data = [...incidents];
+
+    if (search) {
+      data = data.filter(i =>
+        i.description.toLowerCase().includes(search.toLowerCase()) ||
+        i.type.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (severityFilter !== "all") {
+      data = data.filter(i => i.severity === severityFilter);
+    }
+
+    setFilteredIncidents(data);
   };
 
   const getSeverityBadgeColor = (severity: string) => {
@@ -173,11 +221,11 @@ const AdminIncidentsPage = () => {
     }
   };
 
-  const displayData = 
+  const displayData =
     activeView === 'resolved' ? resolvedIncidents :
-    activeView === 'critical' ? incidents.filter(i => i.severity === 'critical') :
-    activeView === 'deleted' ? deletedIncidents :
-    incidents;
+      activeView === 'critical' ? incidents.filter(i => i.severity === 'critical') :
+        activeView === 'deleted' ? deletedIncidents :
+          (filteredIncidents.length > 0 ? filteredIncidents : incidents);
 
   return (
     <AdminDashboardLayout>
@@ -238,16 +286,29 @@ const AdminIncidentsPage = () => {
                 />
               </div>
             </div>
-            <Button 
-              className="px-4"
-              onClick={() => {
-                // Live filtering is already reactive via useEffect, 
-                // but we can add an explicit refresh here if needed
-                console.log("Filters applied");
-              }}
-            >
-              Apply
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                className="px-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  applyFilters();
+                }}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="outline"
+                className="px-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearch("");
+                  setSeverityFilter("all");
+                  setFilteredIncidents([]);
+                }}
+              >
+                Clear
+              </Button>
+            </div>
             <Select value={severityFilter} onValueChange={setSeverityFilter}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by severity" />
@@ -475,9 +536,9 @@ const AdminIncidentsPage = () => {
           <div className="mt-4 border p-4 rounded bg-muted/20 animate-in fade-in duration-300">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-sm text-orange-600">Archived Deletions</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="text-[10px] h-7"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -493,6 +554,11 @@ const AdminIncidentsPage = () => {
                   <div>
                     <span className="font-medium">{inc.type}</span>
                     <span className="text-muted-foreground ml-2">— {inc.description.substring(0, 30)}...</span>
+                    {(inc as any).actionAt && (
+                      <span className="ml-2 text-[10px] text-muted-foreground">
+                        ({new Date((inc as any).actionAt).toLocaleString()})
+                      </span>
+                    )}
                   </div>
                   <Badge variant="outline" className="text-[10px]">Deleted</Badge>
                 </div>
