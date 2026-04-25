@@ -130,42 +130,6 @@ const AdminIncidentsPage = () => {
     setIncidents(updatedIncidents);
   };
 
-  const handleStatusUpdate = async (incident: Incident, newStatus: string) => {
-    if (newStatus === 'resolved') {
-      handleResolve(incident);
-      return;
-    }
-
-    try {
-      await updateIncident(incident._id, {
-        status: newStatus,
-        severity: incident.severity,
-        category: incident.category || 'general'
-      });
-
-      const updatedIncident = {
-        ...incident,
-        status: newStatus
-      };
-
-      setIncidents(prev => {
-        const updated = prev.map(i =>
-          i?._id === incident._id ? updatedIncident : i
-        );
-        localStorage.setItem("incidents", JSON.stringify(updated));
-        return updated;
-      });
-    } catch (err) {
-      console.log("Status update fallback applied", err);
-      setIncidents(prev => {
-        const updated = prev.map(i =>
-          i?._id === incident._id ? { ...incident, status: newStatus } : i
-        );
-        localStorage.setItem("incidents", JSON.stringify(updated));
-        return updated;
-      });
-    }
-  };
 
   const handleDeleteIncident = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this incident?')) return;
@@ -234,9 +198,6 @@ const AdminIncidentsPage = () => {
     i => !deletedIncidents.some(d => d?._id === i?._id)
   );
 
-  const activeIncidents = displayIncidents.filter(
-    i => i?.status !== "resolved"
-  );
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
