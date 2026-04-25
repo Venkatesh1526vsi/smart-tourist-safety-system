@@ -27,6 +27,9 @@ const AdminUsersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deletedUsers, setDeletedUsers] = useState<any[]>([]);
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -78,10 +81,20 @@ const AdminUsersPage = () => {
     setExpandedUserId(prev => (prev === id ? null : id));
   };
 
+  const handleEditUser = (user: User) => {
+    console.log("Edit user:", user);
+  };
+
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Delete this user?')) return;
     try {
+      const userToDelete = users.find(u => u._id === id);
       await deleteUser(id);
+      
+      if (userToDelete) {
+        setDeletedUsers(prev => [...prev, userToDelete]);
+      }
+      
       setUsers(prev => prev.filter(u => u._id !== id));
     } catch (err) {
       console.error('Delete failed', err);
@@ -103,8 +116,8 @@ const AdminUsersPage = () => {
             <p className="text-muted-foreground text-sm mt-1">Manage user accounts and permissions</p>
           </div>
           <Button
-            className="flex items-center gap-2"
-            onClick={() => console.log('Add user clicked')}
+            className="flex items-center gap-2 cursor-pointer hover:bg-primary/90 transition"
+            onClick={() => setShowAddModal(true)}
           >
             <UserPlus className="h-4 w-4" />
             Add User
@@ -132,11 +145,16 @@ const AdminUsersPage = () => {
             <p className="text-xs text-muted-foreground">Administrators</p>
           </DashboardCard>
 
-          <DashboardCard title="Suspended" icon={<Ban className="h-5 w-5 text-orange-500" />}>
+          <DashboardCard 
+            title="Deleted" 
+            icon={<Ban className="h-5 w-5 text-orange-500" />}
+            className="cursor-pointer hover:shadow-md transition"
+            onClick={() => setShowDeletedUsers(prev => !prev)}
+          >
             <div className="text-2xl font-bold">
-              {users.filter(u => u.status === 'suspended').length}
+              {deletedUsers.length}
             </div>
-            <p className="text-xs text-muted-foreground">Suspended accounts</p>
+            <p className="text-xs text-muted-foreground">Deleted this session</p>
           </DashboardCard>
         </div>
 
@@ -152,6 +170,12 @@ const AdminUsersPage = () => {
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
                 />
+                <button
+                  onClick={() => setSearch(search)}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs border rounded hover:bg-muted transition"
+                >
+                  Apply
+                </button>
               </div>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -237,7 +261,7 @@ const AdminUsersPage = () => {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Edit user:', user._id);
+                                handleEditUser(user);
                               }}
                             >
                               <Edit className="h-4 w-4" />
@@ -311,7 +335,60 @@ const AdminUsersPage = () => {
             </div>
           )}
         </DashboardCard>
+
+        {showDeletedUsers && (
+          <div className="mt-4 border p-4 rounded bg-muted/20 animate-in fade-in duration-300">
+            <h3 className="font-semibold mb-2">Deleted Users</h3>
+            {deletedUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No deleted users</p>
+            ) : (
+              <div className="space-y-2">
+                {deletedUsers.map(user => (
+                  <div key={user._id} className="border-b border-border py-2 text-sm flex justify-between">
+                    <span>{user.name} - {user.email}</span>
+                    <Badge variant="outline" className="text-[10px]">Deleted</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-96 shadow-xl border animate-in zoom-in-95 duration-200">
+            <h2 className="text-lg font-semibold mb-4">Add User</h2>
+            <div className="space-y-4">
+              <input
+                placeholder="Name"
+                className="border p-2 w-full rounded bg-background"
+              />
+              <input
+                placeholder="Email"
+                className="border p-2 w-full rounded bg-background"
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="px-4 py-2 border rounded hover:bg-muted transition text-sm"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition text-sm"
+                onClick={() => {
+                  console.log("Add user clicked");
+                  setShowAddModal(false);
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminDashboardLayout>
   );
 };
