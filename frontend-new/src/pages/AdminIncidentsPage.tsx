@@ -48,86 +48,64 @@ const AdminIncidentsPage = () => {
   const [activeView, setActiveView] = useState("all");
   const [filteredIncidents, setFilteredIncidents] = useState<Incident[]>([]);
 
-  useEffect(() => {
-    localStorage.setItem("incidents", JSON.stringify(incidents));
-  }, [incidents]);
 
-  useEffect(() => {
-    localStorage.setItem("resolvedIncidents", JSON.stringify(resolvedIncidents));
-  }, [resolvedIncidents]);
+  const fetchIncidents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    localStorage.setItem("deletedIncidents", JSON.stringify(deletedIncidents));
-  }, [deletedIncidents]);
+      const response: any = await getMyIncidents();
 
-  useEffect(() => {
-    const hasLocalData =
-      localStorage.getItem("incidents") ||
-      localStorage.getItem("resolvedIncidents") ||
-      localStorage.getItem("deletedIncidents");
+      const data = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response?.data?.data)
+            ? response.data.data
+            : [];
 
-    // 🚫 Prevent overwrite if local data exists
-    if (hasLocalData) {
+      // 🔥 FILTER OUT resolved + deleted (ADD THIS PART)
+      const resolvedIds = JSON.parse(localStorage.getItem("resolvedIncidents") || "[]").map((i: any) => i._id);
+      const deletedIds = JSON.parse(localStorage.getItem("deletedIncidents") || "[]").map((i: any) => i._id);
+
+      const cleanedData = data.filter((i: any) =>
+        !resolvedIds.includes(i._id) &&
+        !deletedIds.includes(i._id)
+      );
+
+      // ✅ USE cleanedData instead of data
+      setIncidents(cleanedData);
+      localStorage.setItem("incidents", JSON.stringify(cleanedData));
+
+    } catch (err) {
+      console.error("API ERROR:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load incidents');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const fetchIncidents = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response: any = await getMyIncidents();
-
-        const finalData = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-            ? response.data
-            : Array.isArray(response?.data?.data)
-              ? response.data.data
-              : [];
-
-        setIncidents(prev => {
-          // 🚫 Do not overwrite existing local state
-          if (prev && prev.length > 0) return prev;
-
-          localStorage.setItem("incidents", JSON.stringify(finalData));
-          return finalData as Incident[];
-        });
-      } catch (err) {
-        console.error("API ERROR:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load incidents');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  };
+  useEffect(() => {
     fetchIncidents();
   }, []); // Run ONLY once on mount
 
   const handleResolve = (incident: Incident) => {
-    const found = incidents.find(i => i._id === incident._id);
-    if (!found) return;
-
     const resolvedItem = {
-      ...found,
+      ...incident,
       status: "resolved",
       resolvedAt: new Date().toISOString()
     };
 
-    const stored = JSON.parse(localStorage.getItem("resolvedIncidents") || "[]");
+    setResolvedIncidents(prev => {
+      const updated = [...prev, resolvedItem];
+      localStorage.setItem("resolvedIncidents", JSON.stringify(updated));
+      return updated;
+    });
 
-    const updatedResolved = stored.find((i: any) => i._id === resolvedItem._id)
-      ? stored
-      : [...stored, resolvedItem];
-
-    localStorage.setItem("resolvedIncidents", JSON.stringify(updatedResolved));
-    setResolvedIncidents(updatedResolved);
-
-    const updatedIncidents = incidents.filter(i => i._id !== resolvedItem._id);
-
-    localStorage.setItem("incidents", JSON.stringify(updatedIncidents));
-    setIncidents(updatedIncidents);
+    setIncidents(prev => {
+      const updated = prev.filter(i => i._id !== incident._id);
+      localStorage.setItem("incidents", JSON.stringify(updated));
+      return updated;
+    });
   };
 
 
@@ -215,16 +193,12 @@ const AdminIncidentsPage = () => {
     }
   };
 
-  console.log("ResolvedIncidents UI:", resolvedIncidents);
-
   const displayData =
     activeView === "resolved"
       ? resolvedIncidents
       : activeView === "deleted"
         ? deletedIncidents
-        : filteredIncidents.length > 0
-          ? filteredIncidents
-          : incidents;
+        : incidents;
 
   return (
     <AdminDashboardLayout>
