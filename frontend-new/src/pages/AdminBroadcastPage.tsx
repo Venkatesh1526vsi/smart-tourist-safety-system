@@ -25,9 +25,43 @@ interface Broadcast {
 
 const AdminBroadcastPage = () => {
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>(() => {
-    const stored = localStorage.getItem("broadcasts");
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem("broadcasts");
+      if (stored && stored !== "[]") return JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to parse broadcasts from localStorage", e);
+    }
+
+    // ✅ Fallback demo data
+    return [
+      {
+        _id: "1",
+        title: "Heavy Rain Alert",
+        message: "Heavy rainfall expected in the Pune region. Please avoid unnecessary travel and stay safe.",
+        type: "warning",
+        targetAudience: "region",
+        status: "sent",
+        sentAt: new Date(Date.now() - 7200000).toISOString(),
+        recipients: 5234,
+        regions: ["Pune", "Kothrud"],
+        createdBy: "Admin",
+        createdAt: new Date(Date.now() - 10800000).toISOString()
+      },
+      {
+        _id: "2",
+        title: "System Maintenance",
+        message: "Emergency services will be temporarily unavailable for maintenance from 2AM to 4AM.",
+        type: "maintenance",
+        targetAudience: "all",
+        status: "scheduled",
+        scheduledFor: new Date(Date.now() + 3600000).toISOString(),
+        recipients: 0,
+        createdBy: "Admin",
+        createdAt: new Date(Date.now() - 3600000).toISOString()
+      }
+    ];
   });
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -288,31 +322,32 @@ const AdminBroadcastPage = () => {
                 </Select>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-col gap-2 mt-3">
+                <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                   <input
                     type="checkbox"
-                    id="schedule-toggle"
                     checked={newBroadcast.isScheduled}
                     onChange={(e) => setNewBroadcast(prev => ({ ...prev, isScheduled: e.target.checked }))}
                     className="h-4 w-4 rounded border-gray-300"
                   />
-                  <label htmlFor="schedule-toggle" className="text-sm font-medium cursor-pointer">
-                    Schedule for later
-                  </label>
-                </div>
+                  Schedule for later
+                </label>
+
                 {newBroadcast.isScheduled && (
-                  <Input
-                    type="datetime-local"
-                    value={newBroadcast.scheduledDate}
-                    onChange={(e) => setNewBroadcast(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                    className="mb-2"
-                  />
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <Input
+                      type="datetime-local"
+                      value={newBroadcast.scheduledDate}
+                      onChange={(e) => setNewBroadcast(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                      className="w-full bg-background mt-1"
+                    />
+                  </div>
                 )}
+
                 <Button
                   onClick={handleSendBroadcast}
                   disabled={!newBroadcast.title || !newBroadcast.message || (newBroadcast.isScheduled && !newBroadcast.scheduledDate)}
-                  className="w-full flex items-center gap-2"
+                  className="w-full flex items-center gap-2 mt-2"
                 >
                   <Send className="h-4 w-4" />
                   {newBroadcast.isScheduled ? 'Schedule Broadcast' : 'Send Broadcast'}
