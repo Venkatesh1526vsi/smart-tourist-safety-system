@@ -40,6 +40,12 @@ const AdminUsersPage = () => {
     role: "user",
     password: ""
   });
+  const [expandedDeletedUserId, setExpandedDeletedUserId] = useState<string | null>(null);
+
+  // Sync deleted users to localStorage
+  useEffect(() => {
+    localStorage.setItem("deletedUsers", JSON.stringify(deletedUsers));
+  }, [deletedUsers]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -99,6 +105,8 @@ const AdminUsersPage = () => {
     if (!window.confirm('Delete this user?')) return;
     try {
       const userToDelete = { ...users.find(u => u._id === id) };
+      if (!userToDelete._id) return;
+
       await deleteUser(id);
 
       const updatedDeleted = [
@@ -107,8 +115,6 @@ const AdminUsersPage = () => {
       ];
 
       setDeletedUsers(updatedDeleted);
-      localStorage.setItem("deletedUsers", JSON.stringify(updatedDeleted));
-
       setUsers(prev => prev.filter(u => u._id !== id));
     } catch (err) {
       console.error('Delete failed', err);
@@ -386,9 +392,27 @@ const AdminUsersPage = () => {
             ) : (
               <div className="space-y-2">
                 {deletedUsers.map(user => (
-                  <div key={user._id} className="border-b border-border py-2 text-sm flex justify-between">
-                    <span>{user.name} - {user.email}</span>
-                    <Badge variant="outline" className="text-[10px]">Deleted</Badge>
+                  <div key={user._id}>
+                    <div
+                      onClick={() =>
+                        setExpandedDeletedUserId(prev =>
+                          prev === user._id ? null : user._id
+                        )
+                      }
+                      className="border-b border-border py-2 text-sm flex justify-between cursor-pointer hover:bg-muted/40 transition"
+                    >
+                      <span>{user.name} - {user.email}</span>
+                      <Badge variant="outline" className="text-[10px]">Deleted</Badge>
+                    </div>
+
+                    {expandedDeletedUserId === user._id && (
+                      <div className="p-3 text-[11px] bg-muted/30 border-b space-y-1 animate-in slide-in-from-top-1 duration-200">
+                        <p><strong className="text-muted-foreground mr-2">ID:</strong> {user._id}</p>
+                        <p><strong className="text-muted-foreground mr-2">Email:</strong> {user.email}</p>
+                        <p><strong className="text-muted-foreground mr-2">Role:</strong> {user.role}</p>
+                        <p><strong className="text-muted-foreground mr-2">Name:</strong> {user.name}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
