@@ -145,21 +145,26 @@ const AdminIncidentsPage = () => {
     setSelectedIncidentId(prev => prev === id ? null : id);
   };
 
-  const applyFilters = () => {
+  const handleApplyFilter = () => {
     let data = [...incidents];
 
     if (search) {
       data = data.filter(i =>
-        (i?.description || "").toLowerCase().includes(search.toLowerCase()) ||
-        (i?.type || "").toLowerCase().includes(search.toLowerCase())
+        i.description?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
     if (severityFilter !== "all") {
-      data = data.filter(i => i?.severity === severityFilter);
+      data = data.filter(i => i.severity === severityFilter);
     }
 
     setFilteredIncidents(data);
+  };
+
+  const handleClearFilter = () => {
+    setSearch("");
+    setSeverityFilter("all");
+    setFilteredIncidents([]);
   };
 
   const getSeverityBadgeColor = (severity: string) => {
@@ -198,7 +203,9 @@ const AdminIncidentsPage = () => {
       ? resolvedIncidents
       : activeView === "deleted"
         ? deletedIncidents
-        : incidents;
+        : filteredIncidents.length > 0
+          ? filteredIncidents
+          : incidents;
 
   return (
     <AdminDashboardLayout>
@@ -212,14 +219,14 @@ const AdminIncidentsPage = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div onClick={() => setActiveView("all")} className="cursor-pointer">
+          <div onClick={() => { setActiveView("all"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Total" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />} className={activeView === 'all' ? 'ring-2 ring-primary' : ''}>
               <div className="text-2xl font-bold">{incidents.length}</div>
               <p className="text-xs text-muted-foreground">Active Reports</p>
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("critical")} className="cursor-pointer">
+          <div onClick={() => { setActiveView("critical"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Critical" icon={<AlertTriangle className="h-5 w-5 text-red-500" />} className={activeView === 'critical' ? 'ring-2 ring-red-500' : ''}>
               <div className="text-2xl font-bold">
                 {incidents.filter(i => i?.severity === 'critical').length}
@@ -228,7 +235,7 @@ const AdminIncidentsPage = () => {
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("resolved")} className="cursor-pointer">
+          <div onClick={() => { setActiveView("resolved"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Resolved" icon={<CheckCircle className="h-5 w-5 text-green-500" />} className={activeView === 'resolved' ? 'ring-2 ring-green-500' : ''}>
               <div className="text-2xl font-bold">
                 {resolvedIncidents.length}
@@ -237,7 +244,7 @@ const AdminIncidentsPage = () => {
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("deleted")} className="cursor-pointer">
+          <div onClick={() => { setActiveView("deleted"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Deleted" icon={<XCircle className="h-5 w-5 text-orange-500" />} className={activeView === 'deleted' ? 'ring-2 ring-orange-500' : ''}>
               <div className="text-2xl font-bold">{deletedIncidents.length}</div>
               <p className="text-xs text-muted-foreground">Archived deletions</p>
@@ -264,7 +271,7 @@ const AdminIncidentsPage = () => {
                 className="px-4"
                 onClick={(e) => {
                   e.stopPropagation();
-                  applyFilters();
+                  handleApplyFilter();
                 }}
               >
                 Apply
@@ -274,9 +281,7 @@ const AdminIncidentsPage = () => {
                 className="px-4"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSearch("");
-                  setSeverityFilter("all");
-                  setFilteredIncidents([]);
+                  handleClearFilter();
                 }}
               >
                 Clear
