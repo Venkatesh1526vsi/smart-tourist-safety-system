@@ -90,11 +90,11 @@ const AdminUsersPage = () => {
     try {
       const userToDelete = users.find(u => u._id === id);
       await deleteUser(id);
-      
+
       if (userToDelete) {
         setDeletedUsers(prev => [...prev, userToDelete]);
       }
-      
+
       setUsers(prev => prev.filter(u => u._id !== id));
     } catch (err) {
       console.error('Delete failed', err);
@@ -145,17 +145,21 @@ const AdminUsersPage = () => {
             <p className="text-xs text-muted-foreground">Administrators</p>
           </DashboardCard>
 
-          <DashboardCard 
-            title="Deleted" 
-            icon={<Ban className="h-5 w-5 text-orange-500" />}
-            className="cursor-pointer hover:shadow-md transition"
+          <div
             onClick={() => setShowDeletedUsers(prev => !prev)}
+            className="cursor-pointer"
           >
-            <div className="text-2xl font-bold">
-              {deletedUsers.length}
-            </div>
-            <p className="text-xs text-muted-foreground">Deleted this session</p>
-          </DashboardCard>
+            <DashboardCard
+              title="Deleted"
+              icon={<Ban className="h-5 w-5 text-orange-500" />}
+              className="hover:shadow-md transition"
+            >
+              <div className="text-2xl font-bold">
+                {deletedUsers.length}
+              </div>
+              <p className="text-xs text-muted-foreground">Deleted this session</p>
+            </DashboardCard>
+          </div>
         </div>
 
         {/* Filters */}
