@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { AlertTriangle, Filter, Search, Loader2, Eye, Edit, CheckCircle, XCircle, Clock } from "lucide-react";
@@ -8,23 +8,23 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getMyIncidents, updateIncident, deleteIncident } from "@/services/api";
 
-interface Incident {
+type Incident = {
   _id: string;
-  userId: string;
-  type: string;
-  category?: string;
   description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: string;
   status: string;
-  latitude: number;
-  longitude: number;
+  category?: string;
+  type?: string;
+  latitude?: number;
+  longitude?: number;
   evidence_image?: string;
   created_at: string;
   user?: {
     name: string;
     email: string;
   };
-}
+  [key: string]: any;
+};
 
 const AdminIncidentsPage = () => {
   const [incidents, setIncidents] = useState<Incident[]>(() => {
@@ -35,7 +35,6 @@ const AdminIncidentsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [deletedIncidents, setDeletedIncidents] = useState<Incident[]>(() => {
     const stored = localStorage.getItem("deletedIncidents");
@@ -69,7 +68,6 @@ const AdminIncidentsPage = () => {
 
         const response: any = await getMyIncidents();
 
-        // Step 5: Safe data extraction
         const finalData = Array.isArray(response)
           ? response
           : Array.isArray(response?.data)
@@ -78,26 +76,13 @@ const AdminIncidentsPage = () => {
               ? response.data.data
               : [];
 
-        const original = [...finalData];
-        let filtered = [...original];
+        setIncidents(prev => {
+          // If local data already exists, DO NOT override with API data
+          if (prev && prev.length > 0) return prev;
 
-        // Apply filters on copy
-        if (search) {
-          filtered = filtered.filter(incident =>
-            incident.description.toLowerCase().includes(search.toLowerCase()) ||
-            incident.type.toLowerCase().includes(search.toLowerCase())
-          );
-        }
-
-        if (severityFilter !== 'all') {
-          filtered = filtered.filter(incident => incident.severity === severityFilter);
-        }
-
-        if (statusFilter !== 'all') {
-          filtered = filtered.filter(incident => incident.status === statusFilter);
-        }
-
-        setIncidents(filtered as Incident[]);
+          localStorage.setItem("incidents", JSON.stringify(finalData));
+          return finalData as Incident[];
+        });
       } catch (err) {
         console.error("API ERROR:", err);
         setError(err instanceof Error ? err.message : 'Failed to load incidents');
@@ -106,8 +91,13 @@ const AdminIncidentsPage = () => {
       }
     };
 
-    fetchIncidents();
-  }, [search, severityFilter, statusFilter]); // Re-run when filters change
+    const stored = localStorage.getItem("incidents");
+    if (!stored || JSON.parse(stored).length === 0) {
+      fetchIncidents();
+    } else {
+      setLoading(false);
+    }
+  }, []); // Run ONLY once on mount
 
   const handleStatusUpdate = async (incident: Incident, newStatus: string) => {
     try {
@@ -121,41 +111,49 @@ const AdminIncidentsPage = () => {
         ...incident,
         status: newStatus,
         ...(newStatus === "resolved" && {
-          actionAt: new Date().toISOString()
+          resolvedAt: new Date().toISOString()
         })
       };
 
       if (newStatus === 'resolved') {
-        setResolvedIncidents(prev =>
-          prev.find(i => i._id === incident._id)
+        setResolvedIncidents(prev => {
+          const updated = prev.find(i => i._id === incident._id)
             ? prev
-            : [...prev, updatedIncident]
-        );
+            : [...prev, updatedIncident];
+          localStorage.setItem("resolvedIncidents", JSON.stringify(updated));
+          return updated;
+        });
       }
 
-      setIncidents(prev => prev.map(i =>
-        i._id === incident._id ? updatedIncident : i
-      ));
+      setIncidents(prev => {
+        const updated = prev.map(i =>
+          i?._id === incident._id ? updatedIncident : i
+        );
+        localStorage.setItem("incidents", JSON.stringify(updated));
+        return updated;
+      });
     } catch (err) {
       console.log("Status update fallback applied", err);
-      setIncidents(prev => prev.map(i =>
-        i._id === incident._id ? { ...incident, status: newStatus } : i
-      ));
+      setIncidents(prev => {
+        const updated = prev.map(i =>
+          i?._id === incident._id ? { ...incident, status: newStatus } : i
+        );
+        localStorage.setItem("incidents", JSON.stringify(updated));
+        return updated;
+      });
     }
   };
 
   const handleDeleteIncident = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this incident?')) return;
 
-    const found = incidents.find(i => i._id === id);
-
+    const found = incidents.find(i => i?._id === id);
     if (!found) return;
 
     const incidentToDelete = {
       ...found,
-      actionAt: new Date().toISOString()
+      deletedAt: new Date().toISOString()
     };
-    if (!incidentToDelete._id) return;
 
     try {
       await deleteIncident(id);
@@ -163,12 +161,19 @@ const AdminIncidentsPage = () => {
       console.log("Delete fallback applied", err);
     }
 
-    setDeletedIncidents(prev =>
-      prev.find(i => i._id === id)
+    setDeletedIncidents(prev => {
+      const updated = prev.find(i => i?._id === id)
         ? prev
-        : [...prev, incidentToDelete as Incident]
-    );
-    setIncidents(prev => prev.filter(incident => incident._id !== id));
+        : [...prev, incidentToDelete as Incident];
+      localStorage.setItem("deletedIncidents", JSON.stringify(updated));
+      return updated;
+    });
+
+    setIncidents(prev => {
+      const updated = prev.filter(incident => incident?._id !== id);
+      localStorage.setItem("incidents", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleRowClick = (id: string) => {
@@ -180,13 +185,13 @@ const AdminIncidentsPage = () => {
 
     if (search) {
       data = data.filter(i =>
-        i.description.toLowerCase().includes(search.toLowerCase()) ||
-        i.type.toLowerCase().includes(search.toLowerCase())
+        (i?.description || "").toLowerCase().includes(search.toLowerCase()) ||
+        (i?.type || "").toLowerCase().includes(search.toLowerCase())
       );
     }
 
     if (severityFilter !== "all") {
-      data = data.filter(i => i.severity === severityFilter);
+      data = data.filter(i => i?.severity === severityFilter);
     }
 
     setFilteredIncidents(data);
@@ -201,6 +206,14 @@ const AdminIncidentsPage = () => {
       default: return 'bg-gray-500 text-white';
     }
   };
+
+  const displayIncidents = incidents.filter(
+    i => !deletedIncidents.some(d => d?._id === i?._id)
+  );
+
+  const activeIncidents = displayIncidents.filter(
+    i => i?.status !== "resolved"
+  );
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -222,10 +235,13 @@ const AdminIncidentsPage = () => {
   };
 
   const displayData =
-    activeView === 'resolved' ? resolvedIncidents :
-      activeView === 'critical' ? incidents.filter(i => i.severity === 'critical') :
-        activeView === 'deleted' ? deletedIncidents :
-          (filteredIncidents.length > 0 ? filteredIncidents : incidents);
+    activeView === "resolved"
+      ? resolvedIncidents
+      : activeView === "deleted"
+        ? deletedIncidents
+        : filteredIncidents.length > 0
+          ? filteredIncidents
+          : activeIncidents;
 
   return (
     <AdminDashboardLayout>
@@ -239,35 +255,35 @@ const AdminIncidentsPage = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div onClick={() => setActiveView("all")} className="cursor-pointer">
+          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("all"); }} className="cursor-pointer">
             <DashboardCard title="Total" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />} className={activeView === 'all' ? 'ring-2 ring-primary' : ''}>
-              <div className="text-2xl font-bold">{incidents.length}</div>
-              <p className="text-xs text-muted-foreground">All reports</p>
+              <div className="text-2xl font-bold">{displayIncidents.length}</div>
+              <p className="text-xs text-muted-foreground">Active & Resolved</p>
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("critical")} className="cursor-pointer">
+          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("critical"); }} className="cursor-pointer">
             <DashboardCard title="Critical" icon={<AlertTriangle className="h-5 w-5 text-red-500" />} className={activeView === 'critical' ? 'ring-2 ring-red-500' : ''}>
               <div className="text-2xl font-bold">
-                {incidents.filter(i => i.severity === 'critical').length}
+                {displayIncidents.filter(i => i?.severity === 'critical').length}
               </div>
               <p className="text-xs text-muted-foreground">High priority</p>
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("resolved")} className="cursor-pointer">
+          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("resolved"); }} className="cursor-pointer">
             <DashboardCard title="Resolved" icon={<CheckCircle className="h-5 w-5 text-green-500" />} className={activeView === 'resolved' ? 'ring-2 ring-green-500' : ''}>
               <div className="text-2xl font-bold">
-                {incidents.filter(i => i.status === 'resolved').length}
+                {resolvedIncidents.length}
               </div>
               <p className="text-xs text-muted-foreground">Success cases</p>
             </DashboardCard>
           </div>
 
-          <div onClick={() => setActiveView("deleted")} className="cursor-pointer">
+          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("deleted"); }} className="cursor-pointer">
             <DashboardCard title="Deleted" icon={<XCircle className="h-5 w-5 text-orange-500" />} className={activeView === 'deleted' ? 'ring-2 ring-orange-500' : ''}>
               <div className="text-2xl font-bold">{deletedIncidents.length}</div>
-              <p className="text-xs text-muted-foreground">Archived this session</p>
+              <p className="text-xs text-muted-foreground">Archived deletions</p>
             </DashboardCard>
           </div>
         </div>
@@ -321,18 +337,6 @@ const AdminIncidentsPage = () => {
                 <SelectItem value="low">Low</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="reported">Reported</SelectItem>
-                <SelectItem value="investigating">Investigating</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </DashboardCard>
 
@@ -361,46 +365,45 @@ const AdminIncidentsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(Array.isArray(displayData) ? displayData : []).map((incident) => (
-                    <>
+                  {(displayData || []).map((incident: any) => (
+                    <Fragment key={incident?._id || Math.random()}>
                       <tr
-                        key={incident._id}
                         className="border-b border-border hover:bg-muted/50 cursor-pointer"
-                        onClick={() => handleRowClick(incident._id)}
+                        onClick={() => handleRowClick(incident?._id)}
                       >
                         <td className="p-3">
                           <div>
-                            <div className="font-medium">{incident.type}</div>
+                            <div className="font-medium">{incident?.type}</div>
                             <div className="text-sm text-muted-foreground line-clamp-2">
-                              {incident.description}
+                              {incident?.description}
                             </div>
                           </div>
                         </td>
                         <td className="p-3">
                           <div className="text-sm">
-                            <div className="font-medium">{incident.user?.name || 'Unknown'}</div>
-                            <div className="text-muted-foreground">{incident.user?.email || 'N/A'}</div>
+                            <div className="font-medium">{incident?.user?.name || 'Unknown'}</div>
+                            <div className="text-muted-foreground">{incident?.user?.email || 'N/A'}</div>
                           </div>
                         </td>
                         <td className="p-3">
-                          <Badge className={getSeverityBadgeColor(incident.severity)}>
-                            {incident.severity}
+                          <Badge className={getSeverityBadgeColor(incident?.severity)}>
+                            {incident?.severity}
                           </Badge>
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            {getStatusIcon(incident.status)}
-                            <Badge className={getStatusBadgeColor(incident.status)}>
-                              {incident.status}
+                            {getStatusIcon(incident?.status)}
+                            <Badge className={getStatusBadgeColor(incident?.status)}>
+                              {incident?.status}
                             </Badge>
                           </div>
                         </td>
                         <td className="p-3">
                           <div className="text-sm">
-                            {new Date(incident.created_at).toLocaleDateString()}
+                            {incident?.created_at ? new Date(incident.created_at).toLocaleDateString() : 'N/A'}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(incident.created_at).toLocaleTimeString()}
+                            {incident?.created_at ? new Date(incident.created_at).toLocaleTimeString() : ''}
                           </div>
                         </td>
                         <td className="p-3">
@@ -524,7 +527,7 @@ const AdminIncidentsPage = () => {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -607,11 +610,19 @@ const AdminIncidentsPage = () => {
                 onClick={async () => {
                   try {
                     await updateIncident(editingIncident._id, editingIncident);
-                    setIncidents(prev => prev.map(i => i._id === editingIncident._id ? editingIncident : i));
+                    setIncidents(prev => {
+                      const updated = prev.map(i => i?._id === editingIncident._id ? editingIncident : i);
+                      localStorage.setItem("incidents", JSON.stringify(updated));
+                      return updated;
+                    });
                     setEditingIncident(null);
                   } catch (err) {
                     console.log("Edit fallback applied", err);
-                    setIncidents(prev => prev.map(i => i._id === editingIncident._id ? editingIncident : i));
+                    setIncidents(prev => {
+                      const updated = prev.map(i => i?._id === editingIncident._id ? editingIncident : i);
+                      localStorage.setItem("incidents", JSON.stringify(updated));
+                      return updated;
+                    });
                     setEditingIncident(null);
                   }
                 }}
