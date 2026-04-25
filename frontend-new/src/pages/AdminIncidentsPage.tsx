@@ -194,9 +194,6 @@ const AdminIncidentsPage = () => {
     }
   };
 
-  const displayIncidents = incidents.filter(
-    i => !deletedIncidents.some(d => d?._id === i?._id)
-  );
 
 
   const getStatusBadgeColor = (status: string) => {
