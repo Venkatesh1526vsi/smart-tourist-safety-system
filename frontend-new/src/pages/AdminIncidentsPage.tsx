@@ -61,6 +61,17 @@ const AdminIncidentsPage = () => {
   }, [deletedIncidents]);
 
   useEffect(() => {
+    const hasLocalData =
+      localStorage.getItem("incidents") ||
+      localStorage.getItem("resolvedIncidents") ||
+      localStorage.getItem("deletedIncidents");
+
+    // 🚫 Prevent overwrite if local data exists
+    if (hasLocalData) {
+      setLoading(false);
+      return;
+    }
+
     const fetchIncidents = async () => {
       try {
         setLoading(true);
@@ -77,7 +88,7 @@ const AdminIncidentsPage = () => {
               : [];
 
         setIncidents(prev => {
-          // If local data already exists, DO NOT override with API data
+          // 🚫 Do not overwrite existing local state
           if (prev && prev.length > 0) return prev;
 
           localStorage.setItem("incidents", JSON.stringify(finalData));
@@ -91,15 +102,40 @@ const AdminIncidentsPage = () => {
       }
     };
 
-    const stored = localStorage.getItem("incidents");
-    if (!stored || JSON.parse(stored).length === 0) {
-      fetchIncidents();
-    } else {
-      setLoading(false);
-    }
+    fetchIncidents();
   }, []); // Run ONLY once on mount
 
+  const handleResolve = (incident: Incident) => {
+    const found = incidents.find(i => i._id === incident._id);
+    if (!found) return;
+
+    const resolvedItem = {
+      ...found,
+      status: "resolved",
+      resolvedAt: new Date().toISOString()
+    };
+
+    const stored = JSON.parse(localStorage.getItem("resolvedIncidents") || "[]");
+
+    const updatedResolved = stored.find((i: any) => i._id === resolvedItem._id)
+      ? stored
+      : [...stored, resolvedItem];
+
+    localStorage.setItem("resolvedIncidents", JSON.stringify(updatedResolved));
+    setResolvedIncidents(updatedResolved);
+
+    const updatedIncidents = incidents.filter(i => i._id !== resolvedItem._id);
+
+    localStorage.setItem("incidents", JSON.stringify(updatedIncidents));
+    setIncidents(updatedIncidents);
+  };
+
   const handleStatusUpdate = async (incident: Incident, newStatus: string) => {
+    if (newStatus === 'resolved') {
+      handleResolve(incident);
+      return;
+    }
+
     try {
       await updateIncident(incident._id, {
         status: newStatus,
@@ -109,21 +145,8 @@ const AdminIncidentsPage = () => {
 
       const updatedIncident = {
         ...incident,
-        status: newStatus,
-        ...(newStatus === "resolved" && {
-          resolvedAt: new Date().toISOString()
-        })
+        status: newStatus
       };
-
-      if (newStatus === 'resolved') {
-        setResolvedIncidents(prev => {
-          const updated = prev.find(i => i._id === incident._id)
-            ? prev
-            : [...prev, updatedIncident];
-          localStorage.setItem("resolvedIncidents", JSON.stringify(updated));
-          return updated;
-        });
-      }
 
       setIncidents(prev => {
         const updated = prev.map(i =>
@@ -234,6 +257,8 @@ const AdminIncidentsPage = () => {
     }
   };
 
+  console.log("ResolvedIncidents UI:", resolvedIncidents);
+
   const displayData =
     activeView === "resolved"
       ? resolvedIncidents
@@ -241,7 +266,7 @@ const AdminIncidentsPage = () => {
         ? deletedIncidents
         : filteredIncidents.length > 0
           ? filteredIncidents
-          : activeIncidents;
+          : incidents;
 
   return (
     <AdminDashboardLayout>
@@ -255,23 +280,23 @@ const AdminIncidentsPage = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("all"); }} className="cursor-pointer">
+          <div onClick={() => setActiveView("all")} className="cursor-pointer">
             <DashboardCard title="Total" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />} className={activeView === 'all' ? 'ring-2 ring-primary' : ''}>
-              <div className="text-2xl font-bold">{displayIncidents.length}</div>
-              <p className="text-xs text-muted-foreground">Active & Resolved</p>
+              <div className="text-2xl font-bold">{incidents.length}</div>
+              <p className="text-xs text-muted-foreground">Active Reports</p>
             </DashboardCard>
           </div>
 
-          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("critical"); }} className="cursor-pointer">
+          <div onClick={() => setActiveView("critical")} className="cursor-pointer">
             <DashboardCard title="Critical" icon={<AlertTriangle className="h-5 w-5 text-red-500" />} className={activeView === 'critical' ? 'ring-2 ring-red-500' : ''}>
               <div className="text-2xl font-bold">
-                {displayIncidents.filter(i => i?.severity === 'critical').length}
+                {incidents.filter(i => i?.severity === 'critical').length}
               </div>
               <p className="text-xs text-muted-foreground">High priority</p>
             </DashboardCard>
           </div>
 
-          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("resolved"); }} className="cursor-pointer">
+          <div onClick={() => setActiveView("resolved")} className="cursor-pointer">
             <DashboardCard title="Resolved" icon={<CheckCircle className="h-5 w-5 text-green-500" />} className={activeView === 'resolved' ? 'ring-2 ring-green-500' : ''}>
               <div className="text-2xl font-bold">
                 {resolvedIncidents.length}
@@ -280,7 +305,7 @@ const AdminIncidentsPage = () => {
             </DashboardCard>
           </div>
 
-          <div onClick={(e: any) => { e.stopPropagation(); setActiveView("deleted"); }} className="cursor-pointer">
+          <div onClick={() => setActiveView("deleted")} className="cursor-pointer">
             <DashboardCard title="Deleted" icon={<XCircle className="h-5 w-5 text-orange-500" />} className={activeView === 'deleted' ? 'ring-2 ring-orange-500' : ''}>
               <div className="text-2xl font-bold">{deletedIncidents.length}</div>
               <p className="text-xs text-muted-foreground">Archived deletions</p>
@@ -428,13 +453,13 @@ const AdminIncidentsPage = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            {incident.status !== 'resolved' && (
+                            {incident?.status !== 'resolved' && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
+                                onClick={(e: any) => {
                                   e.stopPropagation();
-                                  handleStatusUpdate(incident, 'resolved');
+                                  handleResolve(incident);
                                 }}
                                 className="text-green-600 hover:text-green-700"
                               >
