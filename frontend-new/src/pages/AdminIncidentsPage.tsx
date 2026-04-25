@@ -174,7 +174,7 @@ const AdminIncidentsPage = () => {
   };
 
   const displayData = 
-    activeView === 'resolved' ? incidents.filter(i => i.status === 'resolved') :
+    activeView === 'resolved' ? resolvedIncidents :
     activeView === 'critical' ? incidents.filter(i => i.severity === 'critical') :
     activeView === 'deleted' ? deletedIncidents :
     incidents;
