@@ -13,19 +13,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   console.log('[ProtectedRoute] Render - isAuthenticated:', isAuthenticated, 'loading:', loading);
   console.log('[ProtectedRoute] user:', user, 'token:', token ? 'exists' : 'null');
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Loading...</span>
-      </div>
-    );
-  }
+  // Use direct localStorage check as a fail-safe for authentication persistence
+  const storedToken = localStorage.getItem("token");
 
-  if (!isAuthenticated) {
+  if (!storedToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
   // Admin access check
   if (location.pathname.startsWith('/dashboard/admin') && user?.role !== 'admin') {
     console.log('[ProtectedRoute] ACCESS DENIED - User is not an admin, redirecting to user dashboard');

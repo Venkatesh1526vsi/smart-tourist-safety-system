@@ -10,9 +10,21 @@ const AdminAnalyticsPage = () => {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   // 1. LOAD DATA (localStorage ONLY)
-  const incidents = JSON.parse(localStorage.getItem("incidents") || "[]");
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  const broadcasts = JSON.parse(localStorage.getItem("broadcasts") || "[]");
+  const incidents = JSON.parse(
+    localStorage.getItem("incidents") ?? 
+    localStorage.getItem("incidentData") ?? 
+    "[]"
+  );
+  const users = JSON.parse(
+    localStorage.getItem("users") ?? 
+    localStorage.getItem("userData") ?? 
+    "[]"
+  );
+  const broadcasts = JSON.parse(
+    localStorage.getItem("broadcasts") ?? 
+    localStorage.getItem("broadcastData") ?? 
+    "[]"
+  );
 
   // 2. BASE FILTERING (Time Range)
   let baseIncidents = [...incidents];

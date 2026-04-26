@@ -24,41 +24,37 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 // Auth Provider Component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Stabilize initialization - Step 1
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (storedToken && storedUser) {
+  // Initialize state synchronously from localStorage to prevent redirect loops
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        return JSON.parse(savedUser);
       } catch (e) {
-        console.error('Failed to parse user from localStorage:', e);
+        console.error("Failed to parse user from localStorage:", e);
+        return null;
       }
     }
+    return null;
+  });
+  const [loading, setLoading] = useState(false); // Set to false since we initialize synchronously
 
-    setLoading(false);
-  }, []);
-
-
-  // Login method - Step 3
+  // Login method
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response = await loginService({ email, password });
       const authData = response.data || response;
-      const { token, user } = authData;
+      const { token: newToken, user: newUser } = authData;
 
-      if (token && user) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+      if (newToken && newUser) {
+        // Step 1: Save to localStorage first
+        localStorage.setItem("token", newToken);
+        localStorage.setItem("user", JSON.stringify(newUser));
 
-        setToken(token);
-        setUser(user);
+        // Step 2: Update state
+        setToken(newToken);
+        setUser(newUser);
       }
     } catch (error) {
       console.error('[AuthContext] login error:', error);
@@ -71,14 +67,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await registerService({ name, email, password });
       const authData = response.data || response;
-      const { token, user } = authData;
+      const { token: newToken, user: newUser } = authData;
 
-      if (token && user) {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+      if (newToken && newUser) {
+        localStorage.setItem("token", newToken);
+        localStorage.setItem("user", JSON.stringify(newUser));
 
-        setToken(token);
-        setUser(user);
+        setToken(newToken);
+        setUser(newUser);
       }
     } catch (error) {
       console.error('[AuthContext] register error:', error);
@@ -89,6 +85,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout method
   const logout = (): void => {
     logoutService();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setToken(null);
     setUser(null);
   };
@@ -96,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!(token && user),
+    isAuthenticated: !!token, // Primary check based on token existence
     loading,
     login,
     register,
