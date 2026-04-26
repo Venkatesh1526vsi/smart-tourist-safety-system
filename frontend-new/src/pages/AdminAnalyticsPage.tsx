@@ -1,121 +1,103 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { BarChart3, TrendingUp, Users, AlertTriangle, Calendar, Download, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Users, AlertTriangle, Calendar, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAllIncidents, type Incident } from "@/services/api";
-
-
-interface AnalyticsData {
-  totalIncidents: number;
-  resolvedIncidents: number;
-  criticalIncidents: number;
-  averageResolutionTime: number;
-  incidentsByType: { [key: string]: number };
-  incidentsBySeverity: { [key: string]: number };
-  monthlyTrend: { month: string; count: number }[];
-  userActivity: { day: string; activeUsers: number }[];
-}
 
 const AdminAnalyticsPage = () => {
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState('30d');
+  const [timeRange, setTimeRange] = useState('30');
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await getAllIncidents();
-        const incidentsData: Incident[] = response.data ?? [];
-        
-        // Calculate analytics from real data
-        const totalIncidents = incidentsData.length;
-        const resolvedIncidents = incidentsData.filter(i => i.status === 'resolved').length;
-        const criticalIncidents = incidentsData.filter(i => i.severity === 'critical').length;
-        
-        // Calculate average resolution time (mock calculation)
-        const resolvedIncidentsWithTime = incidentsData.filter(i => i.status === 'resolved');
-        const averageResolutionTime = resolvedIncidentsWithTime.length > 0 ? 24 : 0; // hours
-        
-        // Group incidents by type
-        const incidentsByType = incidentsData.reduce((acc, incident) => {
-          acc[incident.type] = (acc[incident.type] || 0) + 1;
-          return acc;
-        }, {} as { [key: string]: number });
-        
-        // Group incidents by severity
-        const incidentsBySeverity = incidentsData.reduce((acc, incident) => {
-          acc[incident.severity] = (acc[incident.severity] || 0) + 1;
-          return acc;
-        }, {} as { [key: string]: number });
-        
-        // Generate monthly trend (mock data based on real incidents)
-        const monthlyTrend = [
-          { month: 'Jan', count: Math.floor(totalIncidents * 0.15) },
-          { month: 'Feb', count: Math.floor(totalIncidents * 0.18) },
-          { month: 'Mar', count: Math.floor(totalIncidents * 0.22) },
-          { month: 'Apr', count: Math.floor(totalIncidents * 0.20) },
-          { month: 'May', count: Math.floor(totalIncidents * 0.25) },
-        ];
-        
-        // Generate user activity (mock data)
-        const userActivity = [
-          { day: 'Mon', activeUsers: 1247 },
-          { day: 'Tue', activeUsers: 1356 },
-          { day: 'Wed', activeUsers: 1423 },
-          { day: 'Thu', activeUsers: 1389 },
-          { day: 'Fri', activeUsers: 1567 },
-          { day: 'Sat', activeUsers: 1123 },
-          { day: 'Sun', activeUsers: 987 },
-        ];
-        
-        setAnalytics({
-          totalIncidents,
-          resolvedIncidents,
-          criticalIncidents,
-          averageResolutionTime,
-          incidentsByType,
-          incidentsBySeverity,
-          monthlyTrend,
-          userActivity
-        });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchAnalytics();
-  }, [timeRange]);
+  // 1. LOAD DATA (localStorage ONLY)
+  const incidents = JSON.parse(localStorage.getItem("incidents") || "[]");
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+  const broadcasts = JSON.parse(localStorage.getItem("broadcasts") || "[]");
 
-  const resolutionRate = analytics ? Math.round((analytics.resolvedIncidents / analytics.totalIncidents) * 100) : 0;
-
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2 text-muted-foreground">Loading analytics...</span>
-        </div>
-      </AdminDashboardLayout>
-    );
+  // 2. BASE FILTERING (Time Range)
+  let baseIncidents = [...incidents];
+  if (timeRange !== 'all') {
+    const now = new Date();
+    const days = parseInt(timeRange) || 30;
+    const cutoff = new Date(now.setDate(now.getDate() - days));
+    baseIncidents = incidents.filter((i: any) => new Date(i.created_at || i.createdAt || "").getTime() >= cutoff.getTime());
   }
 
-  if (error) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-4 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">
-          {error}
-        </div>
-      </AdminDashboardLayout>
-    );
+  // 3. COMPUTE METRICS (Using baseIncidents)
+  const totalIncidents = baseIncidents.length;
+  const resolvedIncidentsCount = baseIncidents.filter((i: any) => i.status === 'resolved').length;
+  const criticalIncidentsCount = baseIncidents.filter((i: any) => i.severity?.toLowerCase() === 'critical').length;
+  const resolutionRate = totalIncidents > 0 ? Math.round((resolvedIncidentsCount / totalIncidents) * 100) : 0;
+
+  // Avg Resolution Time calculation
+  const resolvedWithTime = baseIncidents.filter((i: any) => 
+    i.status === 'resolved' && (i.created_at || i.createdAt) && (i.resolvedAt || i.resolved_at)
+  );
+  let totalHours = 0;
+  let validCount = 0;
+  resolvedWithTime.forEach((i: any) => {
+    const start = new Date(i.created_at || i.createdAt || "").getTime();
+    const end = new Date(i.resolvedAt || i.resolved_at || "").getTime();
+    if (!isNaN(start) && !isNaN(end) && end >= start) {
+      totalHours += (end - start) / (1000 * 60 * 60);
+      validCount++;
+    }
+  });
+  const avgResolutionTime = validCount > 0 ? Math.round(totalHours / validCount) : 0;
+
+  // 4. CHART FILTERING (Respect selectedMetric)
+  let chartIncidents = [...baseIncidents];
+  if (selectedMetric === 'critical') {
+    chartIncidents = baseIncidents.filter((i: any) => i.severity?.toLowerCase() === 'critical');
   }
+
+  // 5. CHART DATA COMPUTATION
+  // Incident Types
+  const typeCounts = chartIncidents.reduce((acc: any, i: any) => {
+    const type = i.type || "Unknown";
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+  const incidentsByType = Object.entries(typeCounts).map(([name, value]) => ({ name, value: value as number }));
+
+  // Severity Data
+  const incidentsBySeverity = chartIncidents.reduce((acc: any, i: any) => {
+    const s = i.severity?.toLowerCase() || 'low';
+    if (acc[s] !== undefined) acc[s]++;
+    return acc;
+  }, { critical: 0, high: 0, medium: 0, low: 0 });
+
+  // Monthly Trend
+  const monthsMap: Record<string, number> = {};
+  chartIncidents.forEach((i: any) => {
+    const date = i.created_at || i.createdAt;
+    if (date) {
+      const m = new Date(date).toLocaleString("default", { month: "short" });
+      monthsMap[m] = (monthsMap[m] || 0) + 1;
+    }
+  });
+  const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthlyTrend = Object.entries(monthsMap)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+
+  // User Activity (Simulated)
+  const userActivity = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
+    day,
+    activeUsers: users.length + Math.floor(Math.random() * 5)
+  }));
+
+  // EXPORT FUNCTION
+  const exportData = () => {
+    const data = { incidents, users, broadcasts };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "analytics.json";
+    a.click();
+    alert("Analytics exported successfully");
+  };
 
   return (
     <AdminDashboardLayout>
@@ -123,7 +105,7 @@ const AdminAnalyticsPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold">Analytics Dashboard</h1>
-            <p className="text-muted-foreground text-sm mt-1">System performance and usage insights</p>
+            <p className="text-muted-foreground text-sm mt-1">Live system performance from local storage</p>
           </div>
           <div className="flex items-center gap-4">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -131,143 +113,137 @@ const AdminAnalyticsPage = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
+                <SelectItem value="7">Last 7 days</SelectItem>
+                <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last 90 days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button variant="outline" className="flex items-center gap-2" onClick={exportData}>
               <Download className="h-4 w-4" />
               Export
             </Button>
           </div>
         </div>
 
-        {/* Key Metrics */}
+        {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <DashboardCard title="Total Incidents" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />}>
-            <div className="text-2xl font-bold">{analytics?.totalIncidents || 0}</div>
-            <p className="text-xs text-muted-foreground">All reported incidents</p>
-          </DashboardCard>
+          <div onClick={() => setSelectedMetric(selectedMetric === "total" ? null : "total")} className={`cursor-pointer transition-all ${selectedMetric === 'total' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+            <DashboardCard title="Total Incidents" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />}>
+              <div className="text-2xl font-bold">{totalIncidents}</div>
+              <p className="text-xs text-muted-foreground">Reported cases</p>
+            </DashboardCard>
+          </div>
           
-          <DashboardCard title="Resolution Rate" icon={<TrendingUp className="h-5 w-5 text-green-500" />}>
-            <div className="text-2xl font-bold">{resolutionRate}%</div>
-            <p className="text-xs text-muted-foreground">Successfully resolved</p>
-          </DashboardCard>
+          <div onClick={() => setSelectedMetric(selectedMetric === "resolution" ? null : "resolution")} className={`cursor-pointer transition-all ${selectedMetric === 'resolution' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+            <DashboardCard title="Resolution Rate" icon={<TrendingUp className="h-5 w-5 text-green-500" />}>
+              <div className="text-2xl font-bold">{resolutionRate}%</div>
+              <p className="text-xs text-muted-foreground">Successful resolutions</p>
+            </DashboardCard>
+          </div>
           
-          <DashboardCard title="Critical Cases" icon={<AlertTriangle className="h-5 w-5 text-red-500" />}>
-            <div className="text-2xl font-bold">{analytics?.criticalIncidents || 0}</div>
-            <p className="text-xs text-muted-foreground">Require immediate attention</p>
-          </DashboardCard>
+          <div onClick={() => setSelectedMetric(selectedMetric === "critical" ? null : "critical")} className={`cursor-pointer transition-all ${selectedMetric === 'critical' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+            <DashboardCard title="Critical Cases" icon={<AlertTriangle className="h-5 w-5 text-red-500" />}>
+              <div className="text-2xl font-bold">{criticalIncidentsCount}</div>
+              <p className="text-xs text-muted-foreground">Immediate priority</p>
+            </DashboardCard>
+          </div>
           
-          <DashboardCard title="Avg Resolution Time" icon={<Calendar className="h-5 w-5 text-orange-500" />}>
-            <div className="text-2xl font-bold">{analytics?.averageResolutionTime || 0}h</div>
-            <p className="text-xs text-muted-foreground">Average time to resolve</p>
-          </DashboardCard>
+          <div onClick={() => setSelectedMetric(selectedMetric === "time" ? null : "time")} className={`cursor-pointer transition-all ${selectedMetric === 'time' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+            <DashboardCard title="Avg Resolution Time" icon={<Calendar className="h-5 w-5 text-orange-500" />}>
+              <div className="text-2xl font-bold">{avgResolutionTime}h</div>
+              <p className="text-xs text-muted-foreground">Avg time to fix</p>
+            </DashboardCard>
+          </div>
         </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Incident Types Chart */}
-          <DashboardCard title="Incidents by Type" icon={<BarChart3 className="h-5 w-5 text-primary" />}>
-            <div className="space-y-4">
-              {analytics && Object.entries(analytics.incidentsByType).map(([type, count]) => (
-                <div key={type} className="flex items-center justify-between">
-                  <span className="text-sm font-medium capitalize">{type}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full" 
-                        style={{ width: `${(count / analytics.totalIncidents) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </DashboardCard>
-
-          {/* Severity Distribution */}
-          <DashboardCard title="Severity Distribution" icon={<AlertTriangle className="h-5 w-5 text-primary" />}>
-            <div className="space-y-4">
-              {analytics && ['critical', 'high', 'medium', 'low'].map(severity => {
-                const count = analytics.incidentsBySeverity[severity] || 0;
-                const percentage = analytics.totalIncidents > 0 ? (count / analytics.totalIncidents) * 100 : 0;
-                const color = severity === 'critical' ? 'bg-red-500' : 
-                             severity === 'high' ? 'bg-orange-500' : 
-                             severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500';
-                
-                return (
-                  <div key={severity} className="flex items-center justify-between">
-                    <span className="text-sm font-medium capitalize">{severity}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-muted rounded-full h-2">
-                        <div className={`${color} h-2 rounded-full`} style={{ width: `${percentage}%` }} />
+          <div className="cursor-pointer">
+            <DashboardCard title="Incidents by Type" icon={<BarChart3 className="h-5 w-5 text-primary" />}>
+              <div className="space-y-4">
+                {incidentsByType.length > 0 ? (
+                  incidentsByType.map(({ name, value }) => (
+                    <div key={name} className="flex items-center justify-between" title={`${name}: ${value}`}>
+                      <span className="text-sm font-medium capitalize">{name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${(value / (totalIncidents || 1)) * 100}%` }} />
+                        </div>
+                        <span className="text-sm text-muted-foreground w-8 text-right">{value}</span>
                       </div>
-                      <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
                     </div>
-                  </div>
-                );
-              })}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No data available</p>
+                )}
+              </div>
+            </DashboardCard>
+          </div>
+
+          <div className="cursor-pointer">
+            <DashboardCard title="Severity Distribution" icon={<AlertTriangle className="h-5 w-5 text-primary" />}>
+              <div className="space-y-4">
+                {['critical', 'high', 'medium', 'low'].map(s => {
+                  const count = incidentsBySeverity[s] || 0;
+                  const pct = totalIncidents > 0 ? (count / totalIncidents) * 100 : 0;
+                  const color = s === 'critical' ? 'bg-red-500' : s === 'high' ? 'bg-orange-500' : s === 'medium' ? 'bg-yellow-500' : 'bg-blue-500';
+                  return (
+                    <div key={s} className="flex items-center justify-between" title={`${s}: ${count}`}>
+                      <span className="text-sm font-medium capitalize">{s}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-muted rounded-full h-2">
+                          <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </DashboardCard>
+          </div>
+        </div>
+
+        <div className="cursor-pointer">
+          <DashboardCard title="Monthly Incident Trend" icon={<TrendingUp className="h-5 w-5 text-primary" />}>
+            <div className="space-y-4 h-40 flex items-end">
+              {monthlyTrend.length > 0 ? (
+                <div className="flex items-end justify-between w-full">
+                  {monthlyTrend.map((m) => {
+                    const max = Math.max(...monthlyTrend.map(x => x.count), 1);
+                    return (
+                      <div key={m.month} className="flex flex-col items-center flex-1" title={`${m.month}: ${m.count}`}>
+                        <div className="w-8 bg-primary rounded-t transition-all" style={{ height: `${(m.count / max) * 100}%` }} />
+                        <span className="text-[10px] text-muted-foreground mt-2">{m.month}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="w-full text-center text-sm text-muted-foreground">No trend data</p>
+              )}
             </div>
           </DashboardCard>
         </div>
 
-        {/* Monthly Trend */}
-        <DashboardCard title="Monthly Incident Trend" icon={<TrendingUp className="h-5 w-5 text-primary" />}>
-          <div className="space-y-4">
-            {analytics && (
-              <div className="flex items-end justify-between h-32">
-                {analytics.monthlyTrend.map((month) => {
-                  const maxCount = Math.max(...analytics.monthlyTrend.map(m => m.count));
-                  const height = maxCount > 0 ? (month.count / maxCount) * 100 : 0;
-                  
+        <div className="cursor-pointer">
+          <DashboardCard title="User Activity (Last 7 Days)" icon={<Users className="h-5 w-5 text-primary" />}>
+            <div className="space-y-4 h-40 flex items-end">
+              <div className="flex items-end justify-between w-full">
+                {userActivity.map((day) => {
+                  const max = Math.max(...userActivity.map(d => d.activeUsers), 1);
                   return (
-                    <div key={month.month} className="flex flex-col items-center flex-1">
-                      <div className="w-full flex flex-col items-center">
-                        <span className="text-xs text-muted-foreground mb-1">{month.count}</span>
-                        <div 
-                          className="w-8 bg-primary rounded-t" 
-                          style={{ height: `${height}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-2">{month.month}</span>
+                    <div key={day.day} className="flex flex-col items-center flex-1" title={`${day.day}: ${day.activeUsers}`}>
+                      <div className="w-8 bg-green-500 rounded-t transition-all" style={{ height: `${(day.activeUsers / max) * 100}%` }} />
+                      <span className="text-[10px] text-muted-foreground mt-2">{day.day}</span>
                     </div>
                   );
                 })}
               </div>
-            )}
-          </div>
-        </DashboardCard>
-
-        {/* User Activity */}
-        <DashboardCard title="User Activity (Last 7 Days)" icon={<Users className="h-5 w-5 text-primary" />}>
-          <div className="space-y-4">
-            {analytics && (
-              <div className="flex items-end justify-between h-32">
-                {analytics.userActivity.map((day,) => {
-                  const maxUsers = Math.max(...analytics.userActivity.map(d => d.activeUsers));
-                  const height = maxUsers > 0 ? (day.activeUsers / maxUsers) * 100 : 0;
-                  
-                  return (
-                    <div key={day.day} className="flex flex-col items-center flex-1">
-                      <div className="w-full flex flex-col items-center">
-                        <span className="text-xs text-muted-foreground mb-1">{day.activeUsers}</span>
-                        <div 
-                          className="w-8 bg-green-500 rounded-t" 
-                          style={{ height: `${height}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-2">{day.day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </DashboardCard>
+            </div>
+          </DashboardCard>
+        </div>
       </div>
     </AdminDashboardLayout>
   );
