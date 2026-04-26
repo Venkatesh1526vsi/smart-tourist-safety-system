@@ -44,25 +44,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response = await loginService({ email, password });
+      console.log("FULL LOGIN RESPONSE:", response);
       
-      // Extract token and user correctly (handle both flat and wrapped responses with type bypass)
-      const newToken = (response as any)?.token || (response as any)?.data?.token;
-      const newUser = (response as any)?.user || (response as any)?.data?.user;
+      // FORCE TOKEN EXTRACTION (TRY ALL POSSIBLE PATHS)
+      const newToken = 
+        (response as any)?.token || 
+        (response as any)?.data?.token || 
+        (response as any)?.data?.data?.token || 
+        (response as any)?.accessToken;
 
+      const newUser = 
+        (response as any)?.user || 
+        (response as any)?.data?.user || 
+        (response as any)?.data?.data?.user;
+
+      // HARD CHECK (CRITICAL)
       if (!newToken) {
-        console.error("TOKEN MISSING:", response);
+        console.error("🚨 TOKEN NOT FOUND:", response);
+        alert("Token not received from server");
         return;
       }
 
-      // TASK 1.4: SAVE TO localStorage FIRST
+      // FORCE SAVE (BEFORE ANYTHING)
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(newUser));
       
-      // TASK 3: DEBUG
-      console.log("TOKEN SAVED:", newToken);
-      console.log("LOCAL TOKEN:", localStorage.getItem("token"));
+      console.log("✅ TOKEN SAVED:", newToken);
+      console.log("✅ LOCAL TOKEN:", localStorage.getItem("token"));
 
-      // TASK 1.5: THEN update state
+      // THEN UPDATE STATE
       setToken(newToken);
       setUser(newUser);
     } catch (error) {
@@ -75,20 +85,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (name: string, email: string, password: string): Promise<void> => {
     try {
       const response = await registerService({ name, email, password });
+      console.log("FULL REGISTER RESPONSE:", response);
       
-      // Extract token and user correctly (handle both flat and wrapped responses with type bypass)
-      const newToken = (response as any)?.token || (response as any)?.data?.token;
-      const newUser = (response as any)?.user || (response as any)?.data?.user;
+      // Same logic for register
+      const newToken = 
+        (response as any)?.token || 
+        (response as any)?.data?.token || 
+        (response as any)?.data?.data?.token || 
+        (response as any)?.accessToken;
+
+      const newUser = 
+        (response as any)?.user || 
+        (response as any)?.data?.user || 
+        (response as any)?.data?.data?.user;
 
       if (!newToken) {
-        console.error("TOKEN MISSING:", response);
+        console.error("🚨 TOKEN NOT FOUND (REGISTER):", response);
+        alert("Registration successful but token missing");
         return;
       }
 
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(newUser));
 
-      console.log("TOKEN SAVED (REGISTER):", newToken);
+      console.log("✅ TOKEN SAVED (REGISTER):", newToken);
 
       setToken(newToken);
       setUser(newUser);
