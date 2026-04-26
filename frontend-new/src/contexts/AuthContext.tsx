@@ -44,24 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response = await loginService({ email, password });
-      console.log("FULL LOGIN RESPONSE:", response);
+      console.log("🔥 LOGIN RESPONSE RAW:", JSON.stringify(response, null, 2));
       
-      // FORCE TOKEN EXTRACTION (TRY ALL POSSIBLE PATHS)
-      const newToken = 
-        (response as any)?.token || 
-        (response as any)?.data?.token || 
-        (response as any)?.data?.data?.token || 
-        (response as any)?.accessToken;
+      // TEMPORARY STRICT EXTRACTION
+      const newToken = (response as any)?.token;
+      const newUser = (response as any)?.user;
 
-      const newUser = 
-        (response as any)?.user || 
-        (response as any)?.data?.user || 
-        (response as any)?.data?.data?.user;
-
-      // HARD CHECK (CRITICAL)
+      // HARD FAIL (CRITICAL)
       if (!newToken) {
-        console.error("🚨 TOKEN NOT FOUND:", response);
-        alert("Token not received from server");
+        console.error("❌ TOKEN MISSING - BACKEND ISSUE:", response);
+        alert("Backend is NOT returning token for this user");
         return;
       }
 
