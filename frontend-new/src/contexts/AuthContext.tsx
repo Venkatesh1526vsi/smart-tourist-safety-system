@@ -44,18 +44,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response = await loginService({ email, password });
-      const authData = response.data || response;
-      const { token: newToken, user: newUser } = authData;
+      
+      // TASK 1: Extract token and user correctly
+      const newToken = response?.token || response?.data?.token;
+      const newUser = response?.user || response?.data?.user;
 
-      if (newToken && newUser) {
-        // Step 1: Save to localStorage first
-        localStorage.setItem("token", newToken);
-        localStorage.setItem("user", JSON.stringify(newUser));
-
-        // Step 2: Update state
-        setToken(newToken);
-        setUser(newUser);
+      // TASK 1.3: SAFETY CHECK
+      if (!newToken) {
+        console.error("LOGIN ERROR: Token missing from response", response);
+        return;
       }
+
+      // TASK 1.4: SAVE TO localStorage FIRST
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      
+      // TASK 3: DEBUG
+      console.log("TOKEN SAVED:", newToken);
+      console.log("LOCAL TOKEN:", localStorage.getItem("token"));
+
+      // TASK 1.5: THEN update state
+      setToken(newToken);
+      setUser(newUser);
     } catch (error) {
       console.error('[AuthContext] login error:', error);
       throw error;
@@ -66,16 +76,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (name: string, email: string, password: string): Promise<void> => {
     try {
       const response = await registerService({ name, email, password });
-      const authData = response.data || response;
-      const { token: newToken, user: newUser } = authData;
+      
+      // TASK 2: Same logic for register
+      const newToken = response?.token || response?.data?.token;
+      const newUser = response?.user || response?.data?.user;
 
-      if (newToken && newUser) {
-        localStorage.setItem("token", newToken);
-        localStorage.setItem("user", JSON.stringify(newUser));
-
-        setToken(newToken);
-        setUser(newUser);
+      if (!newToken) {
+        console.error("REGISTER ERROR: Token missing from response", response);
+        return;
       }
+
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+      console.log("TOKEN SAVED (REGISTER):", newToken);
+
+      setToken(newToken);
+      setUser(newUser);
     } catch (error) {
       console.error('[AuthContext] register error:', error);
       throw error;
