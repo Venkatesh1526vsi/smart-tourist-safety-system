@@ -45,13 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await loginService({ email, password });
       
-      // TASK 1: Extract token and user correctly
-      const newToken = response?.token || response?.data?.token;
-      const newUser = response?.user || response?.data?.user;
+      // Extract token and user correctly
+      const newToken = response?.data?.token;
+      const newUser = response?.data?.user;
 
-      // TASK 1.3: SAFETY CHECK
       if (!newToken) {
-        console.error("LOGIN ERROR: Token missing from response", response);
+        console.error("TOKEN MISSING:", response);
         return;
       }
 
@@ -77,12 +76,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await registerService({ name, email, password });
       
-      // TASK 2: Same logic for register
-      const newToken = response?.token || response?.data?.token;
-      const newUser = response?.user || response?.data?.user;
+      // Extract token and user correctly
+      const newToken = response?.data?.token;
+      const newUser = response?.data?.user;
 
       if (!newToken) {
-        console.error("REGISTER ERROR: Token missing from response", response);
+        console.error("TOKEN MISSING:", response);
         return;
       }
 
