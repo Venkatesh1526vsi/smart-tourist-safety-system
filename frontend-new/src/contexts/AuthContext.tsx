@@ -46,27 +46,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await loginService({ email, password });
       console.log("🔥 LOGIN RESPONSE RAW:", JSON.stringify(response, null, 2));
       
-      // TEMPORARY STRICT EXTRACTION
-      const newToken = (response as any)?.token;
-      const newUser = (response as any)?.user;
-
-      // HARD FAIL (CRITICAL)
-      if (!newToken) {
-        console.error("❌ TOKEN MISSING - BACKEND ISSUE:", response);
-        alert("Backend is NOT returning token for this user");
-        return;
-      }
+      // CORRECT VERSION: Extract from response.data
+      const newToken = (response as any)?.data?.token;
+      const newUser = (response as any)?.data?.user;
 
       // TASK 3: GUARANTEE TOKEN STORAGE (SAVE BEFORE STATE)
-      localStorage.setItem("token", newToken);
-      localStorage.setItem("user", JSON.stringify(newUser));
-      
-      console.log("✅ TOKEN SAVED:", newToken);
-      console.log("✅ LOCAL TOKEN:", localStorage.getItem("token"));
+      if (newToken) {
+        localStorage.setItem("token", newToken);
+        localStorage.setItem("user", JSON.stringify(newUser));
+        
+        console.log("✅ TOKEN SAVED:", newToken);
+        console.log("✅ LOCAL TOKEN:", localStorage.getItem("token"));
 
-      // THEN UPDATE STATE
-      setToken(newToken);
-      setUser(newUser);
+        // THEN UPDATE STATE
+        setToken(newToken);
+        setUser(newUser);
+      }
     } catch (error) {
       console.error('[AuthContext] login error:', error);
       throw error;
@@ -79,20 +74,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await registerService({ name, email, password });
       console.log("FULL REGISTER RESPONSE:", response);
       
-      const newToken = 
-        (response as any)?.token || 
-        (response as any)?.data?.token || 
-        (response as any)?.data?.data?.token || 
-        (response as any)?.accessToken;
-
-      const newUser = 
-        (response as any)?.user || 
-        (response as any)?.data?.user || 
-        (response as any)?.data?.data?.user;
+      const newToken = (response as any)?.data?.token;
+      const newUser = (response as any)?.data?.user;
 
       if (!newToken) {
         console.error("🚨 TOKEN NOT FOUND (REGISTER):", response);
-        alert("Registration successful but token missing");
         return;
       }
 
