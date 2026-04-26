@@ -3,7 +3,6 @@ import { lazy, Suspense } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PageLoader from "@/components/PageLoader";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 
 // Eagerly load critical pages (landing, auth)
 import Index from "@/pages/Index";
@@ -29,13 +28,6 @@ const ProtectedLazyRoute = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>
     <Suspense fallback={<PageLoader />}>{children}</Suspense>
   </ProtectedRoute>
-);
-
-// Admin protected lazy route wrapper
-const AdminProtectedLazyRoute = ({ children }: { children: React.ReactNode }) => (
-  <AdminProtectedRoute>
-    <Suspense fallback={<PageLoader />}>{children}</Suspense>
-  </AdminProtectedRoute>
 );
 
 function App() {
