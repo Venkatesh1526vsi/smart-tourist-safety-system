@@ -48,6 +48,16 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
+          {/* TASK 6: Explicit dashboard routes */}
+          <Route 
+            path="/user-dashboard" 
+            element={<ProtectedLazyRoute><UserDashboard /></ProtectedLazyRoute>} 
+          />
+          <Route 
+            path="/admin-dashboard" 
+            element={<ProtectedLazyRoute><AdminDashboard /></ProtectedLazyRoute>} 
+          />
+          
           {/* Settings page - specific route must come before catch-all */}
           <Route 
             path="/dashboard/user/settings" 
@@ -81,27 +91,27 @@ function App() {
           {/* Admin pages - specific routes must come before catch-all */}
           <Route 
             path="/dashboard/admin" 
-            element={<AdminProtectedLazyRoute><AdminDashboard /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminDashboard /></ProtectedLazyRoute>} 
           />
           <Route 
             path="/dashboard/admin/users" 
-            element={<AdminProtectedLazyRoute><AdminUsersPage /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminUsersPage /></ProtectedLazyRoute>} 
           />
           <Route 
             path="/dashboard/admin/incidents" 
-            element={<AdminProtectedLazyRoute><AdminIncidentsPage /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminIncidentsPage /></ProtectedLazyRoute>} 
           />
           <Route 
             path="/dashboard/admin/broadcast" 
-            element={<AdminProtectedLazyRoute><AdminBroadcastPage /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminBroadcastPage /></ProtectedLazyRoute>} 
           />
           <Route 
             path="/dashboard/admin/analytics" 
-            element={<AdminProtectedLazyRoute><AdminAnalyticsPage /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminAnalyticsPage /></ProtectedLazyRoute>} 
           />
           <Route 
             path="/dashboard/admin/*" 
-            element={<AdminProtectedLazyRoute><AdminDashboard /></AdminProtectedLazyRoute>} 
+            element={<ProtectedLazyRoute><AdminDashboard /></ProtectedLazyRoute>} 
           />
           
           {/* Incident reporting page */}

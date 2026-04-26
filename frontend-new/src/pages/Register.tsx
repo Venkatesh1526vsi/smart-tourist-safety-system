@@ -63,7 +63,7 @@ const Register = () => {
       
       // Redirect to dashboard after short delay
       setTimeout(() => {
-        navigate("/dashboard/user");
+        navigate("/user-dashboard");
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");

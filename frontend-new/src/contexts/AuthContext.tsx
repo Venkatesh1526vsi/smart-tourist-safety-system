@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // FORCE SAVE (BEFORE ANYTHING)
+      // TASK 3: GUARANTEE TOKEN STORAGE (SAVE BEFORE STATE)
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(newUser));
       
@@ -87,7 +87,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await registerService({ name, email, password });
       console.log("FULL REGISTER RESPONSE:", response);
       
-      // Same logic for register
       const newToken = 
         (response as any)?.token || 
         (response as any)?.data?.token || 
@@ -107,8 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(newUser));
-
-      console.log("✅ TOKEN SAVED (REGISTER):", newToken);
 
       setToken(newToken);
       setUser(newUser);

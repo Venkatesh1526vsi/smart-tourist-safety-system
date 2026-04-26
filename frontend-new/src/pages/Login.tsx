@@ -46,9 +46,9 @@ const Login = () => {
       console.log('[Login] Login successful, navigating...');
       // Redirect based on role
       if (role === "admin") {
-        navigate("/dashboard/admin", { replace: true });
+        navigate("/admin-dashboard", { replace: true });
       } else {
-        navigate("/dashboard/user", { replace: true });
+        navigate("/user-dashboard", { replace: true });
       }
     } catch (err) {
       console.error('[Login] Login error:', err);
