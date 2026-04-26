@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { login as loginService, register as registerService, logout as logoutService } from '@/services/authService';
 
 // TypeScript Interfaces
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return null;
   });
-  const [loading, setLoading] = useState(false); // Set to false since we initialize synchronously
+  const loading = false; // Synchronous initialization means we're never in a "loading" state
 
   // Login method
   const login = async (email: string, password: string): Promise<void> => {
