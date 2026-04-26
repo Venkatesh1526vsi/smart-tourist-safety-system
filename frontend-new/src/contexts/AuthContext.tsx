@@ -45,9 +45,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await loginService({ email, password });
       
-      // Extract token and user correctly
-      const newToken = response?.data?.token || response?.token;
-      const newUser = response?.data?.user || response?.user;
+      // Extract token and user correctly (handle both flat and wrapped responses with type bypass)
+      const newToken = (response as any)?.token || (response as any)?.data?.token;
+      const newUser = (response as any)?.user || (response as any)?.data?.user;
 
       if (!newToken) {
         console.error("TOKEN MISSING:", response);
@@ -76,9 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await registerService({ name, email, password });
       
-      // Extract token and user correctly
-      const newToken = response?.data?.token || response?.token;
-      const newUser = response?.data?.user || response?.user;
+      // Extract token and user correctly (handle both flat and wrapped responses with type bypass)
+      const newToken = (response as any)?.token || (response as any)?.data?.token;
+      const newUser = (response as any)?.user || (response as any)?.data?.user;
 
       if (!newToken) {
         console.error("TOKEN MISSING:", response);
