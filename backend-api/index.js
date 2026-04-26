@@ -390,10 +390,12 @@ app.post('/api/register', validateMongoConnection, validatePasswordStrength, asy
       { expiresIn: '2h' }
     );
 
-    return ResponseHandler.created(res, {
+    return res.status(201).json({
+      success: true,
+      message: 'User registered successfully!',
       user: { name, email, role: user.role || 'tourist' },
       token
-    }, 'User registered successfully!');
+    });
   } catch (err) {
     console.error('Registration error:', err);
     return ResponseHandler.error(res, 500, 'Server error during registration.', err.message);
@@ -466,10 +468,12 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
       { expiresIn: '2h' }
     );
 
-    return ResponseHandler.success(res, 200, {
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful!',
       user: { name: user.name, email: user.email, role: user.role || 'tourist' },
       token
-    }, 'Login successful!');
+    });
   } catch (err) {
     console.error('Login error:', err);
     return ResponseHandler.error(res, 500, 'Server error during login.', err.message);
