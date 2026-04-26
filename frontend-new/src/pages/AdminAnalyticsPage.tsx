@@ -11,18 +11,18 @@ const AdminAnalyticsPage = () => {
 
   // 1. LOAD DATA (localStorage ONLY)
   const incidents = JSON.parse(
-    localStorage.getItem("incidents") ?? 
-    localStorage.getItem("incidentData") ?? 
+    localStorage.getItem("incidents") ??
+    localStorage.getItem("incidentData") ??
     "[]"
   );
   const users = JSON.parse(
-    localStorage.getItem("users") ?? 
-    localStorage.getItem("userData") ?? 
+    localStorage.getItem("users") ??
+    localStorage.getItem("userData") ??
     "[]"
   );
   const broadcasts = JSON.parse(
-    localStorage.getItem("broadcasts") ?? 
-    localStorage.getItem("broadcastData") ?? 
+    localStorage.getItem("broadcasts") ??
+    localStorage.getItem("broadcastData") ??
     "[]"
   );
 
@@ -42,7 +42,7 @@ const AdminAnalyticsPage = () => {
   const resolutionRate = totalIncidents > 0 ? Math.round((resolvedIncidentsCount / totalIncidents) * 100) : 0;
 
   // Avg Resolution Time calculation
-  const resolvedWithTime = baseIncidents.filter((i: any) => 
+  const resolvedWithTime = baseIncidents.filter((i: any) =>
     i.status === 'resolved' && (i.created_at || i.createdAt) && (i.resolvedAt || i.resolved_at)
   );
   let totalHours = 0;
@@ -60,7 +60,9 @@ const AdminAnalyticsPage = () => {
   // 4. CHART FILTERING (Respect selectedMetric)
   let chartIncidents = [...baseIncidents];
   if (selectedMetric === 'critical') {
-    chartIncidents = baseIncidents.filter((i: any) => i.severity?.toLowerCase() === 'critical');
+    chartIncidents = baseIncidents.filter((i: any) => (i.severity || i.Severity)?.toLowerCase() === 'critical');
+  } else if (selectedMetric === 'resolution') {
+    chartIncidents = baseIncidents.filter((i: any) => (i.status || i.Status)?.toLowerCase() === 'resolved');
   }
 
   // 5. CHART DATA COMPUTATION
@@ -79,24 +81,33 @@ const AdminAnalyticsPage = () => {
     return acc;
   }, { critical: 0, high: 0, medium: 0, low: 0 });
 
-  // Monthly Trend
-  const monthsMap: Record<string, number> = {};
-  chartIncidents.forEach((i: any) => {
-    const date = i.created_at || i.createdAt;
-    if (date) {
-      const m = new Date(date).toLocaleString("default", { month: "short" });
-      monthsMap[m] = (monthsMap[m] || 0) + 1;
-    }
-  });
+  // 1. FIX MONTHLY TREND
   const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const monthlyTrend = Object.entries(monthsMap)
-    .map(([month, count]) => ({ month, count }))
-    .sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+  const monthlyMap: Record<string, number> = {};
 
-  // User Activity (Simulated)
-  const userActivity = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({
+  chartIncidents.forEach((i: any) => {
+    const dateStr = i?.createdAt || i?.created_at;
+    if (!dateStr) return;
+
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return;
+
+    const month = date.toLocaleString("default", { month: "short" });
+    monthlyMap[month] = (monthlyMap[month] || 0) + 1;
+  });
+
+  const monthlyTrend = monthOrder
+    .map(month => ({
+      month,
+      count: monthlyMap[month] || 0
+    }))
+    .filter(m => m.count > 0);
+
+  // 2. FIX USER ACTIVITY (SIMULATED)
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const userActivity = days.map((day, index) => ({
     day,
-    activeUsers: users.length + Math.floor(Math.random() * 5)
+    value: users.length + (index % 3) // small variation
   }));
 
   // EXPORT FUNCTION
@@ -110,6 +121,8 @@ const AdminAnalyticsPage = () => {
     a.click();
     alert("Analytics exported successfully");
   };
+
+  const hasIncidentData = incidents.length > 0;
 
   return (
     <AdminDashboardLayout>
@@ -140,28 +153,28 @@ const AdminAnalyticsPage = () => {
 
         {/* Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div onClick={() => setSelectedMetric(selectedMetric === "total" ? null : "total")} className={`cursor-pointer transition-all ${selectedMetric === 'total' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+          <div onClick={() => setSelectedMetric(prev => prev === "total" ? null : "total")} className={`cursor-pointer transition-all ${selectedMetric === 'total' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
             <DashboardCard title="Total Incidents" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />}>
               <div className="text-2xl font-bold">{totalIncidents}</div>
               <p className="text-xs text-muted-foreground">Reported cases</p>
             </DashboardCard>
           </div>
-          
-          <div onClick={() => setSelectedMetric(selectedMetric === "resolution" ? null : "resolution")} className={`cursor-pointer transition-all ${selectedMetric === 'resolution' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+
+          <div onClick={() => setSelectedMetric(prev => prev === "resolution" ? null : "resolution")} className={`cursor-pointer transition-all ${selectedMetric === 'resolution' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
             <DashboardCard title="Resolution Rate" icon={<TrendingUp className="h-5 w-5 text-green-500" />}>
               <div className="text-2xl font-bold">{resolutionRate}%</div>
               <p className="text-xs text-muted-foreground">Successful resolutions</p>
             </DashboardCard>
           </div>
-          
-          <div onClick={() => setSelectedMetric(selectedMetric === "critical" ? null : "critical")} className={`cursor-pointer transition-all ${selectedMetric === 'critical' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+
+          <div onClick={() => setSelectedMetric(prev => prev === "critical" ? null : "critical")} className={`cursor-pointer transition-all ${selectedMetric === 'critical' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
             <DashboardCard title="Critical Cases" icon={<AlertTriangle className="h-5 w-5 text-red-500" />}>
               <div className="text-2xl font-bold">{criticalIncidentsCount}</div>
               <p className="text-xs text-muted-foreground">Immediate priority</p>
             </DashboardCard>
           </div>
-          
-          <div onClick={() => setSelectedMetric(selectedMetric === "time" ? null : "time")} className={`cursor-pointer transition-all ${selectedMetric === 'time' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
+
+          <div onClick={() => setSelectedMetric(prev => prev === "time" ? null : "time")} className={`cursor-pointer transition-all ${selectedMetric === 'time' ? 'ring-2 ring-primary rounded-xl' : ''}`}>
             <DashboardCard title="Avg Resolution Time" icon={<Calendar className="h-5 w-5 text-orange-500" />}>
               <div className="text-2xl font-bold">{avgResolutionTime}h</div>
               <p className="text-xs text-muted-foreground">Avg time to fix</p>
@@ -187,7 +200,9 @@ const AdminAnalyticsPage = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No data available</p>
+                  <div className="text-center text-gray-400 py-10">
+                    No data available
+                  </div>
                 )}
               </div>
             </DashboardCard>
@@ -196,22 +211,28 @@ const AdminAnalyticsPage = () => {
           <div className="cursor-pointer">
             <DashboardCard title="Severity Distribution" icon={<AlertTriangle className="h-5 w-5 text-primary" />}>
               <div className="space-y-4">
-                {['critical', 'high', 'medium', 'low'].map(s => {
-                  const count = incidentsBySeverity[s] || 0;
-                  const pct = totalIncidents > 0 ? (count / totalIncidents) * 100 : 0;
-                  const color = s === 'critical' ? 'bg-red-500' : s === 'high' ? 'bg-orange-500' : s === 'medium' ? 'bg-yellow-500' : 'bg-blue-500';
-                  return (
-                    <div key={s} className="flex items-center justify-between" title={`${s}: ${count}`}>
-                      <span className="text-sm font-medium capitalize">{s}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-muted rounded-full h-2">
-                          <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                {totalIncidents > 0 ? (
+                  ['critical', 'high', 'medium', 'low'].map(s => {
+                    const count = incidentsBySeverity[s] || 0;
+                    const pct = totalIncidents > 0 ? (count / totalIncidents) * 100 : 0;
+                    const color = s === 'critical' ? 'bg-red-500' : s === 'high' ? 'bg-orange-500' : s === 'medium' ? 'bg-yellow-500' : 'bg-blue-500';
+                    return (
+                      <div key={s} className="flex items-center justify-between" title={`${s}: ${count}`}>
+                        <span className="text-sm font-medium capitalize">{s}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-muted rounded-full h-2">
+                            <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="text-center text-gray-400 py-10">
+                    No data available
+                  </div>
+                )}
               </div>
             </DashboardCard>
           </div>
@@ -233,7 +254,9 @@ const AdminAnalyticsPage = () => {
                   })}
                 </div>
               ) : (
-                <p className="w-full text-center text-sm text-muted-foreground">No trend data</p>
+                <div className="text-center text-gray-400 py-10 w-full">
+                  No data available
+                </div>
               )}
             </div>
           </DashboardCard>
@@ -244,10 +267,10 @@ const AdminAnalyticsPage = () => {
             <div className="space-y-4 h-40 flex items-end">
               <div className="flex items-end justify-between w-full">
                 {userActivity.map((day) => {
-                  const max = Math.max(...userActivity.map(d => d.activeUsers), 1);
+                  const max = Math.max(...userActivity.map(d => d.value), 1);
                   return (
-                    <div key={day.day} className="flex flex-col items-center flex-1" title={`${day.day}: ${day.activeUsers}`}>
-                      <div className="w-8 bg-green-500 rounded-t transition-all" style={{ height: `${(day.activeUsers / max) * 100}%` }} />
+                    <div key={day.day} className="flex flex-col items-center flex-1" title={`${day.day}: ${day.value}`}>
+                      <div className="w-8 bg-green-500 rounded-t transition-all" style={{ height: `${(day.value / max) * 100}%` }} />
                       <span className="text-[10px] text-muted-foreground mt-2">{day.day}</span>
                     </div>
                   );
