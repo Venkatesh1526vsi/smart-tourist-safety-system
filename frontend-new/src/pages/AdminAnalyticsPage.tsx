@@ -122,7 +122,6 @@ const AdminAnalyticsPage = () => {
     alert("Analytics exported successfully");
   };
 
-  const hasIncidentData = incidents.length > 0;
 
   return (
     <AdminDashboardLayout>
