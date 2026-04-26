@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
@@ -5,10 +6,20 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("token");
+  const [isReady, setIsReady] = useState(false);
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
 
-  // TASK 1: Only token decides authentication
-  if (!token) {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setHasToken(!!token);
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) {
+    return null; // prevent premature redirect
+  }
+
+  if (!hasToken) {
     return <Navigate to="/login" replace />;
   }
 

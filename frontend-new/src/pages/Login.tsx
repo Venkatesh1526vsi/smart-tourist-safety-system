@@ -36,19 +36,19 @@ const Login = () => {
     try {
       console.log('[Login] Starting login process...');
       await login(email, password);
-      notifySuccess("Login successful");
-      // toast.success("Login successful");
-      // notifyWarning("Test alert - SafeYatra system working");
       
-      // Small delay to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const storedToken = localStorage.getItem("token");
       
-      console.log('[Login] Login successful, navigating...');
-      // Redirect based on role
-      if (role === "admin") {
-        navigate("/admin-dashboard", { replace: true });
+      if (storedToken) {
+        notifySuccess("Login successful");
+        console.log('[Login] Token verified, navigating...');
+        if (role === "admin") {
+          navigate("/admin-dashboard", { replace: true });
+        } else {
+          navigate("/user-dashboard", { replace: true });
+        }
       } else {
-        navigate("/user-dashboard", { replace: true });
+        console.error('[Login] Login succeeded but token missing from storage');
       }
     } catch (err) {
       console.error('[Login] Login error:', err);

@@ -59,12 +59,16 @@ const Register = () => {
     try {
       await register(formData.name, formData.email, formData.password);
       
-      setSubmitMessage("Account created successfully! Redirecting...");
+      const storedToken = localStorage.getItem("token");
       
-      // Redirect to dashboard after short delay
-      setTimeout(() => {
-        navigate("/user-dashboard");
-      }, 1500);
+      if (storedToken) {
+        setSubmitMessage("Account created successfully! Redirecting...");
+        setTimeout(() => {
+          navigate("/user-dashboard");
+        }, 1500);
+      } else {
+        console.error('[Register] Registration succeeded but token missing from storage');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
