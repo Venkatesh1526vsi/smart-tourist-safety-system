@@ -83,7 +83,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.options("*", cors());
+app.options("/*", cors());
 
 // Create HTTP server for WebSocket support
 const server = http.createServer(app);
