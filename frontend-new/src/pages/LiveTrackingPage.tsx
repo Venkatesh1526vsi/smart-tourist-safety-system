@@ -4,7 +4,7 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { AlertTriangle, Map as MapIcon } from "lucide-react";
+import { Map as MapIcon } from "lucide-react";
 
 // Helper for severity-based marker colors
 const getMarkerColor = (severity: string) => {
