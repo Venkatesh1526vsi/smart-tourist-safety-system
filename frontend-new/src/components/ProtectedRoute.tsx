@@ -1,25 +1,14 @@
-import { useState, useEffect } from "react";
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
-interface ProtectedRouteProps {
+interface Props {
   children: React.ReactNode;
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const [isReady, setIsReady] = useState(false);
-  const [hasToken, setHasToken] = useState<boolean | null>(null);
+export const ProtectedRoute = ({ children }: Props) => {
+  const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setHasToken(!!token);
-    setIsReady(true);
-  }, []);
-
-  if (!isReady) {
-    return null; // prevent premature redirect
-  }
-
-  if (!hasToken) {
+  // 🔥 SINGLE SOURCE OF TRUTH
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 

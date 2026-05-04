@@ -46,18 +46,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await loginService({ email, password });
       console.log("🔥 LOGIN RESPONSE RAW:", JSON.stringify(response, null, 2));
       
-      const newToken = (response as any)?.token;
-      const newUser = (response as any)?.user;
+      const res = response as any;
+
+      const newToken = res?.token;
+      const newUser = res?.user;
 
       if (!newToken) {
-        console.error("Token missing:", response);
+        console.error("❌ TOKEN NOT FOUND:", res);
         return;
       }
 
+      // 🔥 STORE FIRST (THIS IS KEY)
       localStorage.setItem("token", newToken);
       localStorage.setItem("user", JSON.stringify(newUser));
 
-      setToken(newToken);
+      // 🔥 FORCE SYNC (prevents race issues)
+      const storedToken = localStorage.getItem("token");
+
+      if (!storedToken) {
+        console.error("❌ TOKEN NOT SAVED");
+        return;
+      }
+
+      // 🔥 THEN update state
+      setToken(storedToken);
       setUser(newUser);
     } catch (error) {
       console.error('[AuthContext] login error:', error);

@@ -36,19 +36,22 @@ const Login = () => {
     try {
       console.log('[Login] Starting login process...');
       await login(email, password);
-      
-      const storedToken = localStorage.getItem("token");
-      
-      if (storedToken) {
-        notifySuccess("Login successful");
-        console.log('[Login] Token verified, navigating...');
-        if (role === "admin") {
-          navigate("/admin-dashboard", { replace: true });
-        } else {
-          navigate("/user-dashboard", { replace: true });
-        }
+
+      // 🔥 HARD CHECK
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.error("❌ Token missing after login");
+        return;
+      }
+
+      // 🔥 GET USER ROLE SAFELY
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (user?.role === "admin") {
+        navigate("/admin-dashboard");
       } else {
-        console.error('[Login] Login succeeded but token missing from storage');
+        navigate("/user-dashboard");
       }
     } catch (err) {
       console.error('[Login] Login error:', err);
