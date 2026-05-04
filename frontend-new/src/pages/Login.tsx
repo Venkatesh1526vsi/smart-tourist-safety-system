@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { notifySuccess, notifyError } from "@/utils/notify";
+import { login as loginService } from "@/services/authService";
 
 const Login = () => {
   const [showPass, setShowPass] = useState(false);
@@ -35,20 +36,35 @@ const Login = () => {
 
     try {
       console.log('[Login] Starting login process...');
-      await login(email, password);
+      const response = await loginService({ email, password });
 
-      // 🔥 HARD CHECK
-      const token = localStorage.getItem("token");
+      console.log("🔥 LOGIN RESPONSE RAW:", response);
 
-      if (!token) {
-        console.error("❌ Token missing after login");
+      // 🔥 DIRECT EXTRACTION (NO CONTEXT DEPENDENCY)
+      const newToken = (response as any)?.token;
+      const newUser = (response as any)?.user;
+
+      if (!newToken) {
+        console.error("❌ TOKEN NOT FOUND:", response);
         return;
       }
 
-      // 🔥 GET USER ROLE SAFELY
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      // 🔥 STORE DIRECTLY HERE (CRITICAL FIX)
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(newUser));
 
-      if (user?.role === "admin") {
+      // 🔥 VERIFY IMMEDIATELY
+      const storedToken = localStorage.getItem("token");
+
+      if (!storedToken) {
+        console.error("❌ TOKEN FAILED TO SAVE");
+        return;
+      }
+
+      console.log("✅ TOKEN STORED:", storedToken);
+
+      // 🔥 NAVIGATION (SAFE NOW)
+      if (newUser?.role === "admin") {
         navigate("/admin-dashboard");
       } else {
         navigate("/user-dashboard");
