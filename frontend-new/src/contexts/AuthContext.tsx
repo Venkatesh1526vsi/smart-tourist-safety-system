@@ -46,22 +46,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await loginService({ email, password });
       console.log("🔥 LOGIN RESPONSE RAW:", JSON.stringify(response, null, 2));
       
-      // CORRECT VERSION: Extract from response.data
-      const newToken = (response as any)?.data?.token;
-      const newUser = (response as any)?.data?.user;
+      const newToken = (response as any)?.token;
+      const newUser = (response as any)?.user;
 
-      // TASK 3: GUARANTEE TOKEN STORAGE (SAVE BEFORE STATE)
-      if (newToken) {
-        localStorage.setItem("token", newToken);
-        localStorage.setItem("user", JSON.stringify(newUser));
-        
-        console.log("✅ TOKEN SAVED:", newToken);
-        console.log("✅ LOCAL TOKEN:", localStorage.getItem("token"));
-
-        // THEN UPDATE STATE
-        setToken(newToken);
-        setUser(newUser);
+      if (!newToken) {
+        console.error("Token missing:", response);
+        return;
       }
+
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+      setToken(newToken);
+      setUser(newUser);
     } catch (error) {
       console.error('[AuthContext] login error:', error);
       throw error;
