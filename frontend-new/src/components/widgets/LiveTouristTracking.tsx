@@ -21,6 +21,10 @@ interface LiveTourist {
   sosActive: boolean;
   travelStatus: string;
   recentAlerts: string[];
+  currentZoneId: string;
+  criticalEntryTime: number;
+  escalationLevel: number;
+  activities: { time: number; msg: string; type: 'safe'|'moderate'|'high'|'critical'|'info' }[];
 }
 
 
@@ -156,7 +160,11 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                emergencyContact: "112 (Emergency)",
                sosActive: false,
                travelStatus: "Active in Pune",
-               recentAlerts: []
+               recentAlerts: [],
+               currentZoneId: '',
+               criticalEntryTime: 0,
+               escalationLevel: 0,
+               activities: []
              });
            });
            return updated;
@@ -180,7 +188,11 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
               emergencyContact: rt.email || "No contact",
               sosActive: false,
               travelStatus: "Active in Pune",
-              recentAlerts: []
+              recentAlerts: [],
+              currentZoneId: '',
+              criticalEntryTime: 0,
+              escalationLevel: 0,
+              activities: []
             });
           }
         });
@@ -210,42 +222,80 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
   const evaluateRisk = useCallback((t: LiveTourist): LiveTourist => {
     let newScore = 100;
     let newLevel: 'safe' | 'moderate' | 'high' | 'critical' = 'safe';
-    let enteredDangerZone = false;
-    let zoneName = '';
+    
+    let activeZone: RiskZone | null = null;
 
+    // Find highest multiplier zone the tourist is currently inside
     for (const zone of RISK_ZONES) {
       const dist = calculateDistance(t.latitude, t.longitude, zone.lat, zone.lng);
-      if (dist <= zone.radius * 1.5) { 
-        newScore -= 15 * zone.riskMultiplier;
-        newLevel = 'moderate';
-      }
       if (dist <= zone.radius) { 
-        newScore -= 30 * zone.riskMultiplier;
-        newLevel = 'high';
-        if (t.riskLevel !== 'high' && t.riskLevel !== 'critical') {
-           enteredDangerZone = true;
-           zoneName = zone.name;
+        if (!activeZone || zone.riskMultiplier > activeZone.riskMultiplier) {
+          activeZone = zone;
         }
       }
+    }
+
+    if (activeZone) {
+      if (activeZone.riskMultiplier >= 2.0) newLevel = 'critical';
+      else if (activeZone.riskMultiplier >= 1.5) newLevel = 'high';
+      else if (activeZone.riskMultiplier >= 1.2) newLevel = 'moderate';
+      else newLevel = 'safe';
+      newScore -= (10 * activeZone.riskMultiplier);
     }
 
     if (t.sosActive) {
       newScore = 10;
       newLevel = 'critical';
-    } else if (newScore < 40) {
-      newLevel = 'critical';
-    } else if (newScore < 70) {
-      newLevel = 'high';
     }
 
-    if (enteredDangerZone) {
-      notifyError(`CRITICAL: ${t.name} entered high risk zone: ${zoneName}`);
-      t.recentAlerts.unshift(`Auto-Alert: Entered ${zoneName} at ${new Date().toLocaleTimeString()}`);
-    } else if (t.riskLevel !== 'moderate' && newLevel === 'moderate') {
-      notifyWarning(`WARNING: ${t.name} is approaching a risk zone.`);
+    const updatedT = { ...t, safetyScore: Math.max(0, Math.round(newScore)), riskLevel: newLevel, lastActive: Date.now() };
+    const newZoneId = activeZone ? activeZone.id : '';
+    
+    // Zone Transition Logic
+    if (t.currentZoneId !== newZoneId) {
+       updatedT.currentZoneId = newZoneId;
+       updatedT.criticalEntryTime = newLevel === 'critical' ? Date.now() : 0;
+       updatedT.escalationLevel = 0;
+       
+       if (activeZone) {
+         // Entered a new zone
+         const isSafe = newLevel === 'safe';
+         const isModerate = newLevel === 'moderate';
+         
+         const actType = newLevel as 'safe'|'moderate'|'high'|'critical';
+         const actMsg = isSafe ? `Entered ${activeZone.name}` :
+                        isModerate ? `Moved into ${activeZone.name} (moderate activity)` :
+                        `Approaching ${activeZone.name}`;
+         
+         updatedT.activities = [{ time: Date.now(), msg: actMsg, type: actType }, ...t.activities].slice(0, 5);
+         
+         // Only High risk gets an immediate temporary warning popup. Safe/Moderate are SILENT FEED ONLY. Critical handles escalation.
+         if (newLevel === 'high') {
+            notifyWarning(`High Risk Area: ${t.name} entered ${activeZone.name}`);
+            updatedT.recentAlerts = [`Entered High Risk: ${activeZone.name} at ${new Date().toLocaleTimeString()}`, ...t.recentAlerts].slice(0, 3);
+         }
+       } else if (t.currentZoneId) {
+         // Exited previous zone
+         updatedT.activities = [{ time: Date.now(), msg: `Exited tracked zone`, type: 'info' as const }, ...t.activities].slice(0, 5);
+       }
+    } else if (newLevel === 'critical' && activeZone) {
+       // Escalation Logic for Critical Zones (prevent popup spam)
+       const elapsed = Date.now() - updatedT.criticalEntryTime;
+       
+       if (elapsed >= 30000 && updatedT.escalationLevel === 0) {
+          // 30 seconds inside critical zone: Elevated Warning
+          updatedT.escalationLevel = 1;
+          notifyWarning(`Elevated Warning: ${t.name} dwelling in ${activeZone.name} > 30s`);
+          updatedT.recentAlerts = [`Dwelling warning in ${activeZone.name}`, ...t.recentAlerts].slice(0, 3);
+       } else if (elapsed >= 60000 && updatedT.escalationLevel === 1) {
+          // 60 seconds inside critical zone: Critical Escalation
+          updatedT.escalationLevel = 2;
+          notifyError(`CRITICAL ESCALATION: ${t.name} dwelling in ${activeZone.name} > 60s`);
+          updatedT.recentAlerts = [`Critical escalation: 60s+ in ${activeZone.name}`, ...t.recentAlerts].slice(0, 3);
+       }
     }
 
-    return { ...t, safetyScore: Math.max(0, Math.round(newScore)), riskLevel: newLevel, lastActive: Date.now() };
+    return updatedT;
   }, []);
 
   useEffect(() => {
@@ -270,6 +320,15 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
     });
   }, [tourists, filter]);
 
+  const criticalTourists = useMemo(() => {
+    return tourists.filter(t => t.riskLevel === 'critical' && t.escalationLevel > 0);
+  }, [tourists]);
+
+  const globalActivityFeed = useMemo(() => {
+    const feed = tourists.flatMap(t => t.activities.map(a => ({ ...a, touristName: t.name, touristId: t.id })));
+    return feed.sort((a, b) => b.time - a.time).slice(0, 20); // Keep top 20 latest events
+  }, [tourists]);
+
   useEffect(() => {
     if (selectedTourist) {
       const updated = tourists.find(t => t.id === selectedTourist.id);
@@ -278,8 +337,31 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
   }, [tourists, selectedTourist?.id]);
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[500px]">
-      <div className="w-full md:w-2/3 h-1/2 md:h-full relative border-r border-border">
+    <div className="space-y-4">
+      {/* Persistent Critical Alert Cards (Replaces Popups) */}
+      {criticalTourists.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          {criticalTourists.map(ct => (
+             <div key={ct.id} className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 flex items-center justify-between shadow-lg shadow-red-500/5 animate-in slide-in-from-top-2">
+               <div className="flex items-center gap-3">
+                 <div className="p-2 bg-red-500/20 rounded-full animate-pulse">
+                   <AlertTriangle className="h-5 w-5 text-red-500" />
+                 </div>
+                 <div>
+                   <p className="font-bold text-red-600 dark:text-red-400 text-sm">{ct.name} — CRITICAL ESCALATION</p>
+                   <p className="text-xs text-red-500/80">Dwelling in high-risk zone for &gt; {(Date.now() - ct.criticalEntryTime) > 60000 ? '60s' : '30s'}</p>
+                 </div>
+               </div>
+               <Button variant="ghost" size="sm" onClick={() => setSelectedTourist(ct)} className="text-red-600 hover:bg-red-500/20">
+                 View Live
+               </Button>
+             </div>
+          ))}
+        </div>
+      )}
+
+      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[500px]">
+      <div className="w-full md:w-1/2 h-1/2 md:h-full relative border-r border-border shrink-0">
         <MapContainer center={PUNE_CENTER} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
           <TileLayer
             attribution='&copy; OpenStreetMap'
@@ -320,7 +402,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
         </div>
       </div>
 
-      <div className="w-full md:w-1/3 h-1/2 md:h-full bg-muted/10 p-4 overflow-y-auto">
+      <div className="w-full md:w-1/4 h-1/2 md:h-full bg-muted/10 p-4 overflow-y-auto shrink-0 border-r border-border">
         <div className="flex items-center gap-2 mb-4 pb-2 border-b">
           <Radar className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-lg">Live Telemetry</h3>
@@ -408,7 +490,33 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
           </div>
         )}
       </div>
+      
+      {/* Smart Live Activity Feed (Replaces Popups for Safe/Moderate) */}
+      <div className="hidden md:flex w-full md:w-1/4 flex-col bg-slate-900/5 border-l border-border p-3 overflow-hidden">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <Clock className="h-3 w-3" /> Live Operations Feed
+        </h3>
+        <div className="space-y-2 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+          {globalActivityFeed.length > 0 ? globalActivityFeed.map((item, idx) => (
+             <div key={`${item.touristId}-${item.time}-${idx}`} className="text-xs p-2 rounded-md bg-background/50 border border-border/50 animate-in fade-in zoom-in duration-300">
+               <div className="flex items-center justify-between mb-1 opacity-70">
+                 <span className="font-semibold">{item.touristName}</span>
+                 <span className="text-[9px]">{new Date(item.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+               </div>
+               <div className="flex items-start gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${item.type === 'safe' ? 'bg-emerald-500' : item.type === 'moderate' ? 'bg-amber-400' : item.type === 'high' ? 'bg-orange-500' : item.type === 'critical' ? 'bg-red-500' : 'bg-blue-400'}`} />
+                  <span className={`${item.type === 'critical' ? 'text-red-500 font-medium' : item.type === 'high' ? 'text-orange-500 font-medium' : 'text-muted-foreground'}`}>
+                    {item.msg}
+                  </span>
+               </div>
+             </div>
+          )) : (
+            <div className="text-xs text-muted-foreground text-center mt-10">No recent activity</div>
+          )}
+        </div>
+      </div>
     </Card>
+    </div>
   );
 };
 
