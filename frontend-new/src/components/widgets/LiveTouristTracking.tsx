@@ -53,12 +53,34 @@ const createIcon = (level: string) => {
   });
 };
 
-// Realistic Pune Risk Zones
-const RISK_ZONES = [
-  { id: 'Z1', name: 'Swargate Bus Stand (Transport Hub)', lat: 18.5018, lng: 73.8636, radius: 1000, riskMultiplier: 1.6 },
-  { id: 'Z2', name: 'Shivajinagar Station (Transport Hub)', lat: 18.5314, lng: 73.8446, radius: 1200, riskMultiplier: 1.5 },
-  { id: 'Z3', name: 'Koregaon Park (Nightlife Area)', lat: 18.5362, lng: 73.8939, radius: 1500, riskMultiplier: 1.3 },
-  { id: 'Z4', name: 'FC Road (Crowded)', lat: 18.5263, lng: 73.8441, radius: 800, riskMultiplier: 1.2 },
+interface RiskZone {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radius: number;
+  riskMultiplier: number;
+  fillColor: string;
+  fillOpacity: number;
+}
+
+// Realistic Pune Risk Zones (One location = One Zone, No duplicates, No borders)
+const RISK_ZONES: RiskZone[] = [
+  // Safe (Green)
+  { id: 'Z1', name: 'Baner (Safe Zone)', lat: 18.5590, lng: 73.7868, radius: 1500, riskMultiplier: 0.5, fillColor: '#22c55e', fillOpacity: 0.1 },
+  { id: 'Z2', name: 'Aundh (Safe Zone)', lat: 18.5626, lng: 73.8087, radius: 1500, riskMultiplier: 0.5, fillColor: '#22c55e', fillOpacity: 0.1 },
+  
+  // Moderate (Yellow)
+  { id: 'Z3', name: 'FC Road (Moderate)', lat: 18.5263, lng: 73.8441, radius: 1000, riskMultiplier: 1.2, fillColor: '#eab308', fillOpacity: 0.15 },
+  { id: 'Z4', name: 'Kothrud (Moderate)', lat: 18.5074, lng: 73.8077, radius: 1500, riskMultiplier: 1.2, fillColor: '#eab308', fillOpacity: 0.15 },
+
+  // High (Orange)
+  { id: 'Z5', name: 'Shivajinagar (High Risk)', lat: 18.5314, lng: 73.8446, radius: 1200, riskMultiplier: 1.5, fillColor: '#f97316', fillOpacity: 0.2 },
+  { id: 'Z6', name: 'Swargate (High Risk)', lat: 18.5018, lng: 73.8636, radius: 1200, riskMultiplier: 1.5, fillColor: '#f97316', fillOpacity: 0.2 },
+
+  // Critical (Soft Red)
+  { id: 'Z7', name: 'Pune Station (Critical)', lat: 18.5289, lng: 73.8744, radius: 1000, riskMultiplier: 2.0, fillColor: '#ef4444', fillOpacity: 0.25 },
+  { id: 'Z8', name: 'Koregaon Park (Night Zone)', lat: 18.5362, lng: 73.8939, radius: 1200, riskMultiplier: 2.0, fillColor: '#ef4444', fillOpacity: 0.25 },
 ];
 
 const PUNE_CENTER: [number, number] = [18.5204, 73.8567];
@@ -109,12 +131,18 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
         
         // Ensure fallback tourists exist if no real users are found and no previous tourists exist
         if (realTourists.length === 0 && updated.length === 0) {
-           const fallbacks = [
-             { id: 'F-1', name: 'John Doe', role: 'Tourist', latOffset: 0.01, lngOffset: -0.01, risk: 'safe' },
-             { id: 'F-2', name: 'Jane Smith', role: 'Tourist', latOffset: -0.02, lngOffset: 0.015, risk: 'safe' },
-             { id: 'F-3', name: 'Alex Johnson', role: 'Tourist', latOffset: 0.015, lngOffset: 0.02, risk: 'safe' },
-             { id: 'F-4', name: 'Sarah Lee', role: 'Tourist', latOffset: -0.01, lngOffset: -0.02, risk: 'moderate' },
-           ];
+           const fallbacks = Array.from({ length: 25 }).map((_, i) => {
+             const isCritical = Math.random() > 0.85;
+             const isHigh = !isCritical && Math.random() > 0.7;
+             return {
+               id: `F-${i + 1}`,
+               name: `Tourist-${i + 1}`,
+               role: 'Tourist',
+               latOffset: (Math.random() - 0.5) * 0.15,
+               lngOffset: (Math.random() - 0.5) * 0.15,
+               risk: isCritical ? 'critical' : isHigh ? 'high' : 'safe'
+             };
+           });
            fallbacks.forEach(f => {
              updated.push({
                id: f.id,
@@ -264,7 +292,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                key={zone.id} 
                center={[zone.lat, zone.lng]} 
                radius={zone.radius} 
-               pathOptions={{ color: 'red', fillColor: '#ef4444', fillOpacity: 0.2 }}
+               pathOptions={{ color: 'transparent', fillColor: zone.fillColor, fillOpacity: zone.fillOpacity }}
             />
           ))}
 
