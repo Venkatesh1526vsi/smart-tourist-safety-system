@@ -42,18 +42,18 @@ const RiskZoneHeatmap = () => {
 
   return (
     <>
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm">
+      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm h-full flex flex-col">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <MapPin className="h-5 w-5 text-amber-500" />
             Risk Zone Heatmap
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col">
           {/* Simulated map container */}
-          <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 dark:bg-slate-700/20 dark:border-slate-700/50 p-2">
+          <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 dark:bg-slate-700/20 dark:border-slate-700/50 p-2 flex-1 flex flex-col min-h-[260px]">
             {/* Fake map background */}
-            <div className="h-[260px] w-full bg-gradient-to-br from-sky-100/50 to-emerald-100/30 dark:from-slate-700/30 dark:to-slate-800/50 rounded-md">
+            <div className="flex-1 w-full bg-gradient-to-br from-sky-100/50 to-emerald-100/30 dark:from-slate-700/30 dark:to-slate-800/50 rounded-md">
               {/* Grid overlay */}
               <div className="grid h-full grid-rows-4 gap-1 p-1">
                 {GRID.map((row, ri) => (

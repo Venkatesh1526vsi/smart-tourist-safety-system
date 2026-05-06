@@ -38,7 +38,7 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
       }
     }
 
-    const monthData: Record<string, { month: string, incidents: number, critical: number, high: number }> = {};
+    const monthData: Record<string, { month: string, incidents: number, critical: number, high: number, active: number, users: number }> = {};
     displayMonths.forEach((m, idx) => {
       // Create a gentle believable growth curve (synthetic data hybrid)
       const progress = idx / Math.max(1, displayMonths.length - 1);

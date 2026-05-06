@@ -51,20 +51,20 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
   };
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative">
+    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldAlert className="h-5 w-5 text-sky-600 dark:text-cyan-400" />
           Incident Categories {filter?.category ? `(${filter.category.charAt(0).toUpperCase() + filter.category.slice(1)})` : ''}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col justify-center">
         {DATA.length === 0 ? (
-          <div className="h-[260px] flex items-center justify-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground min-h-[260px]">
             No category data available.
           </div>
         ) : (
-          <div className="h-[260px]">
+          <div className="flex-1 min-h-[260px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
