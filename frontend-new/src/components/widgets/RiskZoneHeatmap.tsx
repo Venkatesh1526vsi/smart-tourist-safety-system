@@ -65,7 +65,7 @@ const RiskZoneHeatmap = () => {
                         className={`flex items-center justify-center border border-white/10 dark:border-slate-600/20 transition-colors cursor-pointer hover:border-primary/50 hover:z-10 relative ${cellColor(val, isDark)} ${val >= 0.8 ? 'animate-pulse' : ''}`}
                         title={`Risk: ${riskLabel(val)} (Click for details)`}
                       >
-                        <span className="text-[9px] font-medium text-foreground/50 opacity-0 hover:opacity-100 transition-opacity">
+                        <span className="text-[9px] font-medium text-foreground/70">
                           {Math.round(val * 100)}
                         </span>
                       </div>
