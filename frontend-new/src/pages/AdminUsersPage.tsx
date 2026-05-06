@@ -67,11 +67,29 @@ const AdminUsersPage = () => {
     deleteUserOp(id);
   };
 
-  // Step 2: Local filtering
-  const filteredUsers = users.filter(user =>
+  const handleApplyFilter = () => {
+    setCurrentPage(1); // Reset to first page on new search
+  };
+
+  const handleClearFilter = () => {
+    setSearch('');
+    setRoleFilter('all');
+    setCurrentPage(1);
+  };
+
+  // Local filtering
+  let filteredUsers = users.filter(user =>
     user.name?.toLowerCase().includes(search.toLowerCase()) ||
     user.email?.toLowerCase().includes(search.toLowerCase())
   );
+  if (roleFilter !== 'all') {
+    filteredUsers = filteredUsers.filter(user => user.role === roleFilter);
+  }
+
+  // Pagination
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <AdminDashboardLayout>
@@ -141,13 +159,28 @@ const AdminUsersPage = () => {
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
                 />
-                <button
-                  onClick={() => setSearch(search)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-3 py-1 text-xs border rounded hover:bg-muted transition"
-                >
-                  Apply
-                </button>
               </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="px-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApplyFilter();
+                }}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="outline"
+                className="px-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearFilter();
+                }}
+              >
+                Clear
+              </Button>
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-full sm:w-48">
@@ -187,7 +220,7 @@ const AdminUsersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <>
                       <tr
                         key={user._id}
@@ -279,7 +312,7 @@ const AdminUsersPage = () => {
               {/* Pagination */}
               <div className="flex items-center justify-between p-4 border-t border-border">
                 <div className="text-sm text-muted-foreground">
-                  Showing {filteredUsers.length} of {analytics.total_users} users
+                  Showing {Math.min(filteredUsers.length, (currentPage - 1) * itemsPerPage + 1)} to {Math.min(filteredUsers.length, currentPage * itemsPerPage)} of {filteredUsers.length} users
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -291,13 +324,13 @@ const AdminUsersPage = () => {
                     Previous
                   </Button>
                   <span className="text-sm">
-                    Page {currentPage}
+                    Page {currentPage} of {totalPages || 1}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(prev => prev + 1)}
-                    disabled={users.length < 10}
+                    disabled={currentPage >= totalPages}
                   >
                     Next
                   </Button>

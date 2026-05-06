@@ -10,7 +10,7 @@ const AdminAnalyticsPage = () => {
   const [timeRange, setTimeRange] = useState('30');
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
-  const { incidents, users, broadcasts, analytics } = useOperationalData();
+  const { incidents, analytics } = useOperationalData();
 
   // 2. BASE FILTERING (Time Range)
   let baseIncidents = [...incidents];
@@ -22,14 +22,14 @@ const AdminAnalyticsPage = () => {
   }
 
   // 3. COMPUTE METRICS (Using baseIncidents)
-  const totalIncidents = analytics.total_incidents; // use unified data
-  const resolvedIncidentsCount = analytics.resolved_today;
-  const criticalIncidentsCount = analytics.critical_incidents;
+  const totalIncidents = baseIncidents.length;
+  const criticalIncidentsCount = baseIncidents.filter((i: any) => (i.severity || '').toLowerCase() === 'critical').length;
+  const resolvedIncidentsCount = baseIncidents.filter((i: any) => (i.status || '').toLowerCase() === 'resolved').length;
   const resolutionRate = totalIncidents > 0 ? Math.round((resolvedIncidentsCount / totalIncidents) * 100) : 0;
 
   // Avg Resolution Time calculation
   const resolvedWithTime = baseIncidents.filter((i: any) =>
-    i.status === 'resolved' && (i.created_at || i.createdAt) && (i.resolvedAt || i.resolved_at)
+    (i.status || '').toLowerCase() === 'resolved' && (i.created_at || i.createdAt) && (i.resolvedAt || i.resolved_at)
   );
   let totalHours = 0;
   let validCount = 0;
@@ -58,21 +58,15 @@ const AdminAnalyticsPage = () => {
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
-  const incidentsByType = Object.entries(typeCounts).map(([name, value]) => ({ name, value: value as number }));
+  const incidentsByType = Object.entries(typeCounts).map(([name, value]) => ({ name, value: value as number })).sort((a, b) => b.value - a.value);
 
-  // Severity Data (Using Analytics scaled data to be proportional)
-  const scaledCritical = analytics.critical_incidents;
-  const scaledHigh = analytics.high_incidents;
-  const scaledTotal = analytics.total_incidents;
-  const scaledMedium = Math.max(0, Math.floor(scaledTotal * 0.4) - scaledHigh);
-  const scaledLow = Math.max(0, scaledTotal - scaledCritical - scaledHigh - scaledMedium);
-  
-  const incidentsBySeverity: Record<string, number> = { 
-     critical: scaledCritical, 
-     high: scaledHigh, 
-     medium: scaledMedium, 
-     low: scaledLow 
-  };
+  // Severity Data
+  const scaledTotal = chartIncidents.length;
+  const incidentsBySeverity = chartIncidents.reduce((acc: any, i: any) => {
+    const s = (i.severity || 'low').toLowerCase();
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, { critical: 0, high: 0, medium: 0, low: 0 });
 
   // 1. FIX MONTHLY TREND
   const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -96,16 +90,18 @@ const AdminAnalyticsPage = () => {
     }))
     .filter(m => m.count > 0);
 
-  // 2. FIX USER ACTIVITY (SIMULATED)
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const userActivity = days.map((day, index) => ({
-    day,
-    value: analytics.total_users + (index % 3) * 5 // small believable variation
-  }));
+  // 2. FIX USER ACTIVITY (CATEGORIES)
+  const userActivity = [
+    { name: "Registrations", value: Math.round(analytics.new_users_this_week * (timeRange === 'all' ? 4 : parseInt(timeRange)/7)) },
+    { name: "Active Users", value: analytics.active_users },
+    { name: "Live Tracked", value: analytics.users_in_risk_zones },
+    { name: "Alerts Opened", value: analytics.total_recipients },
+    { name: "SOS Triggers", value: analytics.critical_incidents }
+  ];
 
   // EXPORT FUNCTION
   const exportData = () => {
-    const data = { incidents, users, broadcasts };
+    const data = { incidents: baseIncidents, metrics: { totalIncidents, resolvedIncidentsCount, criticalIncidentsCount, resolutionRate, avgResolutionTime } };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -114,7 +110,6 @@ const AdminAnalyticsPage = () => {
     a.click();
     alert("Analytics exported successfully");
   };
-
 
   return (
     <AdminDashboardLayout>
@@ -175,24 +170,24 @@ const AdminAnalyticsPage = () => {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="cursor-pointer">
-            <DashboardCard title="Incidents by Type" icon={<BarChart3 className="h-5 w-5 text-primary" />}>
-              <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="cursor-pointer h-full">
+            <DashboardCard title="Incidents by Type" icon={<BarChart3 className="h-5 w-5 text-primary" />} className="h-full flex flex-col">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[220px]">
                 {incidentsByType.length > 0 ? (
                   incidentsByType.map(({ name, value }) => (
                     <div key={name} className="flex items-center justify-between" title={`${name}: ${value}`}>
-                      <span className="text-sm font-medium capitalize">{name}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-muted rounded-full h-2">
-                          <div className="bg-primary h-2 rounded-full" style={{ width: `${(value / (totalIncidents || 1)) * 100}%` }} />
+                      <span className="text-sm font-medium capitalize truncate w-1/3">{name}</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end">
+                        <div className="w-full max-w-[150px] bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${(value / (chartIncidents.length || 1)) * 100}%` }} />
                         </div>
                         <span className="text-sm text-muted-foreground w-8 text-right">{value}</span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-center text-gray-400 py-10">
+                  <div className="text-center text-gray-400 flex items-center justify-center h-full">
                     No data available
                   </div>
                 )}
@@ -201,8 +196,8 @@ const AdminAnalyticsPage = () => {
           </div>
 
           <div className="cursor-pointer h-full">
-            <DashboardCard title="Severity Distribution" icon={<AlertTriangle className="h-5 w-5 text-primary" />}>
-              <div className="space-y-4">
+            <DashboardCard title="Severity Distribution" icon={<AlertTriangle className="h-5 w-5 text-primary" />} className="h-full flex flex-col">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[220px]">
                 {scaledTotal > 0 ? (
                   ['critical', 'high', 'medium', 'low'].map(s => {
                     const count = incidentsBySeverity[s] || 0;
@@ -210,9 +205,9 @@ const AdminAnalyticsPage = () => {
                     const color = s === 'critical' ? 'bg-red-500' : s === 'high' ? 'bg-orange-500' : s === 'medium' ? 'bg-yellow-500' : 'bg-blue-500';
                     return (
                       <div key={s} className="flex items-center justify-between" title={`${s}: ${count}`}>
-                        <span className="text-sm font-medium capitalize">{s}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-muted rounded-full h-2">
+                        <span className="text-sm font-medium capitalize w-1/3">{s}</span>
+                        <div className="flex items-center gap-2 flex-1 justify-end">
+                          <div className="w-full max-w-[150px] bg-muted rounded-full h-2">
                             <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
                           </div>
                           <span className="text-sm text-muted-foreground w-8 text-right">{count}</span>
@@ -221,7 +216,7 @@ const AdminAnalyticsPage = () => {
                     );
                   })
                 ) : (
-                  <div className="text-center text-gray-400 py-10">
+                  <div className="text-center text-gray-400 flex items-center justify-center h-full">
                     No data available
                   </div>
                 )}
@@ -230,24 +225,24 @@ const AdminAnalyticsPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="cursor-pointer">
-            <DashboardCard title="Monthly Incident Trend" icon={<TrendingUp className="h-5 w-5 text-primary" />}>
-              <div className="space-y-4 h-40 flex items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="cursor-pointer h-full">
+            <DashboardCard title="Monthly Incident Trend" icon={<TrendingUp className="h-5 w-5 text-primary" />} className="h-full flex flex-col">
+              <div className="space-y-4 h-[220px] flex items-end">
                 {monthlyTrend.length > 0 ? (
-                  <div className="flex items-end justify-between w-full">
+                  <div className="flex items-end justify-around w-full h-[180px]">
                     {monthlyTrend.map((m) => {
                       const max = Math.max(...monthlyTrend.map(x => x.count), 1);
                       return (
-                        <div key={m.month} className="flex flex-col items-center flex-1" title={`${m.month}: ${m.count}`}>
-                          <div className="w-8 bg-primary rounded-t transition-all" style={{ height: `${(m.count / max) * 100}%` }} />
+                        <div key={m.month} className="flex flex-col items-center flex-1 h-full justify-end" title={`${m.month}: ${m.count}`}>
+                          <div className="w-8 bg-primary rounded-t transition-all" style={{ height: `${(m.count / max) * 100}%`, minHeight: '4px' }} />
                           <span className="text-[10px] text-muted-foreground mt-2">{m.month}</span>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-400 py-10 w-full">
+                  <div className="text-center text-gray-400 w-full flex items-center justify-center h-full">
                     No data available
                   </div>
                 )}
@@ -255,16 +250,16 @@ const AdminAnalyticsPage = () => {
             </DashboardCard>
           </div>
 
-          <div className="cursor-pointer">
-            <DashboardCard title="User Activity (Last 7 Days)" icon={<Users className="h-5 w-5 text-primary" />}>
-              <div className="space-y-4 h-40 flex items-end">
-                <div className="flex items-end justify-between w-full">
-                  {userActivity.map((day) => {
+          <div className="cursor-pointer h-full">
+            <DashboardCard title="User Activity Metrics" icon={<Users className="h-5 w-5 text-primary" />} className="h-full flex flex-col">
+              <div className="space-y-4 h-[220px] flex items-end">
+                <div className="flex items-end justify-around w-full h-[180px]">
+                  {userActivity.map((item) => {
                     const max = Math.max(...userActivity.map(d => d.value), 1);
                     return (
-                      <div key={day.day} className="flex flex-col items-center flex-1" title={`${day.day}: ${day.value}`}>
-                        <div className="w-8 bg-green-500 rounded-t transition-all" style={{ height: `${(day.value / max) * 100}%` }} />
-                        <span className="text-[10px] text-muted-foreground mt-2">{day.day}</span>
+                      <div key={item.name} className="flex flex-col items-center flex-1 h-full justify-end" title={`${item.name}: ${item.value}`}>
+                        <div className="w-10 bg-green-500 rounded-t transition-all" style={{ height: `${(item.value / max) * 100}%`, minHeight: '4px' }} />
+                        <span className="text-[10px] text-muted-foreground mt-2 text-center leading-tight break-words max-w-[60px]">{item.name}</span>
                       </div>
                     );
                   })}

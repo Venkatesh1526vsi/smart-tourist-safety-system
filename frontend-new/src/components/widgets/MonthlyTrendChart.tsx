@@ -43,13 +43,13 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
       // Create a gentle believable growth curve (synthetic data hybrid)
       const progress = idx / Math.max(1, displayMonths.length - 1);
       const baseSynthetic = Math.floor(3 + (progress * 6)); // Growth from ~3 to ~9
-      const randomJitter = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+      const deterministicJitter = (idx % 3) - 1; // -1, 0, 1 (stable based on month index)
       
-      const syntheticIncidents = Math.max(1, baseSynthetic + randomJitter);
+      const syntheticIncidents = Math.max(1, baseSynthetic + deterministicJitter);
       const syntheticHigh = Math.floor(syntheticIncidents * 0.25);
       const syntheticCritical = Math.floor(syntheticIncidents * 0.1);
       const syntheticActive = Math.floor(syntheticIncidents * 0.4);
-      const syntheticUsers = Math.floor(20 + progress * 50 + randomJitter * 2);
+      const syntheticUsers = Math.floor(20 + progress * 50 + deterministicJitter * 2);
 
       monthData[m] = { 
         month: m, 
@@ -69,6 +69,7 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
            monthData[monthStr].incidents += 1;
            if (incident.severity === 'critical') monthData[monthStr].critical += 1;
            if (incident.severity === 'high') monthData[monthStr].high += 1;
+           if (incident.status !== 'resolved' && incident.status !== 'closed') monthData[monthStr].active += 1;
         }
       });
     }

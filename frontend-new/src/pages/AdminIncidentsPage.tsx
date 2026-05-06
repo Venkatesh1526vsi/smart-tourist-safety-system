@@ -28,7 +28,7 @@ type Incident = {
 };
 
 const AdminIncidentsPage = () => {
-  const { loading, incidents, deletedIncidents, updateIncidentOp, deleteIncidentOp } = useOperationalData();
+  const { loading, incidents, deletedIncidents, analytics, updateIncidentOp, deleteIncidentOp } = useOperationalData();
   const [error] = useState<string | null>(null);
   
   const [search, setSearch] = useState('');
@@ -129,7 +129,7 @@ const AdminIncidentsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div onClick={() => { setActiveView("all"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Total" icon={<AlertTriangle className="h-5 w-5 text-blue-500" />} className={activeView === 'all' ? 'ring-2 ring-primary' : ''}>
-              <div className="text-2xl font-bold">{incidents.length}</div>
+              <div className="text-2xl font-bold">{analytics?.total_incidents || incidents.length}</div>
               <p className="text-xs text-muted-foreground">Active Reports</p>
             </DashboardCard>
           </div>
@@ -137,7 +137,7 @@ const AdminIncidentsPage = () => {
           <div onClick={() => { setActiveView("critical"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Critical" icon={<AlertTriangle className="h-5 w-5 text-red-500" />} className={activeView === 'critical' ? 'ring-2 ring-red-500' : ''}>
               <div className="text-2xl font-bold">
-                {incidents.filter(i => i?.severity === 'critical').length}
+                {analytics?.critical_incidents || incidents.filter(i => i?.severity === 'critical').length}
               </div>
               <p className="text-xs text-muted-foreground">High priority</p>
             </DashboardCard>
@@ -146,7 +146,7 @@ const AdminIncidentsPage = () => {
           <div onClick={() => { setActiveView("resolved"); setFilteredIncidents([]); }} className="cursor-pointer">
             <DashboardCard title="Resolved" icon={<CheckCircle className="h-5 w-5 text-green-500" />} className={activeView === 'resolved' ? 'ring-2 ring-green-500' : ''}>
               <div className="text-2xl font-bold">
-                {resolvedIncidents.length}
+                {analytics?.resolved_today || resolvedIncidents.length}
               </div>
               <p className="text-xs text-muted-foreground">Success cases</p>
             </DashboardCard>

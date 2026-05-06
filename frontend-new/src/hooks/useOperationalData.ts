@@ -1,26 +1,74 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getAllIncidents, getAdminUsers, type Incident } from '@/services/api';
 
-// Synthetic Base Data to Ensure Realism
-const SYNTHETIC_INCIDENTS_BASE: Partial<Incident>[] = [
-  { _id: 'SYN-001', type: 'Medical Emergency', category: 'Medical', description: 'Tourist feeling dizzy due to heat at Shaniwar Wada', severity: 'medium', status: 'resolved', latitude: 18.5195, longitude: 73.8553, created_at: new Date(Date.now() - 86400000).toISOString() },
-  { _id: 'SYN-002', type: 'Theft/Loss', category: 'Theft', description: 'Lost wallet near Dagdusheth Halwai Temple', severity: 'high', status: 'investigating', latitude: 18.5164, longitude: 73.8560, created_at: new Date(Date.now() - 172800000).toISOString() },
-  { _id: 'SYN-003', type: 'Harassment', category: 'Harassment', description: 'Group causing disturbance at FC Road', severity: 'critical', status: 'reported', latitude: 18.5263, longitude: 73.8441, created_at: new Date(Date.now() - 3600000).toISOString() },
-  { _id: 'SYN-004', type: 'Lost Person', category: 'General', description: 'Missing child near Pune Station', severity: 'critical', status: 'resolved', latitude: 18.5289, longitude: 73.8744, created_at: new Date(Date.now() - 259200000).toISOString() },
-  { _id: 'SYN-005', type: 'Medical Emergency', category: 'Medical', description: 'Minor injury during trek at Sinhagad Fort', severity: 'medium', status: 'resolved', latitude: 18.3663, longitude: 73.7559, created_at: new Date(Date.now() - 432000000).toISOString() },
-  { _id: 'SYN-006', type: 'Suspicious Activity', category: 'Security', description: 'Unattended bag at Swargate Bus Stand', severity: 'high', status: 'pending', latitude: 18.5018, longitude: 73.8636, created_at: new Date(Date.now() - 7200000).toISOString() }
-];
+// Dynamic Synthetic Generation to avoid huge static arrays
+const generateSyntheticUsers = (count: number) => {
+  const indianFirstNames = ['Rahul', 'Priya', 'Amit', 'Sneha', 'Vikas', 'Neha', 'Sanjay', 'Pooja', 'Raj', 'Anjali'];
+  const indianLastNames = ['Sharma', 'Patil', 'Desai', 'Joshi', 'Kadam', 'Gupta', 'Mane', 'Kulkarni', 'Jadhav', 'Bhosale'];
+  const foreignNames = ['John Smith', 'Emma Watson', 'Michael Brown', 'Sarah Davis', 'David Wilson'];
+  
+  const users = [];
+  for (let i = 0; i < count; i++) {
+    const isForeign = i < 8; // Keep foreign names low
+    let name = '';
+    if (isForeign) {
+      name = foreignNames[i % foreignNames.length];
+    } else {
+      name = `${indianFirstNames[i % indianFirstNames.length]} ${indianLastNames[(i + 3) % indianLastNames.length]}`;
+    }
+    
+    users.push({
+      _id: `U-SYN-${1000 + i}`,
+      name,
+      email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
+      role: 'user',
+      status: i % 15 === 0 ? 'suspended' : 'active',
+      created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString()
+    });
+  }
+  return users;
+};
 
-const SYNTHETIC_USERS_BASE = [
-  { _id: 'U-SYN-001', name: 'Rahul Sharma', email: 'rahul.s@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 1000000000).toISOString() },
-  { _id: 'U-SYN-002', name: 'Priya Patel', email: 'priya.p@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 2000000000).toISOString() },
-  { _id: 'U-SYN-003', name: 'Amit Desai', email: 'amit.d@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 3000000000).toISOString() },
-  { _id: 'U-SYN-004', name: 'John Smith', email: 'john.s@foreign.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 4000000000).toISOString() },
-  { _id: 'U-SYN-005', name: 'Sneha Joshi', email: 'sneha.j@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 5000000000).toISOString() },
-  { _id: 'U-SYN-006', name: 'Emma Watson', email: 'emma.w@foreign.com', role: 'user', status: 'suspended', created_at: new Date(Date.now() - 6000000000).toISOString() },
-  { _id: 'U-SYN-007', name: 'Vikas Kadam', email: 'vikas.k@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 7000000000).toISOString() },
-  { _id: 'U-SYN-008', name: 'Neha Gupta', email: 'neha.g@example.com', role: 'user', status: 'active', created_at: new Date(Date.now() - 8000000000).toISOString() }
-];
+const generateSyntheticIncidents = (count: number) => {
+  const types = ['Medical Emergency', 'Theft/Loss', 'Harassment', 'Lost Person', 'Suspicious Activity', 'Scam', 'General'];
+  const locations = [
+    { lat: 18.5263, lng: 73.8441, desc: 'FC Road' },
+    { lat: 18.5018, lng: 73.8636, desc: 'Swargate' },
+    { lat: 18.5289, lng: 73.8744, desc: 'Pune Station' },
+    { lat: 18.5195, lng: 73.8553, desc: 'Shaniwar Wada' },
+    { lat: 18.5362, lng: 73.8939, desc: 'Koregaon Park' },
+    { lat: 18.5590, lng: 73.7868, desc: 'Baner' },
+    { lat: 18.5074, lng: 73.8077, desc: 'Kothrud' }
+  ];
+  
+  const incidents = [];
+  for (let i = 0; i < count; i++) {
+    const loc = locations[i % locations.length];
+    const type = types[i % types.length];
+    const isCritical = i % 12 === 0;
+    const isHigh = i % 7 === 0;
+    const severity = isCritical ? 'critical' : isHigh ? 'high' : (i % 3 === 0 ? 'medium' : 'low');
+    const status = i % 4 === 0 ? 'resolved' : (i % 3 === 0 ? 'investigating' : 'pending');
+    
+    incidents.push({
+      _id: `SYN-INC-${1000 + i}`,
+      type,
+      category: type === 'Medical Emergency' ? 'Medical' : type === 'Theft/Loss' ? 'Theft' : type,
+      description: `${type} reported near ${loc.desc}`,
+      severity,
+      status,
+      latitude: loc.lat + (Math.random() - 0.5) * 0.01,
+      longitude: loc.lng + (Math.random() - 0.5) * 0.01,
+      created_at: new Date(Date.now() - Math.random() * 5000000000).toISOString(),
+      user: { name: `Tourist ${i+1}`, email: `tourist${i+1}@example.com` }
+    });
+  }
+  return incidents;
+};
+
+// Initialized outside component to keep references stable
+const SYNTHETIC_USERS_BASE = generateSyntheticUsers(130);
+const SYNTHETIC_INCIDENTS_BASE = generateSyntheticIncidents(75);
 
 // Helper for local storage
 const getStorage = (key: string, fallback: any) => {
@@ -79,8 +127,8 @@ export function useOperationalData() {
 
   // Compute Merged State
   const unifiedData = useMemo(() => {
-    // 1. INCIDENTS
-    const overrideIncidents = getStorage('op_incidents', {}); // { [id]: { status, deleted, severity, ... } }
+    // 1. INCIDENTS (Real first, then synthetic)
+    const overrideIncidents = getStorage('op_incidents', {});
     
     const allIncidents = [...realIncidents, ...SYNTHETIC_INCIDENTS_BASE].map((inc: any) => {
       const overrides = overrideIncidents[inc._id] || {};
@@ -90,13 +138,11 @@ export function useOperationalData() {
     const mergedIncidents = allIncidents.filter(inc => !inc.deleted);
     const deletedIncidents = allIncidents.filter(inc => inc.deleted);
 
-    // 2. USERS
+    // 2. USERS (Real first, then synthetic)
     const overrideUsers = getStorage('op_users', {});
-    
-    // We add users from localStorage that are manually created by admin but not saved in backend yet
     const localCreatedUsers = getStorage('op_created_users', []);
 
-    const allUsers = [...realUsers, ...SYNTHETIC_USERS_BASE, ...localCreatedUsers].map((usr: any) => {
+    const allUsers = [...realUsers, ...localCreatedUsers, ...SYNTHETIC_USERS_BASE].map((usr: any) => {
       const overrides = overrideUsers[usr._id] || {};
       return { ...usr, ...overrides };
     });
@@ -106,8 +152,8 @@ export function useOperationalData() {
 
     // 3. BROADCASTS
     const broadcasts = getStorage('op_broadcasts', [
-      { id: 'B-1', title: 'Pune Metro Service Disruption', message: 'Metro services delayed by 30 mins.', severity: 'medium', status: 'sent', scheduledFor: '', recipients: 125, timestamp: Date.now() - 86400000 },
-      { id: 'B-2', title: 'Heavy Rain Alert', message: 'Avoid low lying areas near Mutha river.', severity: 'high', status: 'sent', scheduledFor: '', recipients: 148, timestamp: Date.now() - 3600000 }
+      { id: 'B-1', title: 'Pune Metro Service Disruption', message: 'Metro services delayed by 30 mins.', severity: 'medium', status: 'sent', scheduledFor: '', recipients: mergedUsers.length, timestamp: Date.now() - 86400000 },
+      { id: 'B-2', title: 'Heavy Rain Alert', message: 'Avoid low lying areas near Mutha river.', severity: 'high', status: 'sent', scheduledFor: '', recipients: mergedUsers.length, timestamp: Date.now() - 3600000 }
     ]);
     
     // Auto-execute scheduled broadcasts
@@ -125,16 +171,13 @@ export function useOperationalData() {
        setStorage('op_broadcasts', processedBroadcasts);
     }
 
-    // 4. DERIVED ANALYTICS (Realistic scaling)
-    const baseUsers = 124;
-    const baseIncidents = 73;
-
-    const totalUsersCount = baseUsers + mergedUsers.length;
-    const totalIncidentsCount = baseIncidents + mergedIncidents.length;
-    const criticalIncidentsCount = mergedIncidents.filter(i => i.severity === 'critical').length + 18;
-    const resolvedCount = mergedIncidents.filter(i => i.status === 'resolved' || i.status === 'closed').length + 45;
-    const pendingCount = Math.floor(totalIncidentsCount * 0.2) + mergedIncidents.filter(i => i.status === 'pending' || i.status === 'reported').length;
-    const highCount = Math.floor(totalIncidentsCount * 0.3) + mergedIncidents.filter(i => i.severity === 'high').length;
+    // 4. DERIVED ANALYTICS (Exact array matches to prevent count mismatch)
+    const totalUsersCount = mergedUsers.length;
+    const totalIncidentsCount = mergedIncidents.length;
+    const criticalIncidentsCount = mergedIncidents.filter(i => i.severity === 'critical').length;
+    const resolvedCount = mergedIncidents.filter(i => i.status === 'resolved' || i.status === 'closed').length;
+    const pendingCount = mergedIncidents.filter(i => i.status === 'pending' || i.status === 'reported' || i.status === 'investigating').length;
+    const highCount = mergedIncidents.filter(i => i.severity === 'high').length;
 
     return {
       incidents: mergedIncidents,
@@ -151,7 +194,7 @@ export function useOperationalData() {
         high_incidents: highCount,
         new_users_this_week: Math.floor(totalUsersCount * 0.15),
         users_in_risk_zones: Math.floor(totalUsersCount * 0.12),
-        active_users: totalUsersCount - 15,
+        active_users: Math.floor(totalUsersCount * 0.9), // simulate active
         total_recipients: Math.floor(totalUsersCount * 0.85)
       }
     };
