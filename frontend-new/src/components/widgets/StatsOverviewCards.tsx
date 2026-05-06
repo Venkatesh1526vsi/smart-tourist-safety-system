@@ -12,51 +12,80 @@ interface SummaryData {
 
 interface StatsOverviewCardsProps {
   summary?: SummaryData | null;
+  filter?: { severity?: string, status?: string };
+  onFilterChange?: (filter: { severity?: string, status?: string }) => void;
 }
 
-const StatsOverviewCards = ({ summary }: StatsOverviewCardsProps) => {
+const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCardsProps) => {
+  const handleCardClick = (type: string) => {
+    if (!onFilterChange) return;
+    
+    // Toggle logic
+    if (type === 'critical') {
+      onFilterChange(filter?.severity === 'critical' ? {} : { severity: 'critical' });
+    } else if (type === 'active') {
+      onFilterChange(filter?.status === 'reported' ? {} : { status: 'reported' });
+    } else {
+      onFilterChange({}); // Reset for others for now
+    }
+  };
+
   const STATS = [
     {
+      id: "total",
       label: "Total Incidents",
       value: summary?.total_incidents?.toLocaleString() || "1,284",
       subtext: "+12% from last month",
       icon: ShieldAlert,
       iconClass: "text-sky-600 dark:text-cyan-400",
       iconBg: "bg-sky-500/10 dark:bg-cyan-500/10",
+      activeCondition: !filter?.severity && !filter?.status
     },
     {
+      id: "active",
       label: "Active Incidents",
       value: summary?.active_incidents?.toString() || "37",
       subtext: "Requires attention",
       icon: AlertTriangle,
       iconClass: "text-amber-600 dark:text-amber-400",
       iconBg: "bg-amber-500/10 dark:bg-amber-500/10",
+      activeCondition: filter?.status === 'reported'
     },
     {
+      id: "users",
       label: "Total Users",
       value: summary?.total_users?.toLocaleString() || "1,247",
       subtext: summary?.new_users_this_week ? `+${summary.new_users_this_week} this week` : "Registered users",
       icon: Users,
       iconClass: "text-emerald-600 dark:text-emerald-400",
       iconBg: "bg-emerald-500/10 dark:bg-emerald-500/10",
+      activeCondition: false
     },
     {
+      id: "critical",
       label: "Critical Cases",
       value: summary?.critical_incidents?.toString() || "4",
       subtext: "High priority",
       icon: Clock,
       iconClass: "text-red-600 dark:text-red-400",
       iconBg: "bg-red-500/10 dark:bg-red-500/10",
+      activeCondition: filter?.severity === 'critical'
     },
   ];
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       {STATS.map((stat) => {
         const Icon = stat.icon;
+        const isActive = stat.activeCondition;
         return (
           <Card
-            key={stat.label}
-            className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm"
+            key={stat.id}
+            onClick={() => handleCardClick(stat.id)}
+            className={`cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isActive 
+                ? "ring-2 ring-primary bg-primary/5 dark:bg-primary/10 border-primary" 
+                : "dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm"
+            }`}
           >
             <CardContent className="flex items-start gap-3 p-4">
               <div

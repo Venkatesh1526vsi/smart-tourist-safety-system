@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -8,107 +9,131 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Incident } from "@/services/api";
 
 interface MonthlyTrendChartProps {
   incidents?: Incident[];
+  filter?: { month?: string };
+  onFilterChange?: (filter: any) => void;
 }
 
-const MonthlyTrendChart = ({ incidents }: MonthlyTrendChartProps) => {
-  // Generate monthly data from real incidents or use default
-  const generateMonthlyData = () => {
+const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendChartProps) => {
+  
+  const DATA = useMemo(() => {
     if (!incidents || incidents.length === 0) {
-      return [
-        { month: "Jan", incidents: 65 },
-        { month: "Feb", incidents: 59 },
-        { month: "Mar", incidents: 80 },
-        { month: "Apr", incidents: 72 },
-        { month: "May", incidents: 56 },
-        { month: "Jun", incidents: 55 },
-        { month: "Jul", incidents: 90 },
-        { month: "Aug", incidents: 105 },
-        { month: "Sep", incidents: 88 },
-        { month: "Oct", incidents: 74 },
-        { month: "Nov", incidents: 60 },
-        { month: "Dec", incidents: 48 },
-      ];
+      return [];
     }
     
     // Group incidents by month
-    const monthCounts: Record<string, number> = {};
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthData: Record<string, { month: string, incidents: number, critical: number, high: number }> = {};
     
-    // Initialize all months with 0
-    months.forEach(m => monthCounts[m] = 0);
+    months.forEach(m => monthData[m] = { month: m, incidents: 0, critical: 0, high: 0 });
     
-    // Count incidents per month
     incidents.forEach(incident => {
-      const date = new Date(incident.created_at);
+      const date = new Date(incident.created_at || Date.now());
       const month = months[date.getMonth()];
-      monthCounts[month] = (monthCounts[month] || 0) + 1;
+      if (monthData[month]) {
+         monthData[month].incidents += 1;
+         if (incident.severity === 'critical') monthData[month].critical += 1;
+         if (incident.severity === 'high') monthData[month].high += 1;
+      }
     });
     
-    return months.map(month => ({
-      month,
-      incidents: monthCounts[month] || 0
-    }));
+    return Object.values(monthData);
+  }, [incidents]);
+
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+
+  const exportCSV = () => {
+    if (!DATA.length) return;
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Month,Total Incidents,Critical,High\n"
+      + DATA.map(row => `${row.month},${row.incidents},${row.critical},${row.high}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "monthly_incidents_trend.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-  
-  const DATA = generateMonthlyData();
-  const isDark =
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("dark");
+
+  const handleChartClick = (state: any) => {
+    if (state && state.activeLabel && onFilterChange) {
+      const clickedMonth = state.activeLabel;
+      onFilterChange((prev: any) => ({
+        ...prev,
+        month: prev.month === clickedMonth ? undefined : clickedMonth
+      }));
+    }
+  };
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm">
-      <CardHeader className="pb-2">
+    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-lg">
           <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-cyan-400" />
-          Monthly Incident Trend
+          Monthly Incident Trend {filter?.month ? `(${filter.month})` : ''}
         </CardTitle>
+        <Button variant="ghost" size="icon" onClick={exportCSV} title="Export CSV" disabled={DATA.length === 0}>
+           <Download className="h-4 w-4" />
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="h-[260px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={DATA}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={isDark ? "#334155" : "#e2e8f0"}
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: isDark
-                    ? "rgba(30, 41, 59, 0.9)"
-                    : "rgba(255,255,255,0.95)",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  color: isDark ? "#e2e8f0" : "#1e293b",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="incidents"
-                stroke={isDark ? "#22d3ee" : "#10b981"}
-                strokeWidth={2.5}
-                dot={{ fill: isDark ? "#22d3ee" : "#10b981", r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {DATA.length === 0 ? (
+           <div className="h-[260px] flex items-center justify-center text-muted-foreground">
+             No incident data available for the selected filters.
+           </div>
+        ) : (
+          <div className="h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={DATA} onClick={handleChartClick} className="cursor-pointer">
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={isDark ? "#334155" : "#e2e8f0"}
+                />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className={`p-3 rounded-lg shadow-lg ${isDark ? 'bg-slate-800 border border-slate-700 text-slate-200' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                          <p className="font-bold mb-1">{label}</p>
+                          <p className="text-sm">Total: {data.incidents}</p>
+                          <p className="text-sm text-red-500">Critical: {data.critical}</p>
+                          <p className="text-sm text-amber-500">High: {data.high}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="incidents"
+                  stroke={isDark ? "#22d3ee" : "#10b981"}
+                  strokeWidth={2.5}
+                  dot={{ fill: isDark ? "#22d3ee" : "#10b981", r: 4 }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: isDark ? "#fff" : "#000" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
