@@ -1,26 +1,20 @@
 import { type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 
-interface AdminProtectedRouteProps {
+interface Props {
   children: ReactNode;
 }
 
-const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+const AdminProtectedRoute = ({ children }: Props) => {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-2 text-muted-foreground">Loading...</span>
-      </div>
-    );
+  if (!token) {
+    return <Navigate to="/login" replace />;
   }
 
-  // Check if user exists and has admin role
-  if (!user || user.role !== "admin") {
-    return <Navigate to="/dashboard/user" replace />;
+  if (user?.role !== "admin") {
+    return <Navigate to="/user-dashboard" replace />;
   }
 
   return <>{children}</>;

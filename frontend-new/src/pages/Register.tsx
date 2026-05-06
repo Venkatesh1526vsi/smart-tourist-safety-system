@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Upload, X, Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { register as registerService } from "@/services/authService";
+
 const Register = () => {
   const [showPass, setShowPass] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -47,7 +48,6 @@ const Register = () => {
   };
 
   const [error, setError] = useState("");
-  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,17 +57,28 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      await register(formData.name, formData.email, formData.password);
+      const response = await registerService({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: "tourist"
+      });
       
-      const storedToken = localStorage.getItem("token");
-      
-      if (storedToken) {
-        setSubmitMessage("Account created successfully! Redirecting...");
-        setTimeout(() => {
-          navigate("/user-dashboard");
-        }, 1500);
+      const newToken = (response as any)?.token || (response as any)?.data?.token;
+      const newUser = (response as any)?.user || (response as any)?.data?.user;
+
+      if (!newToken) {
+        console.error("❌ TOKEN NOT FOUND:", response);
+        return;
+      }
+
+      localStorage.setItem("token", newToken);
+      localStorage.setItem("user", JSON.stringify(newUser));
+
+      if (newUser?.role === "admin") {
+        navigate("/admin-dashboard");
       } else {
-        console.error('[Register] Registration succeeded but token missing from storage');
+        navigate("/user-dashboard");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
