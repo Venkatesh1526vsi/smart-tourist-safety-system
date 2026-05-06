@@ -22,39 +22,54 @@ interface MonthlyTrendChartProps {
 const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendChartProps) => {
   
   const DATA = useMemo(() => {
-    if (!incidents || incidents.length === 0) {
-      return [
-        { month: "Jan", incidents: 65, critical: 5, high: 10 },
-        { month: "Feb", incidents: 59, critical: 3, high: 8 },
-        { month: "Mar", incidents: 80, critical: 8, high: 15 },
-        { month: "Apr", incidents: 72, critical: 6, high: 12 },
-        { month: "May", incidents: 56, critical: 4, high: 7 },
-        { month: "Jun", incidents: 55, critical: 3, high: 9 },
-        { month: "Jul", incidents: 90, critical: 10, high: 18 },
-        { month: "Aug", incidents: 105, critical: 12, high: 22 },
-        { month: "Sep", incidents: 88, critical: 9, high: 16 },
-        { month: "Oct", incidents: 74, critical: 7, high: 14 },
-        { month: "Nov", incidents: 60, critical: 5, high: 11 },
-        { month: "Dec", incidents: 48, critical: 2, high: 6 },
-      ];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const now = new Date();
+    const currentMonthIndex = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let startMonthIndex = currentMonthIndex - 5; // Default to last 6 months
+    let startYear = currentYear;
+    if (startMonthIndex < 0) {
+      startMonthIndex += 12;
+      startYear -= 1;
     }
-    
-    // Group incidents by month
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const monthData: Record<string, { month: string, incidents: number, critical: number, high: number }> = {};
-    
-    months.forEach(m => monthData[m] = { month: m, incidents: 0, critical: 0, high: 0 });
-    
-    incidents.forEach(incident => {
-      const date = new Date(incident.created_at || Date.now());
-      const month = months[date.getMonth()];
-      if (monthData[month]) {
-         monthData[month].incidents += 1;
-         if (incident.severity === 'critical') monthData[month].critical += 1;
-         if (incident.severity === 'high') monthData[month].high += 1;
+
+    if (incidents && incidents.length > 0) {
+      const oldest = incidents.reduce((oldestDate, incident) => {
+        const d = new Date(incident.created_at || Date.now());
+        return d < oldestDate ? d : oldestDate;
+      }, new Date());
+      startMonthIndex = oldest.getMonth();
+      startYear = oldest.getFullYear();
+    }
+
+    const displayMonths: string[] = [];
+    let tempMonth = startMonthIndex;
+    let tempYear = startYear;
+    while (tempYear < currentYear || (tempYear === currentYear && tempMonth <= currentMonthIndex)) {
+      displayMonths.push(`${monthNames[tempMonth]} '${tempYear.toString().slice(2)}`);
+      tempMonth++;
+      if (tempMonth > 11) {
+        tempMonth = 0;
+        tempYear++;
       }
-    });
-    
+    }
+
+    const monthData: Record<string, { month: string, incidents: number, critical: number, high: number }> = {};
+    displayMonths.forEach(m => monthData[m] = { month: m, incidents: 0, critical: 0, high: 0 });
+
+    if (incidents && incidents.length > 0) {
+      incidents.forEach(incident => {
+        const date = new Date(incident.created_at || Date.now());
+        const monthStr = `${monthNames[date.getMonth()]} '${date.getFullYear().toString().slice(2)}`;
+        if (monthData[monthStr]) {
+           monthData[monthStr].incidents += 1;
+           if (incident.severity === 'critical') monthData[monthStr].critical += 1;
+           if (incident.severity === 'high') monthData[monthStr].high += 1;
+        }
+      });
+    }
+
     return Object.values(monthData);
   }, [incidents]);
 

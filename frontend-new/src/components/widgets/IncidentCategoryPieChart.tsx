@@ -11,8 +11,8 @@ interface IncidentCategoryPieChartProps {
 }
 
 // SAFEYATRA theme-consistent colors
-const COLORS_LIGHT = ["#10b981", "#0ea5e9", "#f59e0b", "#06b6d4", "#64748b"];
-const COLORS_DARK = ["#34d399", "#22d3ee", "#fbbf24", "#38bdf8", "#94a3b8"];
+const COLORS_LIGHT = ["#10b981", "#0ea5e9", "#f59e0b", "#a069e2d6", "#64748b"];
+const COLORS_DARK = ["#34d399", "#22d3ee", "#fbbf24", "#903af8ff", "#94a3b8"];
 
 const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: IncidentCategoryPieChartProps) => {
   const DATA = useMemo(() => {
@@ -25,14 +25,14 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
         { name: "Other", value: 8 },
       ];
     }
-    
+
     const categoryCounts: Record<string, number> = {};
     incidents.forEach(incident => {
       const category = incident.type || incident.category || 'Other';
       const formatted = category.charAt(0).toUpperCase() + category.slice(1);
       categoryCounts[formatted] = (categoryCounts[formatted] || 0) + 1;
     });
-    
+
     return Object.entries(categoryCounts).map(([name, value]) => ({ name, value }));
   }, [incidents]);
 
@@ -61,7 +61,7 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
       <CardContent>
         {DATA.length === 0 ? (
           <div className="h-[260px] flex items-center justify-center text-muted-foreground">
-             No category data available.
+            No category data available.
           </div>
         ) : (
           <div className="h-[260px]">
@@ -80,9 +80,9 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
                   className="cursor-pointer outline-none"
                 >
                   {DATA.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={colors[index % colors.length]} 
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors[index % colors.length]}
                       opacity={filter?.category && filter.category !== entry.name.toLowerCase() ? 0.3 : 1}
                     />
                   ))}

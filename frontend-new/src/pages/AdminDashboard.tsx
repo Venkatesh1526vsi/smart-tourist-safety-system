@@ -6,6 +6,7 @@ import StatsOverviewCards from "@/components/widgets/StatsOverviewCards";
 import IncidentCategoryPieChart from "@/components/widgets/IncidentCategoryPieChart";
 import MonthlyTrendChart from "@/components/widgets/MonthlyTrendChart";
 import RiskZoneHeatmap from "@/components/widgets/RiskZoneHeatmap";
+import LiveTouristTracking from "@/components/widgets/LiveTouristTracking";
 import { getAdminDashboardSummary, getAllIncidents, type Incident } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,9 +114,14 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Risk Zone Heatmap */}
             <div className="grid md:grid-cols-2 gap-6">
               <RiskZoneHeatmap />
+            </div>
+
+            {/* Live Tourist Tracking */}
+            <div className="mt-6">
+               <h2 className="text-xl font-bold mb-4">Live Tourist Tracking</h2>
+               <LiveTouristTracking filter={dashboardFilter} />
             </div>
 
             <div className="grid sm:grid-cols-2 gap-6">
