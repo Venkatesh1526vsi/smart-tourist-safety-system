@@ -23,30 +23,13 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
   
   const DATA = useMemo(() => {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const now = new Date();
-    const currentMonthIndex = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    let startMonthIndex = currentMonthIndex - 5; // Default to last 6 months
-    let startYear = currentYear;
-    if (startMonthIndex < 0) {
-      startMonthIndex += 12;
-      startYear -= 1;
-    }
-
-    if (incidents && incidents.length > 0) {
-      const oldest = incidents.reduce((oldestDate, incident) => {
-        const d = new Date(incident.created_at || Date.now());
-        return d < oldestDate ? d : oldestDate;
-      }, new Date());
-      startMonthIndex = oldest.getMonth();
-      startYear = oldest.getFullYear();
-    }
-
     const displayMonths: string[] = [];
-    let tempMonth = startMonthIndex;
-    let tempYear = startYear;
-    while (tempYear < currentYear || (tempYear === currentYear && tempMonth <= currentMonthIndex)) {
+    
+    // Strict timeline from Oct 2025 to May 2026
+    let tempMonth = 9; // Oct (0-indexed)
+    let tempYear = 2025;
+    
+    while (tempYear < 2026 || (tempYear === 2026 && tempMonth <= 4)) { // Up to May 2026
       displayMonths.push(`${monthNames[tempMonth]} '${tempYear.toString().slice(2)}`);
       tempMonth++;
       if (tempMonth > 11) {
@@ -134,28 +117,37 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
         ) : (
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={DATA} onClick={handleChartClick} className="cursor-pointer">
+              <LineChart data={DATA} onClick={handleChartClick} className="cursor-pointer" margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={isDark ? "#22d3ee" : "#10b981"} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={isDark ? "#22d3ee" : "#10b981"} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke={isDark ? "#334155" : "#e2e8f0"}
+                  vertical={false}
                 />
                 <XAxis
                   dataKey="month"
                   tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
                   axisLine={false}
                   tickLine={false}
+                  dy={10}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }}
                   axisLine={false}
                   tickLine={false}
+                  dx={-10}
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className={`p-3 rounded-lg shadow-lg ${isDark ? 'bg-slate-800 border border-slate-700 text-slate-200' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                        <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-slate-800/90 border-slate-700/50 text-slate-200' : 'bg-white/90 border-slate-200 text-slate-800'} backdrop-blur-md`}>
                           <p className="font-bold mb-1">{label}</p>
                           <p className="text-sm">Total: {data.incidents}</p>
                           <p className="text-sm text-red-500">Critical: {data.critical}</p>
@@ -170,9 +162,10 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
                   type="monotone"
                   dataKey="incidents"
                   stroke={isDark ? "#22d3ee" : "#10b981"}
-                  strokeWidth={2.5}
-                  dot={{ fill: isDark ? "#22d3ee" : "#10b981", r: 4 }}
-                  activeDot={{ r: 6, strokeWidth: 2, stroke: isDark ? "#fff" : "#000" }}
+                  strokeWidth={3}
+                  dot={{ fill: isDark ? "#22d3ee" : "#10b981", strokeWidth: 2, r: 4, stroke: isDark ? "#0f172a" : "#ffffff" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: isDark ? "#fff" : "#000" }}
+                  animationDuration={1500}
                 />
               </LineChart>
             </ResponsiveContainer>

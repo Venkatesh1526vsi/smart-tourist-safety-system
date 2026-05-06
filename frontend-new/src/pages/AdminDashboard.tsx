@@ -104,18 +104,19 @@ const AdminDashboard = () => {
               onFilterChange={setDashboardFilter} 
             />
 
-            {/* Analytics Charts */}
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <MonthlyTrendChart incidents={filteredIncidents} />
-              </div>
-              <div>
-                <IncidentCategoryPieChart incidents={filteredIncidents} />
-              </div>
+            {/* Analytics Charts - Top Row */}
+            <div className="w-full mb-6">
+              <MonthlyTrendChart incidents={filteredIncidents} />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <RiskZoneHeatmap />
+            {/* Risk Intelligence Section */}
+            <div className="grid lg:grid-cols-12 gap-6 mb-6">
+              <div className="lg:col-span-7 flex flex-col">
+                <RiskZoneHeatmap />
+              </div>
+              <div className="lg:col-span-5 flex flex-col">
+                <IncidentCategoryPieChart incidents={filteredIncidents} />
+              </div>
             </div>
 
             {/* Live Tourist Tracking */}

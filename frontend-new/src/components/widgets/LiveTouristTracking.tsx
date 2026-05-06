@@ -40,7 +40,7 @@ const createIcon = (level: string) => {
   const isDanger = level === 'critical' || level === 'high';
   
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-leaflet-marker z-[1000]',
     html: `
       <div class="relative flex items-center justify-center w-6 h-6">
         ${isDanger ? `<div class="absolute inset-0 rounded-full ${bg} animate-ping opacity-75"></div>` : ''}
@@ -105,14 +105,41 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
       const realTourists = storedUsers.filter((u: any) => u.role === "user");
 
       setTourists(prev => {
-        // Only add new users or update existing ones without losing their current simulated location
         const updated = [...prev];
+        
+        // Ensure fallback tourists exist if no real users are found and no previous tourists exist
+        if (realTourists.length === 0 && updated.length === 0) {
+           const fallbacks = [
+             { id: 'F-1', name: 'John Doe', role: 'Tourist', latOffset: 0.01, lngOffset: -0.01, risk: 'safe' },
+             { id: 'F-2', name: 'Jane Smith', role: 'Tourist', latOffset: -0.02, lngOffset: 0.015, risk: 'safe' },
+             { id: 'F-3', name: 'Alex Johnson', role: 'Tourist', latOffset: 0.015, lngOffset: 0.02, risk: 'safe' },
+             { id: 'F-4', name: 'Sarah Lee', role: 'Tourist', latOffset: -0.01, lngOffset: -0.02, risk: 'moderate' },
+           ];
+           fallbacks.forEach(f => {
+             updated.push({
+               id: f.id,
+               name: f.name,
+               role: f.role,
+               latitude: PUNE_CENTER[0] + f.latOffset,
+               longitude: PUNE_CENTER[1] + f.lngOffset,
+               safetyScore: f.risk === 'moderate' ? 75 : 100,
+               riskLevel: f.risk as any,
+               lastActive: Date.now(),
+               emergencyContact: "112 (Emergency)",
+               sosActive: false,
+               travelStatus: "Active in Pune",
+               recentAlerts: []
+             });
+           });
+           return updated;
+        }
+
+        // Merge real tourists
         realTourists.forEach((rt: any) => {
           const exists = updated.find(t => t.id === rt.id || t.id === rt._id);
           if (!exists) {
-            // Assign random realistic Pune coordinate if they don't have one
-            const jitterLat = (Math.random() - 0.5) * 0.1;
-            const jitterLng = (Math.random() - 0.5) * 0.1;
+            const jitterLat = (Math.random() - 0.5) * 0.05;
+            const jitterLng = (Math.random() - 0.5) * 0.05;
             updated.push({
               id: rt.id || rt._id || `U-${Date.now()}-${Math.random()}`,
               name: rt.name || "Unknown Tourist",
@@ -223,7 +250,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
   }, [tourists, selectedTourist?.id]);
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[600px]">
+    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[500px]">
       <div className="w-full md:w-2/3 h-1/2 md:h-full relative border-r border-border">
         <MapContainer center={PUNE_CENTER} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
           <TileLayer

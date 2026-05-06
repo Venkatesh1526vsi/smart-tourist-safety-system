@@ -51,21 +51,21 @@ const RiskZoneHeatmap = () => {
         </CardHeader>
         <CardContent>
           {/* Simulated map container */}
-          <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 dark:bg-slate-700/20 dark:border-slate-700/50">
+          <div className="relative overflow-hidden rounded-lg border border-border bg-muted/30 dark:bg-slate-700/20 dark:border-slate-700/50 p-2">
             {/* Fake map background */}
-            <div className="h-[200px] bg-gradient-to-br from-sky-100/50 to-emerald-100/30 dark:from-slate-700/30 dark:to-slate-800/50">
+            <div className="h-[260px] w-full bg-gradient-to-br from-sky-100/50 to-emerald-100/30 dark:from-slate-700/30 dark:to-slate-800/50 rounded-md">
               {/* Grid overlay */}
-              <div className="grid h-full grid-rows-4">
+              <div className="grid h-full grid-rows-4 gap-1 p-1">
                 {GRID.map((row, ri) => (
-                  <div key={ri} className="grid grid-cols-6">
+                  <div key={ri} className="grid grid-cols-6 gap-1">
                     {row.map((val, ci) => (
                       <div
                         key={ci}
                         onClick={() => setSelectedZone({ ri, ci, val })}
-                        className={`flex items-center justify-center border border-white/10 dark:border-slate-600/20 transition-colors cursor-pointer hover:border-primary/50 hover:z-10 relative ${cellColor(val, isDark)} ${val >= 0.8 ? 'animate-pulse' : ''}`}
+                        className={`flex items-center justify-center rounded-sm transition-colors cursor-pointer hover:border-primary hover:border-2 hover:shadow-lg relative ${cellColor(val, isDark)} ${val >= 0.8 ? 'animate-pulse' : ''}`}
                         title={`Risk: ${riskLabel(val)} (Click for details)`}
                       >
-                        <span className="text-[9px] font-medium text-foreground/70">
+                        <span className="text-xs font-semibold text-foreground/80 mix-blend-luminosity">
                           {Math.round(val * 100)}
                         </span>
                       </div>
@@ -77,18 +77,18 @@ const RiskZoneHeatmap = () => {
           </div>
 
           {/* Legend */}
-          <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500/30" /> Safe
+          <div className="mt-4 flex items-center justify-center gap-6 text-xs font-medium text-muted-foreground bg-muted/20 py-2 rounded-md border border-border/50">
+            <span className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-emerald-500/30 border border-emerald-500/50" /> Safe
             </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-amber-400/40" /> Low
+            <span className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-amber-400/40 border border-amber-400/50" /> Low
             </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-amber-500/50" /> Medium
+            <span className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-amber-500/50 border border-amber-500/50" /> Medium
             </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-red-500/50" /> High
+            <span className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-red-500/50 border border-red-500/50" /> High
             </span>
           </div>
         </CardContent>
