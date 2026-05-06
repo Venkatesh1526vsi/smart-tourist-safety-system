@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Radar, AlertTriangle, ShieldCheck, Phone, Navigation, Clock } from "lucide-react";
+import { Radar, AlertTriangle, ShieldCheck, Phone, Navigation, Clock, LocateFixed } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
+import { Button } from "@/components/ui/button";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { notifyError, notifyWarning } from "@/utils/notify";
@@ -22,61 +23,125 @@ interface LiveTourist {
   recentAlerts: string[];
 }
 
-const getMarkerColor = (level: string) => {
+
+
+const getMarkerBgColor = (level: string) => {
   switch (level) {
-    case "critical": return "red";
-    case "high": return "orange";
-    case "moderate": return "yellow";
-    case "safe": return "green";
-    default: return "blue";
+    case "critical": return "bg-red-500 shadow-red-500/50";
+    case "high": return "bg-orange-500 shadow-orange-500/50";
+    case "moderate": return "bg-yellow-400 shadow-yellow-400/50";
+    case "safe": return "bg-emerald-500 shadow-emerald-500/50";
+    default: return "bg-blue-500 shadow-blue-500/50";
   }
 };
 
-const createIcon = (color: string) =>
-  new L.Icon({
-    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+const createIcon = (level: string) => {
+  const bg = getMarkerBgColor(level);
+  const isDanger = level === 'critical' || level === 'high';
+  
+  return L.divIcon({
+    className: 'custom-leaflet-marker',
+    html: `
+      <div class="relative flex items-center justify-center w-6 h-6">
+        ${isDanger ? `<div class="absolute inset-0 rounded-full ${bg} animate-ping opacity-75"></div>` : ''}
+        <div class="relative w-4 h-4 rounded-full border-2 border-white shadow-lg ${bg}"></div>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
   });
+};
 
-// Simulated Risk Zones
+// Realistic Pune Risk Zones
 const RISK_ZONES = [
-  { id: 'Z1', name: 'Northern Mountain Pass', lat: 21.0, lng: 79.0, radius: 25000, riskMultiplier: 1.8 },
-  { id: 'Z2', name: 'Coastal Flood Area', lat: 20.0, lng: 78.5, radius: 30000, riskMultiplier: 2.2 },
+  { id: 'Z1', name: 'Swargate Bus Stand (Transport Hub)', lat: 18.5018, lng: 73.8636, radius: 1000, riskMultiplier: 1.6 },
+  { id: 'Z2', name: 'Shivajinagar Station (Transport Hub)', lat: 18.5314, lng: 73.8446, radius: 1200, riskMultiplier: 1.5 },
+  { id: 'Z3', name: 'Koregaon Park (Nightlife Area)', lat: 18.5362, lng: 73.8939, radius: 1500, riskMultiplier: 1.3 },
+  { id: 'Z4', name: 'FC Road (Crowded)', lat: 18.5263, lng: 73.8441, radius: 800, riskMultiplier: 1.2 },
 ];
 
-const INITIAL_TOURISTS: LiveTourist[] = [
-  {
-    id: "T-001", name: "Alice Johnson", role: "Tourist",
-    latitude: 20.8, longitude: 79.2, safetyScore: 95, riskLevel: 'safe',
-    lastActive: Date.now(), emergencyContact: "Bob Johnson (+1 555-0100)", sosActive: false,
-    travelStatus: "In Transit", recentAlerts: []
-  },
-  {
-    id: "T-002", name: "Michael Smith", role: "Tourist",
-    latitude: 20.1, longitude: 78.8, safetyScore: 88, riskLevel: 'safe',
-    lastActive: Date.now(), emergencyContact: "Sarah Smith (+1 555-0200)", sosActive: false,
-    travelStatus: "Stationary", recentAlerts: []
-  },
-  {
-    id: "T-003", name: "David Lee", role: "Guide",
-    latitude: 21.1, longitude: 79.3, safetyScore: 70, riskLevel: 'moderate',
-    lastActive: Date.now(), emergencyContact: "Agency Coord (+1 555-0300)", sosActive: false,
-    travelStatus: "Moving to Basecamp", recentAlerts: ["Weather warning issued 2h ago"]
-  },
-];
+const PUNE_CENTER: [number, number] = [18.5204, 73.8567];
+
+// Locate Users Button Component
+const LocateUsersButton = ({ tourists }: { tourists: LiveTourist[] }) => {
+  const map = useMap();
+
+  const handleLocate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (tourists.length === 0) {
+      map.flyTo(PUNE_CENTER, 12, { animate: true, duration: 1 });
+      return;
+    }
+    const bounds = L.latLngBounds(tourists.map(t => [t.latitude, t.longitude]));
+    map.flyToBounds(bounds, { padding: [50, 50], animate: true, duration: 1.5 });
+  };
+
+  return (
+    <div className="leaflet-top leaflet-right" style={{ pointerEvents: 'auto', marginTop: '10px', marginRight: '10px' }}>
+      <div className="leaflet-control leaflet-bar">
+        <Button 
+          onClick={handleLocate}
+          variant="secondary" 
+          size="sm" 
+          className="bg-white hover:bg-gray-100 text-slate-800 shadow-md font-medium flex items-center gap-2 border border-slate-200"
+        >
+          <LocateFixed className="h-4 w-4 text-primary" />
+          Locate Users
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, status?: string } }) => {
-  const [tourists, setTourists] = useState<LiveTourist[]>(INITIAL_TOURISTS);
+  const [tourists, setTourists] = useState<LiveTourist[]>([]);
   const [selectedTourist, setSelectedTourist] = useState<LiveTourist | null>(null);
 
+  // Sync real users from localStorage
+  useEffect(() => {
+    const loadRealUsers = () => {
+      const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      const realTourists = storedUsers.filter((u: any) => u.role === "user");
+
+      setTourists(prev => {
+        // Only add new users or update existing ones without losing their current simulated location
+        const updated = [...prev];
+        realTourists.forEach((rt: any) => {
+          const exists = updated.find(t => t.id === rt.id || t.id === rt._id);
+          if (!exists) {
+            // Assign random realistic Pune coordinate if they don't have one
+            const jitterLat = (Math.random() - 0.5) * 0.1;
+            const jitterLng = (Math.random() - 0.5) * 0.1;
+            updated.push({
+              id: rt.id || rt._id || `U-${Date.now()}-${Math.random()}`,
+              name: rt.name || "Unknown Tourist",
+              role: "Tourist",
+              latitude: PUNE_CENTER[0] + jitterLat,
+              longitude: PUNE_CENTER[1] + jitterLng,
+              safetyScore: 100,
+              riskLevel: 'safe',
+              lastActive: Date.now(),
+              emergencyContact: rt.email || "No contact",
+              sosActive: false,
+              travelStatus: "Active in Pune",
+              recentAlerts: []
+            });
+          }
+        });
+        return updated;
+      });
+    };
+
+    loadRealUsers();
+    // Poll for new user registrations every 10s
+    const syncInterval = setInterval(loadRealUsers, 10000);
+    return () => clearInterval(syncInterval);
+  }, []);
+
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    // Haversine formula
-    const R = 6371e3; // metres
-    const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+    const R = 6371e3;
+    const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
     const Δλ = (lon2-lon1) * Math.PI/180;
@@ -84,7 +149,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // in metres
+    return R * c; 
   };
 
   const evaluateRisk = useCallback((t: LiveTourist): LiveTourist => {
@@ -95,12 +160,12 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
 
     for (const zone of RISK_ZONES) {
       const dist = calculateDistance(t.latitude, t.longitude, zone.lat, zone.lng);
-      if (dist <= zone.radius * 1.5) { // approaching
-        newScore -= 20 * zone.riskMultiplier;
+      if (dist <= zone.radius * 1.5) { 
+        newScore -= 15 * zone.riskMultiplier;
         newLevel = 'moderate';
       }
-      if (dist <= zone.radius) { // inside
-        newScore -= 40 * zone.riskMultiplier;
+      if (dist <= zone.radius) { 
+        newScore -= 30 * zone.riskMultiplier;
         newLevel = 'high';
         if (t.riskLevel !== 'high' && t.riskLevel !== 'critical') {
            enteredDangerZone = true;
@@ -112,13 +177,12 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
     if (t.sosActive) {
       newScore = 10;
       newLevel = 'critical';
-    } else if (newScore < 30) {
+    } else if (newScore < 40) {
       newLevel = 'critical';
-    } else if (newScore < 60) {
+    } else if (newScore < 70) {
       newLevel = 'high';
     }
 
-    // Auto Alerts
     if (enteredDangerZone) {
       notifyError(`CRITICAL: ${t.name} entered high risk zone: ${zoneName}`);
       t.recentAlerts.unshift(`Auto-Alert: Entered ${zoneName} at ${new Date().toLocaleTimeString()}`);
@@ -132,28 +196,17 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
   useEffect(() => {
     const interval = setInterval(() => {
       setTourists(prev => prev.map(t => {
-        // Simulate movement towards Z1 (danger) for T-003, random jitter for others
-        let newLat = t.latitude;
-        let newLng = t.longitude;
-        
-        if (t.id === 'T-003') {
-           // Move closer to 21.0, 79.0
-           newLat -= 0.01;
-           newLng -= 0.01;
-        } else {
-           newLat += (Math.random() - 0.5) * 0.01;
-           newLng += (Math.random() - 0.5) * 0.01;
-        }
-
+        // Random realistic walk in Pune
+        const newLat = t.latitude + (Math.random() - 0.5) * 0.001;
+        const newLng = t.longitude + (Math.random() - 0.5) * 0.001;
         const updatedT = { ...t, latitude: newLat, longitude: newLng };
         return evaluateRisk(updatedT);
       }));
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [evaluateRisk]);
 
-  // Sync with dashboard filter
   const filteredTourists = useMemo(() => {
     return tourists.filter((t: LiveTourist) => {
       if (filter?.severity === 'critical' && t.riskLevel !== 'critical' && t.riskLevel !== 'high') return false;
@@ -162,7 +215,6 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
     });
   }, [tourists, filter]);
 
-  // Update selected tourist if it changes in the main array
   useEffect(() => {
     if (selectedTourist) {
       const updated = tourists.find(t => t.id === selectedTourist.id);
@@ -170,17 +222,16 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
     }
   }, [tourists, selectedTourist?.id]);
 
-  const center: [number, number] = [20.5937, 78.9629];
-
   return (
     <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[600px]">
       <div className="w-full md:w-2/3 h-1/2 md:h-full relative border-r border-border">
-        <MapContainer center={center} zoom={6} scrollWheelZoom={true} className="h-full w-full z-0">
+        <MapContainer center={PUNE_CENTER} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
           <TileLayer
             attribution='&copy; OpenStreetMap'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {/* Render Risk Zones */}
+          <LocateUsersButton tourists={filteredTourists} />
+          
           {RISK_ZONES.map(zone => (
             <Circle 
                key={zone.id} 
@@ -194,7 +245,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
             <Marker 
               key={t.id} 
               position={[t.latitude, t.longitude]}
-              icon={createIcon(getMarkerColor(t.riskLevel))}
+              icon={createIcon(t.riskLevel)}
               eventHandlers={{ click: () => setSelectedTourist(t) }}
             >
               <Popup>
@@ -206,8 +257,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
           ))}
         </MapContainer>
         
-        {/* Floating map legend/status */}
-        <div className="absolute top-4 right-4 z-[1000] bg-background/90 backdrop-blur-sm border rounded-lg p-2 shadow-lg text-xs space-y-1">
+        <div className="absolute bottom-4 left-4 z-[1000] bg-background/90 backdrop-blur-sm border rounded-lg p-2 shadow-lg text-xs space-y-1">
            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-500"/> Safe</div>
            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-yellow-400"/> Moderate</div>
            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-orange-500"/> High Risk</div>
@@ -226,19 +276,20 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
             <div className="flex justify-between items-start">
                <div>
                   <h4 className="font-bold text-lg">{selectedTourist.name}</h4>
-                  <p className="text-xs text-muted-foreground">ID: {selectedTourist.id} • {selectedTourist.role}</p>
+                  <p className="text-xs text-muted-foreground">ID: {selectedTourist.id} • Pune Zone Tracking</p>
                </div>
-               <Badge variant={selectedTourist.riskLevel === 'safe' ? 'default' : selectedTourist.riskLevel === 'moderate' ? 'secondary' : 'destructive'} className="capitalize">
+               <Badge variant={selectedTourist.riskLevel === 'safe' ? 'default' : selectedTourist.riskLevel === 'moderate' ? 'secondary' : 'destructive'} className={`capitalize ${selectedTourist.riskLevel === 'critical' || selectedTourist.riskLevel === 'high' ? 'animate-pulse' : ''}`}>
                  {selectedTourist.riskLevel}
                </Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-               <div className="bg-background p-3 rounded-lg border">
-                  <span className="text-[10px] uppercase text-muted-foreground font-bold flex items-center gap-1 mb-1">
+               <div className="bg-background p-3 rounded-lg border relative overflow-hidden">
+                  <div className={`absolute inset-0 opacity-10 ${selectedTourist.riskLevel === 'critical' ? 'bg-red-500' : 'bg-transparent'}`}></div>
+                  <span className="text-[10px] uppercase text-muted-foreground font-bold flex items-center gap-1 mb-1 relative z-10">
                     <ShieldCheck className="h-3 w-3" /> Safety Score
                   </span>
-                  <span className={`text-xl font-bold ${selectedTourist.safetyScore < 50 ? 'text-red-500' : 'text-emerald-500'}`}>
+                  <span className={`text-xl font-bold relative z-10 ${selectedTourist.safetyScore < 50 ? 'text-red-500' : selectedTourist.safetyScore < 75 ? 'text-amber-500' : 'text-emerald-500'}`}>
                     {selectedTourist.safetyScore}/100
                   </span>
                </div>
@@ -279,7 +330,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                 <p className="text-xs font-bold text-red-500 flex items-center gap-1 mb-2">
                   <AlertTriangle className="h-4 w-4" /> Recent Alerts
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-[100px] overflow-y-auto">
                   {selectedTourist.recentAlerts.map((alert, idx) => (
                     <p key={idx} className="text-xs text-red-600 dark:text-red-400 border-l-2 border-red-500 pl-2">
                       {alert}

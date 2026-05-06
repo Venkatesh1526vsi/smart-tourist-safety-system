@@ -19,10 +19,10 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
     if (!incidents || incidents.length === 0) {
       return [
         { name: "Theft", value: 35 },
-        { name: "Assault", value: 20 },
-        { name: "Scam", value: 25 },
-        { name: "Lost Tourist", value: 12 },
-        { name: "Other", value: 8 },
+        { name: "Harassment", value: 18 },
+        { name: "Scam", value: 22 },
+        { name: "Lost Tourist", value: 15 },
+        { name: "Medical Emergency", value: 10 },
       ];
     }
 
