@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
-import { registerSW } from 'virtual:pwa-register'
+// PWA register import removed as service workers are temporarily disabled
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => void;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -48,22 +48,15 @@ window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
 });
 
-// Register PWA service worker
-const updateSW = registerSW({
-  onOfflineReady(): void {
-    console.log('App ready to work offline');
-  },
-  onNeedRefresh(): void {
-    console.log('New content available, please refresh');
-    updateSW(true);
-  },
-onRegisteredSW(swUrl: string, _registration?: ServiceWorkerRegistration): void {
-  console.log('Service Worker registered at:', swUrl, _registration);
-},
-onRegisterError(error: unknown): void {
-  console.error('Service Worker registration failed:', error);
+// Register PWA service worker - temporarily disabled to clear stale cache
+// const updateSW = registerSW({ ... }); 
+
+// TEMPORARILY DISABLE OLD SERVICE WORKERS:
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  });
 }
-}); 
 
 // Initialize dark mode before rendering
 if (

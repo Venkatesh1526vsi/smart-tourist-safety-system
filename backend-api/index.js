@@ -260,6 +260,9 @@ server.listen(PORT, '0.0.0.0', () => {
 // MongoDB Connect (only once!)
 if (MONGO_URI) {
   console.log('Attempting to connect to MongoDB...');
+  mongoose.connection.on("error", err => {
+    console.error("MongoDB connection error:", err);
+  });
   mongoose
     .connect(MONGO_URI)
     .then(async () => {
@@ -447,6 +450,13 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
       return ResponseHandler.unauthorized(res, 'Invalid email or password.');
     }
 
+    if (!user || !user.password) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('Login failed: Invalid password for user:', email);
@@ -458,6 +468,10 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
     // Reset failed attempts on successful login
     resetFailedAttempts(ipAddress);
     console.log('Login successful for user:', email);
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET missing");
+    }
 
     // Issue JWT token
     const token = jwt.sign(
@@ -472,9 +486,14 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
       user: { name: user.name, email: user.email, role: user.role || 'tourist' },
       token
     });
-  } catch (err) {
-    console.error('Login error:', err);
-    return ResponseHandler.error(res, 500, 'Server error during login.', err.message);
+  } catch (error) {
+    console.error("🔥 LOGIN ROUTE ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error during login.",
+      error: error.message
+    });
   }
 });
 
@@ -1347,6 +1366,10 @@ app.use('/uploads', express.static('uploads'));
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong' });
+  console.error("🔥 GLOBAL SERVER ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    message: "Internal server error"
+  });
 });

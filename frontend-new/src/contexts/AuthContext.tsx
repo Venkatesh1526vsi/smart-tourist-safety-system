@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { login as loginService, register as registerService, logout as logoutService } from '@/services/authService';
 
 // TypeScript Interfaces
 interface User {
@@ -13,9 +12,6 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,73 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return null;
   });
-  const loading = false; // Synchronous initialization means we're never in a "loading" state
-
-  // Login method
-  const login = async (email: string, password: string): Promise<void> => {
-    try {
-      const response = await loginService({ email, password });
-      console.log("🔥 LOGIN RESPONSE RAW:", JSON.stringify(response, null, 2));
-      
-      const res = response as any;
-
-      const newToken = res?.token;
-      const newUser = res?.user;
-
-      if (!newToken) {
-        console.error("❌ TOKEN NOT FOUND:", res);
-        return;
-      }
-
-      // 🔥 STORE FIRST (THIS IS KEY)
-      localStorage.setItem("token", newToken);
-      localStorage.setItem("user", JSON.stringify(newUser));
-
-      // 🔥 FORCE SYNC (prevents race issues)
-      const storedToken = localStorage.getItem("token");
-
-      if (!storedToken) {
-        console.error("❌ TOKEN NOT SAVED");
-        return;
-      }
-
-      // 🔥 THEN update state
-      setToken(storedToken);
-      setUser(newUser);
-    } catch (error) {
-      console.error('[AuthContext] login error:', error);
-      throw error;
-    }
-  };
-
-  // Register method
-  const register = async (name: string, email: string, password: string): Promise<void> => {
-    try {
-      const response = await registerService({ name, email, password });
-      console.log("FULL REGISTER RESPONSE:", response);
-      
-      const newToken = (response as any)?.data?.token;
-      const newUser = (response as any)?.data?.user;
-
-      if (!newToken) {
-        console.error("🚨 TOKEN NOT FOUND (REGISTER):", response);
-        return;
-      }
-
-      localStorage.setItem("token", newToken);
-      localStorage.setItem("user", JSON.stringify(newUser));
-
-      setToken(newToken);
-      setUser(newUser);
-    } catch (error) {
-      console.error('[AuthContext] register error:', error);
-      throw error;
-    }
-  };
 
   // Logout method
   const logout = (): void => {
-    logoutService();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setToken(null);
@@ -115,9 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     token,
     isAuthenticated: !!token, // Primary check based on token existence
-    loading,
-    login,
-    register,
     logout,
   };
 
