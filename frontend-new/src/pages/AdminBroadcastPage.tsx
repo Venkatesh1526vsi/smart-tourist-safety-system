@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { Radio, Send, Bell, Users, MapPin, Calendar, Filter, Search, Loader2 } from "lucide-react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useOperationalData } from "@/hooks/useOperationalData";
 
 interface Broadcast {
   _id: string;
@@ -24,45 +25,7 @@ interface Broadcast {
 }
 
 const AdminBroadcastPage = () => {
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>(() => {
-    try {
-      const stored = localStorage.getItem("broadcasts");
-      if (stored && stored !== "[]") return JSON.parse(stored);
-    } catch (e) {
-      console.error("Failed to parse broadcasts from localStorage", e);
-    }
-
-    // ✅ Fallback demo data
-    return [
-      {
-        _id: "1",
-        title: "Heavy Rain Alert",
-        message: "Heavy rainfall expected in the Pune region. Please avoid unnecessary travel and stay safe.",
-        type: "warning",
-        targetAudience: "region",
-        status: "sent",
-        sentAt: new Date(Date.now() - 7200000).toISOString(),
-        recipients: 5234,
-        regions: ["Pune", "Kothrud"],
-        createdBy: "Admin",
-        createdAt: new Date(Date.now() - 10800000).toISOString()
-      },
-      {
-        _id: "2",
-        title: "System Maintenance",
-        message: "Emergency services will be temporarily unavailable for maintenance from 2AM to 4AM.",
-        type: "maintenance",
-        targetAudience: "all",
-        status: "scheduled",
-        scheduledFor: new Date(Date.now() + 3600000).toISOString(),
-        recipients: 0,
-        createdBy: "Admin",
-        createdAt: new Date(Date.now() - 3600000).toISOString()
-      }
-    ];
-  });
-
-  const [loading, setLoading] = useState(true);
+  const { loading, broadcasts, analytics, saveBroadcastOp } = useOperationalData();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -81,34 +44,7 @@ const AdminBroadcastPage = () => {
     scheduledDate: ''
   });
 
-  useEffect(() => {
-    localStorage.setItem("broadcasts", JSON.stringify(broadcasts));
-  }, [broadcasts]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBroadcasts(prev =>
-        prev.map(b => {
-          if (
-            b.status === "scheduled" &&
-            b.scheduledFor &&
-            new Date(b.scheduledFor) <= new Date()
-          ) {
-            return {
-              ...b,
-              status: "sent",
-              sentAt: new Date().toISOString(),
-              recipients: b.recipients || 0
-            };
-          }
-          return b;
-        })
-      );
-    }, 60000);
-
-    setLoading(false);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleSendBroadcast = () => {
     if (!newBroadcast.title || !newBroadcast.message) return;
@@ -123,12 +59,12 @@ const AdminBroadcastPage = () => {
       status: newBroadcast.isScheduled ? 'scheduled' : 'sent',
       sentAt: newBroadcast.isScheduled ? undefined : new Date().toISOString(),
       scheduledFor: newBroadcast.isScheduled ? new Date(newBroadcast.scheduledDate).toISOString() : undefined,
-      recipients: newBroadcast.isScheduled ? 0 : 15000,
+      recipients: newBroadcast.isScheduled ? 0 : Math.floor(analytics.total_users * 0.85),
       createdBy: 'Admin',
       createdAt: new Date().toISOString()
     };
 
-    setBroadcasts(prev => [broadcast, ...prev]);
+    saveBroadcastOp(broadcast);
     setNewBroadcast({
       title: '',
       message: '',
@@ -164,18 +100,18 @@ const AdminBroadcastPage = () => {
     let data = [...broadcasts];
 
     if (search) {
-      data = data.filter(b =>
+      data = data.filter((b: Broadcast) =>
         b.title.toLowerCase().includes(search.toLowerCase()) ||
         b.message.toLowerCase().includes(search.toLowerCase())
       );
     }
 
     if (statusFilter !== 'all') {
-      data = data.filter(b => b.status === statusFilter);
+      data = data.filter((b: Broadcast) => b.status === statusFilter);
     }
 
     if (typeFilter !== 'all') {
-      data = data.filter(b => b.type === typeFilter);
+      data = data.filter((b: Broadcast) => b.type === typeFilter);
     }
 
     setFiltered(data);
@@ -190,11 +126,11 @@ const AdminBroadcastPage = () => {
 
   const displayData =
     activeView === "scheduled"
-      ? broadcasts.filter(b => b.status === "scheduled")
+      ? broadcasts.filter((b: Broadcast) => b.status === "scheduled")
       : activeView === "emergency"
-        ? broadcasts.filter(b => b.type === "emergency")
+        ? broadcasts.filter((b: Broadcast) => b.type === "emergency")
         : activeView === "recipients"
-          ? [...broadcasts].sort((a, b) => b.recipients - a.recipients)
+          ? [...broadcasts].sort((a: Broadcast, b: Broadcast) => b.recipients - a.recipients)
           : broadcasts;
 
   const finalData = filtered.length > 0 ? filtered : displayData;
@@ -225,7 +161,7 @@ const AdminBroadcastPage = () => {
           <div onClick={() => { setActiveView("all"); setFiltered([]); }} className="cursor-pointer">
             <DashboardCard title="Total Sent" icon={<Send className="h-5 w-5 text-blue-500" />} className={activeView === 'all' ? 'ring-2 ring-primary' : ''}>
               <div className="text-2xl font-bold">
-                {broadcasts.filter(b => b.status === 'sent').length}
+                {broadcasts.filter((b: Broadcast) => b.status === 'sent').length}
               </div>
               <p className="text-xs text-muted-foreground">Broadcasts sent</p>
             </DashboardCard>
@@ -234,7 +170,7 @@ const AdminBroadcastPage = () => {
           <div onClick={() => { setActiveView("scheduled"); setFiltered([]); }} className="cursor-pointer">
             <DashboardCard title="Scheduled" icon={<Calendar className="h-5 w-5 text-orange-500" />} className={activeView === 'scheduled' ? 'ring-2 ring-orange-500' : ''}>
               <div className="text-2xl font-bold">
-                {broadcasts.filter(b => b.status === 'scheduled').length}
+                {broadcasts.filter((b: Broadcast) => b.status === 'scheduled').length}
               </div>
               <p className="text-xs text-muted-foreground">Pending broadcasts</p>
             </DashboardCard>
@@ -243,7 +179,7 @@ const AdminBroadcastPage = () => {
           <div onClick={() => { setActiveView("recipients"); setFiltered([]); }} className="cursor-pointer">
             <DashboardCard title="Total Recipients" icon={<Users className="h-5 w-5 text-green-500" />} className={activeView === 'recipients' ? 'ring-2 ring-green-500' : ''}>
               <div className="text-2xl font-bold">
-                {broadcasts.reduce((sum, b) => sum + b.recipients, 0).toLocaleString()}
+                {broadcasts.reduce((sum: number, b: Broadcast) => sum + b.recipients, 0).toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">Users reached</p>
             </DashboardCard>
@@ -252,7 +188,7 @@ const AdminBroadcastPage = () => {
           <div onClick={() => { setActiveView("emergency"); setFiltered([]); }} className="cursor-pointer">
             <DashboardCard title="Emergency Alerts" icon={<Bell className="h-5 w-5 text-red-500" />} className={activeView === 'emergency' ? 'ring-2 ring-red-500' : ''}>
               <div className="text-2xl font-bold">
-                {broadcasts.filter(b => b.type === 'emergency').length}
+                {broadcasts.filter((b: Broadcast) => b.type === 'emergency').length}
               </div>
               <p className="text-xs text-muted-foreground">Critical broadcasts</p>
             </DashboardCard>
@@ -404,7 +340,7 @@ const AdminBroadcastPage = () => {
         {/* Broadcasts List */}
         <DashboardCard title="Recent Broadcasts" icon={<Radio className="h-5 w-5 text-primary" />}>
           <div className="space-y-4">
-            {finalData.map((broadcast) => (
+            {finalData.map((broadcast: Broadcast) => (
               <div
                 key={broadcast._id}
                 className="border border-border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-muted/30 transition-colors"

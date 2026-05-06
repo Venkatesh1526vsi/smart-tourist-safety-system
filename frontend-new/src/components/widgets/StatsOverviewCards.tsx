@@ -12,8 +12,8 @@ interface SummaryData {
 
 interface StatsOverviewCardsProps {
   summary?: SummaryData | null;
-  filter?: { severity?: string, status?: string };
-  onFilterChange?: (filter: { severity?: string, status?: string }) => void;
+  filter?: { severity?: string, status?: string, contextId?: string };
+  onFilterChange?: (filter: { severity?: string, status?: string, contextId?: string }) => void;
 }
 
 const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCardsProps) => {
@@ -22,11 +22,13 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
     
     // Toggle logic
     if (type === 'critical') {
-      onFilterChange(filter?.severity === 'critical' ? {} : { severity: 'critical' });
+      onFilterChange(filter?.contextId === 'critical' ? {} : { severity: 'critical', contextId: 'critical' });
     } else if (type === 'active') {
-      onFilterChange(filter?.status === 'reported' ? {} : { status: 'reported' });
+      onFilterChange(filter?.contextId === 'active' ? {} : { status: 'reported', contextId: 'active' });
+    } else if (type === 'users') {
+      onFilterChange(filter?.contextId === 'users' ? {} : { contextId: 'users' });
     } else {
-      onFilterChange({}); // Reset for others for now
+      onFilterChange(filter?.contextId === 'total' ? {} : { contextId: 'total' });
     }
   };
 
@@ -39,7 +41,7 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
       icon: ShieldAlert,
       iconClass: "text-sky-600 dark:text-cyan-400",
       iconBg: "bg-sky-500/10 dark:bg-cyan-500/10",
-      activeCondition: !filter?.severity && !filter?.status
+      activeCondition: filter?.contextId === 'total' || (!filter?.contextId && !filter?.severity && !filter?.status)
     },
     {
       id: "active",
@@ -49,7 +51,7 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
       icon: AlertTriangle,
       iconClass: "text-amber-600 dark:text-amber-400",
       iconBg: "bg-amber-500/10 dark:bg-amber-500/10",
-      activeCondition: filter?.status === 'reported'
+      activeCondition: filter?.contextId === 'active'
     },
     {
       id: "users",
@@ -59,7 +61,7 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
       icon: Users,
       iconClass: "text-emerald-600 dark:text-emerald-400",
       iconBg: "bg-emerald-500/10 dark:bg-emerald-500/10",
-      activeCondition: false
+      activeCondition: filter?.contextId === 'users'
     },
     {
       id: "critical",
@@ -69,7 +71,7 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
       icon: Clock,
       iconClass: "text-red-600 dark:text-red-400",
       iconBg: "bg-red-500/10 dark:bg-red-500/10",
-      activeCondition: filter?.severity === 'critical'
+      activeCondition: filter?.contextId === 'critical'
     },
   ];
   return (

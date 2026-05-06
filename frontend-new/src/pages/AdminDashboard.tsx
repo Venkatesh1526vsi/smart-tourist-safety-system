@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { Radar, AlertTriangle, Radio, Users, Loader2 } from "lucide-react";
@@ -7,8 +7,8 @@ import IncidentCategoryPieChart from "@/components/widgets/IncidentCategoryPieCh
 import MonthlyTrendChart from "@/components/widgets/MonthlyTrendChart";
 import RiskZoneHeatmap from "@/components/widgets/RiskZoneHeatmap";
 import LiveTouristTracking from "@/components/widgets/LiveTouristTracking";
-import { getAdminDashboardSummary, getAllIncidents, type Incident } from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { useOperationalData } from "@/hooks/useOperationalData";
 import {
   LiveTrackingModal,
   IncidentReviewModal,
@@ -17,47 +17,13 @@ import {
   SafetyAlertModal
 } from "@/components/dashboard/DashboardModals";
 
-interface DashboardSummary {
-  total_users: number;
-  total_incidents: number;
-  active_incidents: number;
-  resolved_today: number;
-  new_users_this_week: number;
-  critical_incidents: number;
-}
-
 const AdminDashboard = () => {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, incidents, analytics } = useOperationalData();
+  const [error] = useState<string | null>(null);
   
   // New Interactive States
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [dashboardFilter, setDashboardFilter] = useState<{ severity?: string, status?: string }>({});
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const [summaryRes, incidentsRes] = await Promise.all([
-          getAdminDashboardSummary(),
-          getAllIncidents(),
-        ]);
-        
-        setSummary(summaryRes.summary);
-        setIncidents(incidentsRes.data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, []);
+  const [dashboardFilter, setDashboardFilter] = useState<{ severity?: string, status?: string, contextId?: string }>({});
 
   // Centralized filtering
   const filteredIncidents = useMemo(() => {
@@ -68,45 +34,7 @@ const AdminDashboard = () => {
     });
   }, [incidents, dashboardFilter]);
 
-  // Calculate stats from real data
-  const pendingCount = filteredIncidents.filter(i => i.status === 'reported' || i.status === 'pending').length;
-  const criticalCount = filteredIncidents.filter(i => i.severity === 'critical').length;
-  const highCount = filteredIncidents.filter(i => i.severity === 'high').length;
 
-  // Centralized Analytics Derivation
-  // 1. Reads real existing data first
-  // 2. Preserves all real incidents/users
-  // 3. Safely adds realistic synthetic scaling for Smart Pune Pilot Deployment
-  const analytics = useMemo(() => {
-    const realUsers = summary?.total_users || 0;
-    const realIncidentsCount = incidents.length;
-    
-    // Base synthetic counts (Realistic Pilot Scale)
-    const baseUsers = 124;
-    const baseIncidents = 73;
-    const baseCritical = 18;
-    const baseResolved = 45;
-    
-    // Add real data to the base dynamically
-    const total_users = baseUsers + realUsers;
-    const total_incidents = baseIncidents + realIncidentsCount;
-    const critical_incidents = baseCritical + criticalCount;
-    const resolved_today = baseResolved + Math.floor(realIncidentsCount / 2);
-    
-    const derivedHigh = Math.floor(total_incidents * 0.3) + highCount;
-    const derivedPending = Math.floor(total_incidents * 0.2) + pendingCount;
-    
-    return {
-      total_users,
-      total_incidents,
-      critical_incidents,
-      high_incidents: derivedHigh,
-      pending_incidents: derivedPending,
-      resolved_today,
-      new_users_this_week: Math.floor(total_users * 0.15),
-      users_in_risk_zones: Math.floor(total_users * 0.12),
-    };
-  }, [summary, incidents.length, criticalCount, highCount, pendingCount]);
 
   return (
     <AdminDashboardLayout>
@@ -153,10 +81,10 @@ const AdminDashboard = () => {
 
             {/* Risk Intelligence Section */}
             <div className="grid lg:grid-cols-12 gap-6 mb-6">
-              <div className="lg:col-span-7 flex flex-col">
+              <div className="lg:col-span-7 flex flex-col h-full">
                 <RiskZoneHeatmap />
               </div>
-              <div className="lg:col-span-5 flex flex-col">
+              <div className="lg:col-span-5 flex flex-col h-full">
                 <IncidentCategoryPieChart incidents={filteredIncidents} />
               </div>
             </div>

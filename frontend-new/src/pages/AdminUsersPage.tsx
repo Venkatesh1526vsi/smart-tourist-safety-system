@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { Users, Search, Filter, Loader2, UserPlus, Edit, Trash2, Shield, Ban } from "lucide-react";
@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAdminUsers, deleteUser, apiPost, apiPatch } from "@/services/api";
+import { apiPost, apiPatch } from "@/services/api";
+import { useOperationalData } from "@/hooks/useOperationalData";
 
 interface User {
   _id: string;
@@ -19,19 +20,14 @@ interface User {
 }
 
 const AdminUsersPage = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, users, deletedUsers, analytics, updateUserOp, deleteUserOp, createLocalUser } = useOperationalData();
+  const [error] = useState<string | null>(null);
+  
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalUsers, setTotalUsers] = useState(0);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [deletedUsers, setDeletedUsers] = useState<any[]>(() => {
-    const stored = localStorage.getItem("deletedUsers");
-    return stored ? JSON.parse(stored) : [];
-  });
   const [showDeletedUsers, setShowDeletedUsers] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [newUser, setNewUser] = useState({
@@ -40,35 +36,6 @@ const AdminUsersPage = () => {
     role: "user",
     password: ""
   });
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Step 1: Safe extraction
-        const response: any = await getAdminUsers({ page: currentPage, limit: 50 });
-
-        const usersData =
-          Array.isArray(response) ? response :
-            Array.isArray(response?.data) ? response.data :
-              Array.isArray(response?.data?.users) ? response.data.users :
-                Array.isArray(response?.data?.data) ? response.data.data :
-                  [];
-
-        setUsers(usersData);
-        setTotalUsers(usersData.length);
-      } catch (err) {
-        console.error("API ERROR:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load users');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [currentPage]);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -97,22 +64,7 @@ const AdminUsersPage = () => {
 
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Delete this user?')) return;
-    try {
-      const userToDelete = { ...users.find(u => u._id === id) };
-      await deleteUser(id);
-
-      const updatedDeleted = [
-        ...deletedUsers.filter(u => u._id !== userToDelete._id),
-        userToDelete
-      ];
-
-      setDeletedUsers(updatedDeleted);
-      localStorage.setItem("deletedUsers", JSON.stringify(updatedDeleted));
-
-      setUsers(prev => prev.filter(u => u._id !== id));
-    } catch (err) {
-      console.error('Delete failed', err);
-    }
+    deleteUserOp(id);
   };
 
   // Step 2: Local filtering
@@ -141,7 +93,7 @@ const AdminUsersPage = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <DashboardCard title="Total Users" icon={<Users className="h-5 w-5 text-blue-500" />}>
-            <div className="text-2xl font-bold">{totalUsers.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{analytics.total_users.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">Registered accounts</p>
           </DashboardCard>
 
@@ -327,7 +279,7 @@ const AdminUsersPage = () => {
               {/* Pagination */}
               <div className="flex items-center justify-between p-4 border-t border-border">
                 <div className="text-sm text-muted-foreground">
-                  Showing {users.length} of {totalUsers} users
+                  Showing {filteredUsers.length} of {analytics.total_users} users
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -421,13 +373,13 @@ const AdminUsersPage = () => {
                   try {
                     const res: any = await apiPost("/api/admin/users", newUser);
                     const createdUser = res?.data || res?.data?.data || res;
-                    setUsers(prev => [createdUser, ...prev]);
+                    createLocalUser(createdUser);
                     setShowAddModal(false);
                     setNewUser({ name: "", email: "", role: "user", password: "" });
                   } catch (err) {
                     console.log("Add fallback (manual insertion)", err);
-                    const fakeUser = { ...newUser, _id: Date.now().toString(), status: 'active' as const, created_at: new Date().toISOString() };
-                    setUsers(prev => [fakeUser as any, ...prev]);
+                    const fakeUser = { ...newUser, status: 'active' as const, created_at: new Date().toISOString() };
+                    createLocalUser(fakeUser);
                     setShowAddModal(false);
                     setNewUser({ name: "", email: "", role: "user", password: "" });
                   }
@@ -484,13 +436,12 @@ const AdminUsersPage = () => {
               <button
                 className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition text-sm"
                 onClick={async () => {
+                  updateUserOp(editingUser._id, editingUser);
                   try {
                     await apiPatch(`/api/admin/users/${editingUser._id}`, editingUser);
-                    setUsers(prev => prev.map(u => u._id === editingUser._id ? editingUser : u));
-                    setEditingUser(null);
                   } catch (err) {
                     console.log("Edit fallback applied", err);
-                    setUsers(prev => prev.map(u => u._id === editingUser._id ? editingUser : u));
+                  } finally {
                     setEditingUser(null);
                   }
                 }}

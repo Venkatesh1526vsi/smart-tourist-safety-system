@@ -15,7 +15,7 @@ import type { Incident } from "@/services/api";
 
 interface MonthlyTrendChartProps {
   incidents?: Incident[];
-  filter?: { month?: string };
+  filter?: { month?: string, contextId?: string };
   onFilterChange?: (filter: any) => void;
 }
 
@@ -48,12 +48,16 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
       const syntheticIncidents = Math.max(1, baseSynthetic + randomJitter);
       const syntheticHigh = Math.floor(syntheticIncidents * 0.25);
       const syntheticCritical = Math.floor(syntheticIncidents * 0.1);
+      const syntheticActive = Math.floor(syntheticIncidents * 0.4);
+      const syntheticUsers = Math.floor(20 + progress * 50 + randomJitter * 2);
 
       monthData[m] = { 
         month: m, 
         incidents: syntheticIncidents, 
         critical: syntheticCritical, 
-        high: syntheticHigh 
+        high: syntheticHigh,
+        active: syntheticActive,
+        users: syntheticUsers
       };
     });
 
@@ -93,17 +97,41 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
       const clickedMonth = state.activeLabel;
       onFilterChange((prev: any) => ({
         ...prev,
-        month: prev.month === clickedMonth ? undefined : clickedMonth
+        month: prev?.month === clickedMonth ? undefined : clickedMonth
       }));
     }
   };
+
+  const contextId = filter?.contextId || 'total';
+
+  let title = "Monthly Incident Volume";
+  let dataKey = "incidents";
+  let strokeColor = isDark ? "#22d3ee" : "#3b82f6";
+  let iconColor = "text-sky-600 dark:text-cyan-400";
+
+  if (contextId === 'users') {
+     title = "Monthly Active User Growth";
+     dataKey = "users";
+     strokeColor = "#10b981";
+     iconColor = "text-emerald-600 dark:text-emerald-400";
+  } else if (contextId === 'critical') {
+     title = "Monthly Critical Incident Trend";
+     dataKey = "critical";
+     strokeColor = "#ef4444";
+     iconColor = "text-red-600 dark:text-red-400";
+  } else if (contextId === 'active') {
+     title = "Monthly Active Case Flow";
+     dataKey = "active";
+     strokeColor = "#f59e0b";
+     iconColor = "text-amber-600 dark:text-amber-400";
+  }
 
   return (
     <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative">
       <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-cyan-400" />
-          Monthly Incident Trend {filter?.month ? `(${filter.month})` : ''}
+          <TrendingUp className={`h-5 w-5 ${iconColor}`} />
+          {title} {filter?.month ? `(${filter.month})` : ''}
         </CardTitle>
         <Button variant="ghost" size="icon" onClick={exportCSV} title="Export CSV" disabled={DATA.length === 0}>
            <Download className="h-4 w-4" />
@@ -120,8 +148,8 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
               <LineChart data={DATA} onClick={handleChartClick} className="cursor-pointer" margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorIncidents" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={isDark ? "#22d3ee" : "#10b981"} stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor={isDark ? "#22d3ee" : "#10b981"} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={strokeColor} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={strokeColor} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -149,9 +177,19 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
                       return (
                         <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-slate-800/90 border-slate-700/50 text-slate-200' : 'bg-white/90 border-slate-200 text-slate-800'} backdrop-blur-md`}>
                           <p className="font-bold mb-1">{label}</p>
-                          <p className="text-sm">Total: {data.incidents}</p>
-                          <p className="text-sm text-red-500">Critical: {data.critical}</p>
-                          <p className="text-sm text-amber-500">High: {data.high}</p>
+                          {contextId === 'users' ? (
+                            <p className="text-sm">Active Users: {data.users}</p>
+                          ) : contextId === 'critical' ? (
+                            <p className="text-sm text-red-500">Critical Cases: {data.critical}</p>
+                          ) : contextId === 'active' ? (
+                            <p className="text-sm text-amber-500">Active Cases: {data.active}</p>
+                          ) : (
+                            <>
+                              <p className="text-sm">Total Incidents: {data.incidents}</p>
+                              <p className="text-sm text-red-500">Critical: {data.critical}</p>
+                              <p className="text-sm text-amber-500">High: {data.high}</p>
+                            </>
+                          )}
                         </div>
                       );
                     }
@@ -160,10 +198,10 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
                 />
                 <Line
                   type="monotone"
-                  dataKey="incidents"
-                  stroke={isDark ? "#22d3ee" : "#10b981"}
+                  dataKey={dataKey}
+                  stroke={strokeColor}
                   strokeWidth={3}
-                  dot={{ fill: isDark ? "#22d3ee" : "#10b981", strokeWidth: 2, r: 4, stroke: isDark ? "#0f172a" : "#ffffff" }}
+                  dot={{ fill: strokeColor, strokeWidth: 2, r: 4, stroke: isDark ? "#0f172a" : "#ffffff" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: isDark ? "#fff" : "#000" }}
                   animationDuration={1500}
                 />

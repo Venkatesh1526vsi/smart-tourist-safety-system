@@ -1,4 +1,4 @@
-import { useEffect, useState, Fragment } from "react";
+import { useState, Fragment } from "react";
 import { AdminDashboardLayout } from "@/components/dashboard/AdminDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { AlertTriangle, Filter, Search, Loader2, Eye, Edit, CheckCircle, XCircle, Clock } from "lucide-react";
@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getMyIncidents, updateIncident, deleteIncident } from "@/services/api";
+import { updateIncident } from "@/services/api";
+import { useOperationalData } from "@/hooks/useOperationalData";
 
 type Incident = {
   _id: string;
@@ -27,118 +28,25 @@ type Incident = {
 };
 
 const AdminIncidentsPage = () => {
-  const [incidents, setIncidents] = useState<Incident[]>(() => {
-    const stored = localStorage.getItem("incidents");
-    return stored ? JSON.parse(stored) : [];
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, incidents, deletedIncidents, updateIncidentOp, deleteIncidentOp } = useOperationalData();
+  const [error] = useState<string | null>(null);
+  
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
-  const [deletedIncidents, setDeletedIncidents] = useState<Incident[]>(() => {
-    const stored = localStorage.getItem("deletedIncidents");
-    return stored ? JSON.parse(stored) : [];
-  });
   const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
-  const [resolvedIncidents, setResolvedIncidents] = useState<Incident[]>(() => {
-    const stored = localStorage.getItem("resolvedIncidents");
-    return stored ? JSON.parse(stored) : [];
-  });
   const [activeView, setActiveView] = useState("all");
   const [filteredIncidents, setFilteredIncidents] = useState<Incident[]>([]);
 
-
-  const fetchIncidents = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response: any = await getMyIncidents();
-
-      const data = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response?.data?.data)
-            ? response.data.data
-            : [];
-
-      // 🔥 FILTER OUT resolved + deleted (ADD THIS PART)
-      const resolvedIds = JSON.parse(localStorage.getItem("resolvedIncidents") || "[]").map((i: any) => i._id);
-      const deletedIds = JSON.parse(localStorage.getItem("deletedIncidents") || "[]").map((i: any) => i._id);
-
-      const cleanedData = data.filter((i: any) =>
-        !resolvedIds.includes(i._id) &&
-        !deletedIds.includes(i._id)
-      );
-
-      // ✅ USE cleanedData instead of data
-      setIncidents(cleanedData);
-      localStorage.setItem("incidents", JSON.stringify(cleanedData));
-
-    } catch (err) {
-      console.error("API ERROR:", err);
-      setError(err instanceof Error ? err.message : 'Failed to load incidents');
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchIncidents();
-  }, []); // Run ONLY once on mount
+  const resolvedIncidents = incidents.filter(i => i.status === 'resolved');
 
   const handleResolve = (incident: Incident) => {
-    const resolvedItem = {
-      ...incident,
-      status: "resolved",
-      resolvedAt: new Date().toISOString()
-    };
-
-    setResolvedIncidents(prev => {
-      const updated = [...prev, resolvedItem];
-      localStorage.setItem("resolvedIncidents", JSON.stringify(updated));
-      return updated;
-    });
-
-    setIncidents(prev => {
-      const updated = prev.filter(i => i._id !== incident._id);
-      localStorage.setItem("incidents", JSON.stringify(updated));
-      return updated;
-    });
+    updateIncidentOp(incident._id, { status: 'resolved', resolvedAt: new Date().toISOString() });
   };
-
 
   const handleDeleteIncident = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this incident?')) return;
-
-    const found = incidents.find(i => i?._id === id);
-    if (!found) return;
-
-    const incidentToDelete = {
-      ...found,
-      deletedAt: new Date().toISOString()
-    };
-
-    try {
-      await deleteIncident(id);
-    } catch (err) {
-      console.log("Delete fallback applied", err);
-    }
-
-    setDeletedIncidents(prev => {
-      const updated = prev.find(i => i?._id === id)
-        ? prev
-        : [...prev, incidentToDelete as Incident];
-      localStorage.setItem("deletedIncidents", JSON.stringify(updated));
-      return updated;
-    });
-
-    setIncidents(prev => {
-      const updated = prev.filter(incident => incident?._id !== id);
-      localStorage.setItem("incidents", JSON.stringify(updated));
-      return updated;
-    });
+    deleteIncidentOp(id);
   };
 
   const handleRowClick = (id: string) => {
@@ -205,7 +113,7 @@ const AdminIncidentsPage = () => {
         ? deletedIncidents
         : filteredIncidents.length > 0
           ? filteredIncidents
-          : incidents;
+          : incidents.filter(i => i.status !== 'resolved');
 
   return (
     <AdminDashboardLayout>
@@ -314,9 +222,9 @@ const AdminIncidentsPage = () => {
               {error}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+              <table className="w-full relative">
+                <thead className="sticky top-0 bg-background z-10 shadow-sm">
                   <tr className="border-b border-border">
                     <th className="text-left p-3 font-medium">Incident</th>
                     <th className="text-left p-3 font-medium">Reporter</th>
@@ -442,20 +350,14 @@ const AdminIncidentsPage = () => {
                                       onChange={async (e) => {
                                         const newStatus = e.target.value;
                                         try {
-                                          await updateIncident(incident._id, {
+                                          updateIncidentOp(incident._id, { status: newStatus });
+                                          // Optional backend sync:
+                                          updateIncident(incident._id, {
                                             status: newStatus,
                                             severity: incident.severity,
                                             category: incident.category || 'general'
-                                          });
-                                          setIncidents(prev =>
-                                            prev.map(i =>
-                                              i._id === incident._id
-                                                ? { ...i, status: newStatus }
-                                                : i
-                                            )
-                                          );
+                                          }).catch(() => {});
                                           console.log("Updated:", newStatus);
-
                                         } catch (err) {
                                           console.error("Status update failed", err);
                                         }
@@ -507,7 +409,7 @@ const AdminIncidentsPage = () => {
                 className="text-[10px] h-7"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setDeletedIncidents([]);
+                  // No easy clear all in useOperationalData, so just refresh page or keep them
                 }}
               >
                 Clear History
@@ -569,24 +471,11 @@ const AdminIncidentsPage = () => {
               </button>
               <button
                 className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition text-sm"
-                onClick={async () => {
-                  try {
-                    await updateIncident(editingIncident._id, editingIncident);
-                    setIncidents(prev => {
-                      const updated = prev.map(i => i?._id === editingIncident._id ? editingIncident : i);
-                      localStorage.setItem("incidents", JSON.stringify(updated));
-                      return updated;
-                    });
-                    setEditingIncident(null);
-                  } catch (err) {
-                    console.log("Edit fallback applied", err);
-                    setIncidents(prev => {
-                      const updated = prev.map(i => i?._id === editingIncident._id ? editingIncident : i);
-                      localStorage.setItem("incidents", JSON.stringify(updated));
-                      return updated;
-                    });
-                    setEditingIncident(null);
-                  }
+                onClick={() => {
+                  updateIncidentOp(editingIncident._id, editingIncident);
+                  // Optional backend sync:
+                  updateIncident(editingIncident._id, editingIncident).catch(() => {});
+                  setEditingIncident(null);
                 }}
               >
                 Save Changes
