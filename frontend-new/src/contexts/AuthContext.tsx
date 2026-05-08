@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 // TypeScript Interfaces
 interface User {
@@ -34,6 +34,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     return null;
   });
+
+  // Sync state with localStorage to prevent stale null states after login
+  useEffect(() => {
+    const syncState = () => {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken !== token) {
+        setToken(storedToken);
+      }
+      
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (JSON.stringify(parsed) !== JSON.stringify(user)) {
+            setUser(parsed);
+          }
+        } catch (e) {
+          console.error("Sync parse error:", e);
+        }
+      }
+    };
+
+    // Initial sync
+    syncState();
+    
+    window.addEventListener("storage", syncState);
+
+    return () => {
+      window.removeEventListener("storage", syncState);
+    };
+  }, [token, user]);
 
   // Logout method
   const logout = (): void => {
