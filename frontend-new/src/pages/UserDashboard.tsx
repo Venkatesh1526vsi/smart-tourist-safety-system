@@ -10,6 +10,8 @@ import TravelSafetyTipsWidget from "@/components/widgets/TravelSafetyTipsWidget"
 import RouteSafetySuggestionWidget from "@/components/widgets/RouteSafetySuggestionWidget";
 import PuneWeatherWidget from "@/components/widgets/PuneWeatherWidget";
 import PuneSafetyNewsWidget from "@/components/widgets/PuneSafetyNewsWidget";
+import ActiveTripWidget from "@/components/widgets/ActiveTripWidget";
+import LiveSafetyStatusWidget from "@/components/widgets/LiveSafetyStatusWidget";
 import { getMyIncidents, getRiskZones, type Incident, type RiskZone } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -96,6 +98,12 @@ const UserDashboard = () => {
           <NearbyEmergencyContactsWidget />
           <TravelSafetyTipsWidget />
           <RouteSafetySuggestionWidget />
+        </div>
+
+        {/* Operational Intelligence Row */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <ActiveTripWidget />
+          <LiveSafetyStatusWidget incidents={incidents} />
         </div>
 
         {/* Live Data Widgets */}
