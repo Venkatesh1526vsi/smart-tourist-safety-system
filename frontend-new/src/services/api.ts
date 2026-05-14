@@ -120,7 +120,7 @@ const handleAuthError = (status: number, endpoint?: string) => {
 };
 
 // Build headers with optional Authorization - Step 1
-const buildHeaders = (endpoint?: string) => {
+const buildHeaders = () => {
   const headers: any = {
     "Content-Type": "application/json"
   };
@@ -143,7 +143,7 @@ export const apiPost = async <T>(endpoint: string, data: unknown): Promise<T> =>
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: buildHeaders(endpoint),
+      headers: buildHeaders(),
       body: JSON.stringify(data),
     });
 
@@ -168,7 +168,7 @@ export const apiGet = async <T>(endpoint: string): Promise<T> => {
 
   const response = await fetch(url, {
     method: 'GET',
-    headers: buildHeaders(endpoint),
+    headers: buildHeaders(),
   });
 
   if (!response.ok) {
@@ -188,7 +188,7 @@ export const apiDelete = async <T>(endpoint: string): Promise<T> => {
 
   const response = await fetch(url, {
     method: 'DELETE',
-    headers: buildHeaders(endpoint),
+    headers: buildHeaders(),
   });
 
   if (!response.ok) {
@@ -208,7 +208,7 @@ export const apiPatch = async <T>(endpoint: string, data: unknown): Promise<T> =
 
   const response = await fetch(url, {
     method: 'PATCH',
-    headers: buildHeaders(endpoint),
+    headers: buildHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -230,7 +230,7 @@ export const apiUploadFile = async <T>(
 ): Promise<T> => {
   const url = `${BASE_URL}${endpoint}`;
 
-  const headers = buildHeaders(endpoint);
+  const headers = buildHeaders();
   delete headers["Content-Type"]; // browser will set it correctly for FormData
 
   const response = await fetch(url, {
