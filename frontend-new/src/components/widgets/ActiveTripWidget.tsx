@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation, MapPin, Map, Navigation2, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 const ActiveTripWidget = () => {
   const [mounted, setMounted] = useState(false);
@@ -68,7 +67,12 @@ const ActiveTripWidget = () => {
               <span>Progress</span>
               <span>{tripData.progress}%</span>
             </div>
-            <Progress value={tripData.progress} className="h-2 bg-slate-200 dark:bg-slate-700" />
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${tripData.progress}%` }}
+              />
+            </div>
             <div className="text-right text-xs text-muted-foreground mt-1">
               Destination: {tripData.end}
             </div>
