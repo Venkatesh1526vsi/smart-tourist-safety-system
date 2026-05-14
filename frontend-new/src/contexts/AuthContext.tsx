@@ -21,9 +21,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Auth Provider Component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Initialize state synchronously from localStorage to prevent redirect loops
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  console.log('[AuthContext] Initializing AuthProvider');
+  const [token, setToken] = useState<string | null>(() => {
+    const t = localStorage.getItem("token");
+    console.log(`[AuthContext] Initial token from localStorage: ${t ? 'exists' : 'null'}`);
+    return t;
+  });
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem("user");
+    console.log(`[AuthContext] Initial user from localStorage: ${savedUser}`);
     if (savedUser) {
       try {
         return JSON.parse(savedUser);
@@ -38,8 +44,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Sync state with localStorage to prevent stale null states after login
   useEffect(() => {
     const syncState = () => {
+      console.log('[AuthContext] syncState called');
       const storedToken = localStorage.getItem("token");
       if (storedToken !== token) {
+        console.log(`[AuthContext] Token mismatch in syncState, updating. stored: ${storedToken ? 'exists' : 'null'}, current: ${token ? 'exists' : 'null'}`);
         setToken(storedToken);
       }
       
@@ -48,11 +56,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const parsed = JSON.parse(storedUser);
           if (JSON.stringify(parsed) !== JSON.stringify(user)) {
+            console.log('[AuthContext] User mismatch in syncState, updating.');
             setUser(parsed);
           }
         } catch (e) {
           console.error("Sync parse error:", e);
         }
+      } else if (user) {
+         console.log('[AuthContext] User missing in storage but exists in state, clearing.');
+         setUser(null);
       }
     };
 
@@ -68,6 +80,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Logout method
   const logout = (): void => {
+    console.warn('[AuthContext] LOGOUT CALLED! Clearing local storage and state.');
+    console.trace('[AuthContext] Logout stack trace');
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setToken(null);

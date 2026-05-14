@@ -24,13 +24,17 @@ const MapPage = lazy(() => import("@/pages/MapPage"));
 const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
 // Protected lazy route wrapper
-const ProtectedLazyRoute = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>
-    <Suspense fallback={<PageLoader />}>{children}</Suspense>
-  </ProtectedRoute>
-);
+const ProtectedLazyRoute = ({ children }: { children: React.ReactNode }) => {
+  console.log('[App] Rendering ProtectedLazyRoute');
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<PageLoader />}>{children}</Suspense>
+    </ProtectedRoute>
+  );
+};
 
 function App() {
+  console.log(`[App] Rendering App. Path: ${window.location.pathname}`);
   return (
     <ThemeProvider>
       <BrowserRouter>

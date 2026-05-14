@@ -39,8 +39,8 @@ const Login = () => {
       console.log("🔥 LOGIN RESPONSE RAW:", response);
 
       // 🔥 DIRECT EXTRACTION (NO CONTEXT DEPENDENCY)
-      const newToken = (response as any)?.token;
-      const newUser = (response as any)?.user;
+      const newToken = (response as any)?.data?.token || (response as any)?.token;
+      const newUser = (response as any)?.data?.user || (response as any)?.user;
 
       if (!newToken) {
         console.error("❌ TOKEN NOT FOUND:", response);

@@ -17,13 +17,17 @@ const navItems = [
 ];
 
 export function UserDashboardLayout({ children }: { children: React.ReactNode }) {
+  console.log(`[UserDashboardLayout] Rendering. Path: ${window.location.pathname}`);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationStore();
-  const { logout } = useAuth();
+  const { logout, user, token } = useAuth();
+  
+  console.log(`[UserDashboardLayout] useAuth state - user: ${user ? 'exists' : 'null'}, token: ${token ? 'exists' : 'null'}`);
   
   const handleLogout = () => {
+    console.log('[UserDashboardLayout] handleLogout called');
     logout();
     navigate('/login', { replace: true });
   };

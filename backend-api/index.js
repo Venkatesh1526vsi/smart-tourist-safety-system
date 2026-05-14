@@ -74,14 +74,6 @@ if (!fs.existsSync(uploadsDir)) {
 // }
 
 const app = express(); // ----> Must be BEFORE app.use()
-app.set("trust proxy", 1);
-
-app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
 
 // Create HTTP server for WebSocket support
 const server = http.createServer(app);
@@ -166,7 +158,35 @@ const incidentLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
 
+    // Allow localhost for development
+    if (origin.includes('localhost')) return callback(null, true);
+
+    // Allow Vercel deployments
+    if (origin.includes('vercel.app')) return callback(null, true);
+
+    // Allow your specific domains
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://your-frontend-domain.vercel.app' // Replace with actual Vercel domain
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log('CORS blocked origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // Middleware
 // Apply general rate limiting to API routes only (NOT login/register)
@@ -202,9 +222,6 @@ app.use(express.static(path.join(__dirname, '../frontend-new/public'), {
   }
 }));
 
-// Serve uploads directory 
-app.use('/uploads', express.static('uploads'));
-
 // MongoDB connection validation middleware
 const validateMongoConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
@@ -237,7 +254,7 @@ app.use((req, res, next) => {
 
 
 // Plug in router AFTER defining app
-// TEMPORARILY DISABLED: app.use('/api/incidents', validateMongoConnection);
+app.use('/api/risk-zones', riskZonesRouter);
 app.use('/api/incidents', incidentsRouter);
 app.use('/api/profile', profilesRouter);
 app.use('/api/advanced', advancedRouter);
@@ -260,9 +277,6 @@ server.listen(PORT, '0.0.0.0', () => {
 // MongoDB Connect (only once!)
 if (MONGO_URI) {
   console.log('Attempting to connect to MongoDB...');
-  mongoose.connection.on("error", err => {
-    console.error("MongoDB connection error:", err);
-  });
   mongoose
     .connect(MONGO_URI)
     .then(async () => {
@@ -287,13 +301,11 @@ if (MONGO_URI) {
     .catch((err) => {
       console.error('❌ MongoDB connection error:', err.message);
       console.error('Full error:', err);
-      // TEMPORARILY DISABLED: process.exit(1); // Exit if DB connection fails
-      console.log('⚠️  Continuing without MongoDB for testing purposes...');
+      process.exit(1); // Exit if DB connection fails
     });
 } else {
   console.error('❌ MONGO_URI not provided. Cannot connect to database.');
-  // TEMPORARILY DISABLED: process.exit(1);
-  console.log('⚠️  Continuing without MongoDB for testing purposes...');
+  process.exit(1);
 }
 
 // SYSTEM HEALTH CHECK
@@ -391,12 +403,10 @@ app.post('/api/register', validateMongoConnection, validatePasswordStrength, asy
       { expiresIn: '2h' }
     );
 
-    return res.status(201).json({
-      success: true,
-      message: 'User registered successfully!',
+    return ResponseHandler.created(res, {
       user: { name, email, role: user.role || 'tourist' },
       token
-    });
+    }, 'User registered successfully!');
   } catch (err) {
     console.error('Registration error:', err);
     return ResponseHandler.error(res, 500, 'Server error during registration.', err.message);
@@ -450,13 +460,6 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
       return ResponseHandler.unauthorized(res, 'Invalid email or password.');
     }
 
-    if (!user || !user.password) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials"
-      });
-    }
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('Login failed: Invalid password for user:', email);
@@ -469,10 +472,6 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
     resetFailedAttempts(ipAddress);
     console.log('Login successful for user:', email);
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET missing");
-    }
-
     // Issue JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role || 'tourist' },
@@ -480,20 +479,13 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
       { expiresIn: '2h' }
     );
 
-    return res.status(200).json({
-      success: true,
-      message: 'Login successful!',
+    return ResponseHandler.success(res, 200, {
       user: { name: user.name, email: user.email, role: user.role || 'tourist' },
       token
-    });
-  } catch (error) {
-    console.error("🔥 LOGIN ROUTE ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error during login.",
-      error: error.message
-    });
+    }, 'Login successful!');
+  } catch (err) {
+    console.error('Login error:', err);
+    return ResponseHandler.error(res, 500, 'Server error during login.', err.message);
   }
 });
 
@@ -1366,10 +1358,6 @@ app.use('/uploads', express.static('uploads'));
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 app.use((err, req, res, next) => {
-  console.error("🔥 GLOBAL SERVER ERROR:", err);
-
-  res.status(500).json({
-    success: false,
-    message: "Internal server error"
-  });
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong' });
 });

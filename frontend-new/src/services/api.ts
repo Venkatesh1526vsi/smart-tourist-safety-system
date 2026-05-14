@@ -104,13 +104,15 @@ const getToken = (): string | null => {
 };
 
 const handleAuthError = (status: number, endpoint?: string) => {
+  console.log(`[API] handleAuthError called. status: ${status}, endpoint: ${endpoint}`);
+  // /external/ endpoints ACTUALLY require auth on the backend. Only login/register are truly public.
   const isPublicEndpoint =
-    endpoint?.includes("/external/") ||
     endpoint?.includes("/login") ||
     endpoint?.includes("/register");
 
   if (status === 401 || (status === 403 && !isPublicEndpoint)) {
-    console.warn("Invalid or expired token — clearing session");
+    console.warn(`[API] Invalid or expired token (status ${status}) on endpoint ${endpoint} — clearing session and redirecting to /login`);
+    console.trace('[API] handleAuthError stack trace');
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
@@ -125,13 +127,9 @@ const buildHeaders = (endpoint?: string) => {
 
   const token = getToken();
 
-  // Public endpoints that don't need auth
-  const isPublic =
-    endpoint?.includes("/external/") ||
-    endpoint?.includes("/login") ||
-    endpoint?.includes("/register");
-
-  if (token && !isPublic) {
+  // Always attach the token if we have it. The backend will ignore it if not needed.
+  // Previously, /external/ was marked as public but backend required auth, causing 401 redirect loop.
+  if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
