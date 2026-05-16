@@ -9,7 +9,7 @@ import "leaflet-gesture-handling";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
 import {
   Loader2, AlertCircle, Locate, MapPin, Route, Plus, X,
-  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, Share2, ExternalLink
+  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, ExternalLink
 } from "lucide-react";
 import { getAllIncidents, type Incident as ApiIncident } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
@@ -581,7 +581,7 @@ const MapPage = () => {
                 key={inc.id} 
                 position={[inc.lat, inc.lng]} 
                 icon={getIncidentIcon(inc.severity, inc.status, focusedIncidentId === inc.id)}
-                ref={(r) => markerRefs.current[inc.id] = r}
+                ref={(r) => { markerRefs.current[inc.id] = r; }}
                 eventHandlers={{
                   click: () => setFocusedIncidentId(inc.id)
                 }}
