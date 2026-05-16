@@ -7,6 +7,7 @@ import { FileText, MapPin, AlertTriangle, CheckCircle2, ShieldAlert, Activity } 
 import { useOperationalData } from "@/hooks/useOperationalData";
 import { IncidentReportForm } from "@/components/forms/IncidentReportForm";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
+import { motion, AnimatePresence } from "framer-motion";
 
 const getSeverityBadgeClass = (severity: string) => {
   switch (severity?.toLowerCase()) {
@@ -42,7 +43,7 @@ export default function IncidentHistoryPage() {
   
   // Intelligence from centralized operations
   const { incidents: globalIncidents, broadcasts, createLocalIncident } = useOperationalData();
-  const addNotification = useNotificationStore(state => state.addNotification);
+  const { addNotification } = useNotificationStore();
 
   const fetchMyIncidents = async () => {
     try {
@@ -65,14 +66,11 @@ export default function IncidentHistoryPage() {
     setIncidents(prev => [newIncident, ...prev]);
     
     // 3. Fire lightweight user notification
-    addNotification({
-      id: `noti-${Date.now()}`,
-      title: 'Report Transmitted',
-      message: 'Your incident report has been securely synced with operations.',
-      type: 'info',
-      read: false,
-      timestamp: Date.now()
-    });
+    addNotification(
+      'info',
+      'Report Transmitted',
+      'Your incident report has been securely synced with operations.'
+    );
   };
 
   useEffect(() => {
@@ -149,7 +147,7 @@ export default function IncidentHistoryPage() {
                         >
                           <CardContent className="p-4 flex-1 flex flex-col">
                             <div className="flex justify-between items-start gap-3 mb-2">
-                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.title || incident.type || incident.category || 'Incident Report'}</span>
+                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.type || incident.category || 'Incident Report'}</span>
                               <Badge variant="outline" className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 border ${getSeverityBadgeClass(incident.severity)}`}>
                                 {incident.severity}
                               </Badge>
