@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { LocationInput } from "@/components/forms/LocationInput";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Coordinates = { lat: number; lng: number };
@@ -167,57 +168,7 @@ function optimizeOrder(stops: StopInput[]): StopInput[] {
   return ordered;
 }
 
-// ─── LocationInput ────────────────────────────────────────────────────────────
-interface LIProps { value: string; onChange: (l: string, c: Coordinates | null) => void; placeholder: string; icon?: React.ReactNode; onRemove?: () => void }
-function LocationInput({ value, onChange, placeholder, icon, onRemove }: LIProps) {
-  const [query, setQuery] = useState(value);
-  const [results, setResults] = useState<NominatimResult[]>([]);
-  const [open, setOpen] = useState(false);
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { setQuery(value); }, [value]);
-  useEffect(() => {
-    function h(e: MouseEvent) { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
-  }, []);
-  function change(v: string) {
-    setQuery(v); onChange(v, null);
-    if (debRef.current) clearTimeout(debRef.current);
-    if (v.trim().length < 3) { setResults([]); setOpen(false); return; }
-    debRef.current = setTimeout(async () => {
-      try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(v)}&format=json&limit=5`, { headers: { "User-Agent": "smart-tourist-safety-system" } });
-        const d: NominatimResult[] = await r.json();
-        setResults(d); setOpen(d.length > 0);
-      } catch {/*silent*/ }
-    }, 300);
-  }
-  function select(r: NominatimResult) {
-    setQuery(r.display_name); setResults([]); setOpen(false);
-    onChange(r.display_name, { lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
-  }
-  return (
-    <div ref={wrapRef} className="relative flex items-center gap-2">
-      {icon && <span className="shrink-0">{icon}</span>}
-      <div className="relative flex-1">
-        <Input value={query} onChange={e => change(e.target.value)} placeholder={placeholder}
-          onFocus={() => results.length > 0 && setOpen(true)} className="w-full" />
-        {open && (
-          <div className="absolute top-full left-0 right-0 z-[2001] mt-1 bg-background border border-border rounded-lg shadow-xl overflow-hidden max-h-52 overflow-y-auto">
-            {results.map(r => (
-              <button key={r.place_id} className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-start gap-2 border-b border-border/40 last:border-0"
-                onMouseDown={e => { e.preventDefault(); select(r); }}>
-                <MapPin className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
-                <span className="line-clamp-2">{r.display_name}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      {onRemove && <button onClick={onRemove} className="shrink-0 text-muted-foreground hover:text-destructive"><X className="h-4 w-4" /></button>}
-    </div>
-  );
-}
+
 
 // ─── MapPage ─────────────────────────────────────────────────────────────────
 const SS_MODE_KEY = "tourist_trip_mode"; // localStorage key for mode persistence

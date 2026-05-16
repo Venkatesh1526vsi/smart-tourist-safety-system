@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useOperationalData } from "@/hooks/useOperationalData";
+import { IncidentReportForm } from "@/components/forms/IncidentReportForm";
 
 const getSeverityBadgeClass = (severity: string) => {
   switch (severity?.toLowerCase()) {
@@ -37,224 +38,6 @@ const formatIncidentDate = (dateString?: string) => {
     : date.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
 
-// --- Report Form Component ---
-function CompactReportForm({ onSuccess }: { onSuccess: () => void }) {
-  const [formData, setFormData] = useState({
-    title: '', description: '', location: '', type: '', dateTime: new Date().toISOString().slice(0, 16),
-  });
-  const [severity, setSeverity] = useState('');
-  const [isEmergency, setIsEmergency] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [images, setImages] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const incidentTypes = ['Medical Emergency', 'Theft', 'Harassment', 'Accident', 'Suspicious Activity', 'Other'];
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-    if (errors[id]) setErrors(prev => { const ne = { ...prev }; delete ne[id]; return ne; });
-  };
-
-  const handleTypeChange = (value: string) => {
-    setFormData(prev => ({ ...prev, type: value }));
-    if (errors.type) setErrors(prev => { const ne = { ...prev }; delete ne.type; return ne; });
-  };
-
-  const handleEmergencyToggle = (checked: boolean) => {
-    setIsEmergency(checked);
-    if (checked) setSeverity('critical');
-    if (errors.severity) setErrors(prev => { const ne = { ...prev }; delete ne.severity; return ne; });
-  };
-
-  const handleUseCurrentLocation = async () => {
-    if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
-    setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        let resolvedLocation = `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`;
-        try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-          const data = await response.json();
-          const city = data.address?.city || data.address?.town || data.address?.village || '';
-          if (city) resolvedLocation = `${city} (Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)})`;
-        } catch {}
-        setFormData(prev => ({ ...prev, location: resolvedLocation }));
-        setLocationLoading(false);
-      },
-      () => { setLocationLoading(false); alert('Unable to fetch current location'); }
-    );
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setImages(prev => [...prev, ...files]);
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.title.trim()) newErrors.title = 'Title required';
-    if (!formData.description.trim()) newErrors.description = 'Description required';
-    if (!formData.location.trim()) newErrors.location = 'Location required';
-    if (!formData.type) newErrors.type = 'Type required';
-    if (!severity) newErrors.severity = 'Severity required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setIsSubmitting(true);
-    
-    const latMatch = formData.location?.match(/Lat:\s*([0-9.-]+)/);
-    const lngMatch = formData.location?.match(/Lng:\s*([0-9.-]+)/);
-    const latitude = latMatch ? parseFloat(latMatch[1]) : null;
-    const longitude = lngMatch ? parseFloat(lngMatch[1]) : null;
-    
-    const formDataToSend = new FormData();
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("type", formData.type);
-    formDataToSend.append("severity", severity);
-    formDataToSend.append("isEmergency", String(isEmergency));
-    if (latitude !== null) formDataToSend.append("latitude", String(latitude));
-    if (longitude !== null) formDataToSend.append("longitude", String(longitude));
-    images.forEach(img => formDataToSend.append("image", img));
-    
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-          alert("Please login again");
-          setIsSubmitting(false);
-          return;
-      }
-
-      const response = await fetch("https://smart-tourist-safety-system-l724.onrender.com/api/incidents", {
-        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formDataToSend,
-      });
-
-      if (response.ok) {
-        setSuccessMessage("Operational report submitted.");
-        setFormData({ title: "", description: "", location: "", type: "", dateTime: new Date().toISOString().slice(0, 16) });
-        setSeverity(""); setIsEmergency(false); setImages([]);
-        setTimeout(() => setSuccessMessage(""), 4000);
-        onSuccess();
-      } else {
-        const data = await response.json();
-        alert(data.message || "Failed to submit incident");
-      }
-    } catch (error) {
-      console.error("Submission error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Card className="border border-border/40 shadow-xl overflow-hidden glass-card">
-      <CardHeader className="bg-card/50 pb-4 border-b border-border/40">
-        <CardTitle className="text-lg font-display flex items-center gap-2">
-          <Crosshair className="h-5 w-5 text-amber-500" />
-          Report Incident
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-5 space-y-4 bg-muted/5">
-        {successMessage && (
-          <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm flex items-center gap-2 font-medium">
-            <CheckCircle2 className="h-4 w-4" /> {successMessage}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Title</Label>
-              <Input id="title" placeholder="Brief summary" value={formData.title} onChange={handleChange} className={`h-9 bg-background/50 text-sm ${errors.title ? "border-red-500" : ""}`} />
-            </div>
-            
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Category</Label>
-              <Select value={formData.type} onValueChange={handleTypeChange}>
-                <SelectTrigger className={`h-9 bg-background/50 text-sm ${errors.type ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {incidentTypes.map(type => <SelectItem key={type} value={type.toLowerCase()}>{type}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Severity</Label>
-              <Select value={severity} onValueChange={setSeverity}>
-                <SelectTrigger className={`h-9 bg-background/50 text-sm ${errors.severity ? "border-red-500" : ""}`}>
-                  <SelectValue placeholder="Select Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Location</Label>
-              <div className="flex gap-2">
-                <Input id="location" placeholder="Coordinates or area" value={formData.location} onChange={handleChange} className={`h-9 bg-background/50 text-sm ${errors.location ? "border-red-500" : ""}`} />
-                <Button type="button" size="sm" variant="outline" onClick={handleUseCurrentLocation} disabled={locationLoading} className="h-9 px-3 bg-background/50">
-                  <Navigation className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Description</Label>
-              <Textarea id="description" placeholder="Details of the incident..." rows={3} value={formData.description} onChange={handleChange} className={`resize-none bg-background/50 text-sm ${errors.description ? "border-red-500" : ""}`} />
-            </div>
-
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Evidence (Optional)</Label>
-              <label className="flex items-center justify-center w-full h-9 px-4 transition border border-dashed rounded-md appearance-none cursor-pointer hover:border-primary border-border/60 bg-background/30">
-                <span className="flex items-center space-x-2">
-                  <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {images.length > 0 ? `${images.length} selected` : 'Attach images'}
-                  </span>
-                </span>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
-              </label>
-              {images.length > 0 && (
-                <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-                  {images.map((img, i) => (
-                    <div key={i} className="text-[10px] bg-secondary px-2 py-1 rounded truncate max-w-[100px] flex items-center gap-1">
-                      {img.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="col-span-2 mt-1 flex items-center gap-2 p-2 rounded border border-red-500/20 bg-red-500/5">
-              <input type="checkbox" id="emergency" checked={isEmergency} onChange={(e) => handleEmergencyToggle(e.target.checked)} className="rounded border-red-300 text-red-600 focus:ring-red-500 h-3.5 w-3.5 cursor-pointer" />
-              <Label htmlFor="emergency" className="text-xs font-semibold cursor-pointer text-red-500 flex items-center gap-1">
-                <AlertTriangle className="h-3.5 w-3.5" /> Mark as Escalated Emergency
-              </Label>
-            </div>
-          </div>
-          
-          <Button type="submit" className="w-full mt-4 font-semibold text-sm h-10" disabled={isSubmitting} variant={isEmergency ? "destructive" : "default"}>
-            {isSubmitting ? 'Transmitting...' : 'Submit Report'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
 
 // --- Main Page Component ---
 export default function IncidentHistoryPage() {
@@ -310,15 +93,15 @@ export default function IncidentHistoryPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           
           {/* Left Column: Reporting */}
-          <div className="lg:col-span-4 xl:col-span-3 space-y-6 sticky top-6">
-            <CompactReportForm onSuccess={fetchMyIncidents} />
+          <div className="space-y-6 lg:sticky lg:top-6">
+            <IncidentReportForm onSuccess={fetchMyIncidents} />
           </div>
 
           {/* Right Column: History & Intelligence */}
-          <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+          <div className="space-y-8">
             
             {/* Section 2: My Incident History */}
             <div className="space-y-4">

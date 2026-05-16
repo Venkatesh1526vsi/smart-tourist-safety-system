@@ -164,13 +164,13 @@ const UserDashboard = () => {
                 )}
                 <div className="pt-3 flex flex-col sm:flex-row gap-2">
                   <button
-                    onClick={() => navigate('/report-incident')}
+                    onClick={() => navigate('/dashboard/user/incidents')}
                     className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors"
                   >
                     Report Incident
                   </button>
                   <button
-                    onClick={() => navigate('/report-incident')}
+                    onClick={() => navigate('/dashboard/user/incidents')}
                     className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors"
                   >
                     View Reports

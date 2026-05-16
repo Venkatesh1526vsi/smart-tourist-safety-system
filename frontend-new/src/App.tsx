@@ -9,9 +9,9 @@ import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import NotFound from "@/pages/NotFound";
-import ReportIncident from "@/pages/ReportIncident";
 import IncidentHistoryPage from "@/pages/IncidentHistoryPage";
 import SettingsPage from "@/pages/SettingsPage";
+import { Navigate } from "react-router-dom";
 
 // Lazy load heavy dashboard pages
 const UserDashboard = lazy(() => import("@/pages/UserDashboard"));
@@ -110,10 +110,10 @@ function App() {
             element={<ProtectedLazyRoute><AdminDashboard /></ProtectedLazyRoute>} 
           />
           
-          {/* Incident reporting page */}
+          {/* Incident reporting page redirect */}
           <Route 
             path="/report-incident" 
-            element={<ProtectedLazyRoute><ReportIncident /></ProtectedLazyRoute>} 
+            element={<Navigate to="/dashboard/user/incidents" replace />} 
           />
           
           {/* 404 - eagerly loaded */}
