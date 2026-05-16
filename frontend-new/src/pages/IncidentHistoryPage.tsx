@@ -177,7 +177,7 @@ export default function IncidentHistoryPage() {
                                 <Badge variant="secondary" className="text-[9px] uppercase font-medium px-1.5 py-0">
                                   {incident.status === 'pending' && incident.severity === 'critical' ? 'Patrol Assigned' : incident.status === 'pending' && incident.severity === 'high' ? 'Reviewing' : incident.status || 'Pending'}
                                 </Badge>
-                                {(incident.images?.length > 0 || incident.image) && (
+                                {(Array.isArray(incident.images) && incident.images.length > 0) && (
                                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">Evidence</Badge>
                                 )}
                               </div>
