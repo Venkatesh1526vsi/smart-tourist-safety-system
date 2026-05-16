@@ -138,8 +138,18 @@ export function useOperationalData() {
   const unifiedData = useMemo(() => {
     // 1. INCIDENTS (Real first, then synthetic)
     const overrideIncidents = getStorage('op_incidents', {});
+    const localCreatedIncidents = getStorage('op_created_incidents', []);
     
-    const allIncidents = [...realIncidents, ...SYNTHETIC_INCIDENTS_BASE].map((inc: any) => {
+    // Deduplicate and merge: prefer real, then local, then synthetic
+    const rawAllIncidents = [...realIncidents, ...localCreatedIncidents, ...SYNTHETIC_INCIDENTS_BASE];
+    const uniqueIncidentsMap = new Map();
+    rawAllIncidents.forEach(inc => {
+      if (!uniqueIncidentsMap.has(inc._id)) {
+        uniqueIncidentsMap.set(inc._id, inc);
+      }
+    });
+
+    const allIncidents = Array.from(uniqueIncidentsMap.values()).map((inc: any) => {
       const overrides = overrideIncidents[inc._id] || {};
       return { ...inc, ...overrides };
     });
@@ -221,6 +231,21 @@ export function useOperationalData() {
     updateIncidentOp(id, { deleted: true });
   }, [updateIncidentOp]);
 
+  const createLocalIncident = useCallback((incident: any) => {
+    const localIncidents = getStorage('op_created_incidents', []);
+    // Prevent duplicate injection if it already exists (e.g., from DB after reload)
+    if (!localIncidents.find((i: any) => i._id === incident._id)) {
+      localIncidents.unshift({ 
+        ...incident, 
+        _id: incident._id || `INC-LOC-${Date.now()}`,
+        status: incident.status || 'pending',
+        created_at: incident.created_at || new Date().toISOString()
+      });
+      setStorage('op_created_incidents', localIncidents);
+      notifyListeners();
+    }
+  }, []);
+
   const updateUserOp = useCallback((id: string, updates: any) => {
     const overrides = getStorage('op_users', {});
     overrides[id] = { ...(overrides[id] || {}), ...updates };
@@ -270,6 +295,7 @@ export function useOperationalData() {
     analytics: unifiedData.analytics,
     updateIncidentOp,
     deleteIncidentOp,
+    createLocalIncident,
     updateUserOp,
     deleteUserOp,
     createLocalUser,

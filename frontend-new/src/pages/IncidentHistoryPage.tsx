@@ -4,9 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMyIncidents, type Incident } from "@/services/api";
 import { FileText, MapPin, AlertTriangle, CheckCircle2, ShieldAlert, Activity } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useOperationalData } from "@/hooks/useOperationalData";
 import { IncidentReportForm } from "@/components/forms/IncidentReportForm";
+import { useNotificationStore } from "@/hooks/useNotificationStore";
 
 const getSeverityBadgeClass = (severity: string) => {
   switch (severity?.toLowerCase()) {
@@ -41,7 +41,8 @@ export default function IncidentHistoryPage() {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   
   // Intelligence from centralized operations
-  const { incidents: globalIncidents, broadcasts } = useOperationalData();
+  const { incidents: globalIncidents, broadcasts, createLocalIncident } = useOperationalData();
+  const addNotification = useNotificationStore(state => state.addNotification);
 
   const fetchMyIncidents = async () => {
     try {
@@ -54,6 +55,24 @@ export default function IncidentHistoryPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleIncidentSuccess = (newIncident: any) => {
+    // 1. Sync globally to map and operational layer
+    createLocalIncident(newIncident);
+    
+    // 2. Instantly update personal active reports
+    setIncidents(prev => [newIncident, ...prev]);
+    
+    // 3. Fire lightweight user notification
+    addNotification({
+      id: `noti-${Date.now()}`,
+      title: 'Report Transmitted',
+      message: 'Your incident report has been securely synced with operations.',
+      type: 'info',
+      read: false,
+      timestamp: Date.now()
+    });
   };
 
   useEffect(() => {
@@ -92,32 +111,33 @@ export default function IncidentHistoryPage() {
           
           {/* Left Column: Reporting */}
           <div className="space-y-6 lg:sticky lg:top-6">
-            <IncidentReportForm onSuccess={fetchMyIncidents} />
+            <IncidentReportForm onSuccess={handleIncidentSuccess} />
           </div>
 
           {/* Right Column: History & Intelligence */}
-          <div className="space-y-8">
+          <div className="space-y-8 max-h-[85vh] overflow-y-auto pr-1 pb-10">
             
             {/* Section 2: My Incident History */}
             <div className="space-y-4">
-              <h3 className="font-display font-semibold flex items-center gap-2 text-lg">
-                <FileText className="h-5 w-5 text-muted-foreground" /> Personal Active Reports
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-display font-semibold flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5 text-muted-foreground" /> Personal Active Reports
+                </h3>
+                {incidents.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px]">{incidents.length} Total</Badge>
+                )}
+              </div>
               
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2].map(i => <div key={i} className="h-20 w-full bg-muted/40 animate-pulse rounded-xl border border-border/40" />)}
                 </div>
               ) : incidents.length === 0 ? (
-                <Card className="bg-muted/5 border-dashed border-border/60">
-                  <CardContent className="py-10 flex flex-col items-center justify-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-                    </div>
-                    <p className="font-medium text-emerald-500 mb-1">All Clear / No Reports</p>
-                    <p className="text-sm text-muted-foreground max-w-sm">You have no active or past reports. Stay vigilant and monitor the operational intelligence feed below.</p>
-                  </CardContent>
-                </Card>
+                <div className="p-6 rounded-xl bg-muted/10 border border-border/40 text-center flex flex-col items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2 opacity-80" />
+                  <p className="font-medium text-emerald-500 text-sm">All Clear / No Reports</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">You have no active or past reports to display.</p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <AnimatePresence>
@@ -129,7 +149,7 @@ export default function IncidentHistoryPage() {
                         >
                           <CardContent className="p-4 flex-1 flex flex-col">
                             <div className="flex justify-between items-start gap-3 mb-2">
-                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.type || incident.category || 'Incident Report'}</span>
+                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.title || incident.type || incident.category || 'Incident Report'}</span>
                               <Badge variant="outline" className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 border ${getSeverityBadgeClass(incident.severity)}`}>
                                 {incident.severity}
                               </Badge>
@@ -139,9 +159,9 @@ export default function IncidentHistoryPage() {
                             
                             <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/30">
                                <Badge variant="secondary" className="text-[10px] uppercase font-medium">
-                                 {incident.status || 'Pending'}
+                                 {incident.status === 'pending' && incident.severity === 'critical' ? 'Patrol Assigned' : incident.status === 'pending' && incident.severity === 'high' ? 'Reviewing' : incident.status || 'Pending'}
                                </Badge>
-                               <div className="text-[10px] text-muted-foreground font-medium">
+                               <div className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
                                  {formatIncidentDate(incident.created_at)}
                                </div>
                             </div>

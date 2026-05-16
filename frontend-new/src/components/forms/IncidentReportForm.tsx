@@ -9,7 +9,7 @@ import { CheckCircle2, AlertTriangle, Upload, Crosshair, Navigation, MapPin } fr
 import { LocationInput } from "./LocationInput";
 
 export interface IncidentReportFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (incidentData: any) => void;
 }
 
 export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
@@ -159,6 +159,26 @@ export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
       });
 
       if (response.ok) {
+        let responseData;
+        try {
+          responseData = await response.json();
+        } catch {
+          responseData = {};
+        }
+        
+        const newIncident = responseData.data || responseData.incident || {
+          _id: `INC-LOC-${Date.now()}`,
+          title: formData.title,
+          description: formData.description,
+          location: formData.location,
+          type: formData.type,
+          severity,
+          latitude,
+          longitude,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        };
+
         setSuccessMessage("Operational report submitted securely.");
         setFormData({ 
           title: "", 
@@ -174,7 +194,7 @@ export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
         setGpsVerified(false);
         
         setTimeout(() => setSuccessMessage(""), 4000);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess(newIncident);
       } else {
         const data = await response.json();
         alert(data.message || "Failed to submit incident");
@@ -200,8 +220,8 @@ export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
             <CheckCircle2 className="h-4 w-4 shrink-0" /> {successMessage}
           </div>
         )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5 col-span-2">
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Title</Label>
               <Input 
