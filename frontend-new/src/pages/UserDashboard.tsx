@@ -20,6 +20,7 @@ const UserDashboard = () => {
   useSafetySimulation(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { notifications } = useNotificationStore();
   
   console.log('[UserDashboard] user from auth:', user);
   
@@ -181,7 +182,6 @@ const UserDashboard = () => {
             <DashboardCard title="Operational Intelligence" icon={<Bell className="h-5 w-5 text-blue-400" />}>
               <div className="space-y-3">
                 {(() => {
-                  const { notifications } = useNotificationStore();
                   const recentNotifications = notifications.slice(0, 3);
                   
                   if (recentNotifications.length === 0) {
