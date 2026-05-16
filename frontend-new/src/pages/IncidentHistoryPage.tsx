@@ -3,7 +3,7 @@ import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMyIncidents, type Incident } from "@/services/api";
-import { FileText, MapPin, Calendar, AlertTriangle, CheckCircle2, Upload, Crosshair, ShieldAlert, Navigation, Activity } from "lucide-react";
+import { FileText, MapPin, AlertTriangle, CheckCircle2, Upload, Crosshair, ShieldAlert, Navigation, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -351,7 +351,7 @@ export default function IncidentHistoryPage() {
                         >
                           <CardContent className="p-4 flex-1 flex flex-col">
                             <div className="flex justify-between items-start gap-3 mb-2">
-                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.title || incident.type || 'Incident Report'}</span>
+                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.type || incident.category || 'Incident Report'}</span>
                               <Badge variant="outline" className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 border ${getSeverityBadgeClass(incident.severity)}`}>
                                 {incident.severity}
                               </Badge>

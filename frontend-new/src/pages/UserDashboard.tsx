@@ -17,7 +17,7 @@ import { useNotificationStore } from "@/hooks/useNotificationStore";
 const UserDashboard = () => {
   console.log('[UserDashboard] Component render START');
   
-  useSafetySimulation(true, 15000);
+  useSafetySimulation(true);
   const { user } = useAuth();
   const navigate = useNavigate();
   
