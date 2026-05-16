@@ -105,10 +105,19 @@ export function useOperationalData() {
   useEffect(() => {
     const fetchRealData = async () => {
       try {
-        const [incRes, usersRes] = await Promise.all([
-          getAllIncidents().catch(() => ({ data: [] })),
-          getAdminUsers().catch(() => ({ data: [] }))
-        ]);
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const isAdmin = user?.role === 'admin';
+
+        const promises: Promise<any>[] = [getAllIncidents().catch(() => ({ data: [] }))];
+        if (isAdmin) {
+          promises.push(getAdminUsers().catch(() => ({ data: [] })));
+        } else {
+          promises.push(Promise.resolve({ data: [] }));
+        }
+
+        const [incRes, usersRes] = await Promise.all(promises);
+        
         setRealIncidents(Array.isArray(incRes?.data) ? incRes.data : []);
         setRealUsers(Array.isArray(usersRes?.data) ? usersRes.data : []);
       } catch (err) {
