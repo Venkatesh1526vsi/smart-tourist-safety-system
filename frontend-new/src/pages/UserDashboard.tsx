@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { MapPin, AlertTriangle, FileText, Bell, Loader2, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, AlertTriangle, FileText, Bell, Loader2 } from "lucide-react";
 import { useSafetySimulation } from "@/hooks/useSafetySimulation";
 import EmergencySOSWidget from "@/components/widgets/EmergencySOSWidget";
 import NearbyEmergencyContactsWidget from "@/components/widgets/NearbyEmergencyContactsWidget";
@@ -10,11 +9,10 @@ import TravelSafetyTipsWidget from "@/components/widgets/TravelSafetyTipsWidget"
 import RouteSafetySuggestionWidget from "@/components/widgets/RouteSafetySuggestionWidget";
 import PuneWeatherWidget from "@/components/widgets/PuneWeatherWidget";
 import PuneSafetyNewsWidget from "@/components/widgets/PuneSafetyNewsWidget";
-import ActiveTripWidget from "@/components/widgets/ActiveTripWidget";
-import LiveSafetyStatusWidget from "@/components/widgets/LiveSafetyStatusWidget";
 import { getMyIncidents, getRiskZones, type Incident, type RiskZone } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useNotificationStore } from "@/hooks/useNotificationStore";
 
 const UserDashboard = () => {
   console.log('[UserDashboard] Component render START');
@@ -30,21 +28,6 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper function to get severity badge color
-  const getSeverityBadgeColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return 'bg-red-500 text-white';
-      case 'high':
-        return 'bg-orange-500 text-white';
-      case 'medium':
-        return 'bg-yellow-500 text-black';
-      case 'low':
-        return 'bg-green-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
-  };
 
   useEffect(() => {
     console.log('[UserDashboard] useEffect - fetching data');
@@ -53,20 +36,15 @@ const UserDashboard = () => {
         setLoading(true);
         setError(null);
         console.log('[UserDashboard] Calling getMyIncidents and getRiskZones...');
-
-        const incidents = await getMyIncidents();
-
-        let zones: RiskZone[] = [];
-        try {
-          zones = await getRiskZones();
-        } catch (err) {
-          console.warn("Risk zones failed, continuing without it");
-          zones = [];
-        }
-
-        console.log('[UserDashboard] Data fetched - incidents:', incidents?.length, 'zones:', zones?.length);
-        setIncidents(Array.isArray(incidents) ? incidents : []);
-        setRiskZones(Array.isArray(zones) ? zones : []);
+        
+        const [incidentsData, zonesData] = await Promise.all([
+          getMyIncidents(),
+          getRiskZones(),
+        ]);
+        
+        console.log('[UserDashboard] Data fetched - incidents:', incidentsData?.length, 'zones:', zonesData?.length);
+        setIncidents(Array.isArray(incidentsData) ? incidentsData : []);
+        setRiskZones(Array.isArray(zonesData) ? zonesData : []);
       } catch (err) {
         console.error('[UserDashboard] Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
@@ -75,7 +53,7 @@ const UserDashboard = () => {
         setLoading(false);
       }
     };
-
+    
     fetchData();
   }, []); // Empty deps = run once on mount
 
@@ -98,12 +76,6 @@ const UserDashboard = () => {
           <NearbyEmergencyContactsWidget />
           <TravelSafetyTipsWidget />
           <RouteSafetySuggestionWidget />
-        </div>
-
-        {/* Operational Intelligence Row */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <ActiveTripWidget />
-          <LiveSafetyStatusWidget incidents={incidents} />
         </div>
 
         {/* Live Data Widgets */}
@@ -159,85 +131,91 @@ const UserDashboard = () => {
             </DashboardCard>
 
             <DashboardCard title="Incident History" icon={<FileText className="h-5 w-5 text-blue-500" />}>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {incidents.length > 0 ? (
                   incidents.slice(0, 3).map((incident) => {
+                    // Safe date parsing
                     let dateStr = '-';
                     try {
                       if (incident.created_at) {
                         const date = new Date(incident.created_at);
                         if (!isNaN(date.getTime())) {
-                          dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                          dateStr = date.toLocaleDateString();
                         }
                       }
                     } catch {
                       dateStr = '-';
                     }
-
                     return (
-                      <div key={incident._id} className="border border-border rounded-lg p-3 hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{incident?.type || 'Unknown incident'}</p>
-                            <p className="text-xs text-muted-foreground truncate">{incident?.description || 'No description available'}</p>
-                          </div>
-                          <Badge className={getSeverityBadgeColor(incident.severity)}>
-                            {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
-                          </Badge>
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                          {typeof incident.latitude === 'number' && typeof incident.longitude === 'number' && (
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {incident.latitude.toFixed(3)}, {incident.longitude.toFixed(3)}
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {dateStr}
-                          </span>
-                        </div>
+                      <div key={incident._id || Math.random()} className="flex items-center justify-between text-xs">
+                        <span className="truncate max-w-[180px]">{incident?.description || `${incident?.type || 'Unknown'} incident`}</span>
+                        <span className="text-muted-foreground">{dateStr}</span>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-center py-6">
-                    <p className="text-sm text-muted-foreground">No incidents reported yet</p>
-                    <p className="text-xs text-muted-foreground mt-1">Stay safe and report any incidents you encounter</p>
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between text-xs">
+                      <span>No recent incidents reported</span>
+                      <span className="text-muted-foreground">-</span>
+                    </div>
+                  </>
                 )}
-                <div className="pt-3 flex flex-col sm:flex-row gap-2 border-t border-border">
+                <div className="pt-3 flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => navigate('/report-incident')}
-                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors flex-1"
+                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors"
                   >
                     Report Incident
                   </button>
-                  {incidents.length > 0 && (
-                    <button
-                      onClick={() => navigate('/dashboard/user/incidents')}
-                      className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors flex-1"
-                    >
-                      View All Reports
-                    </button>
-                  )}
+                  <button
+                    onClick={() => navigate('/report-incident')}
+                    className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    View Reports
+                  </button>
                 </div>
               </div>
             </DashboardCard>
 
-            <DashboardCard title="Notifications" icon={<Bell className="h-5 w-5 text-blue-400" />}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                  Weather advisory: Heavy rain expected in Pune
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  Emergency contact updated successfully
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Safety tips for your destination
+            <DashboardCard title="Operational Intelligence" icon={<Bell className="h-5 w-5 text-blue-400" />}>
+              <div className="space-y-3">
+                {(() => {
+                  const { notifications } = useNotificationStore();
+                  const recentNotifications = notifications.slice(0, 3);
+                  
+                  if (recentNotifications.length === 0) {
+                    return (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">All Clear</p>
+                        <p className="text-xs text-muted-foreground mt-1">No active intelligence alerts.</p>
+                      </div>
+                    );
+                  }
+
+                  return recentNotifications.map(notif => {
+                    let dotColor = "bg-blue-400";
+                    if (notif.type === "warning") dotColor = "bg-amber-500";
+                    if (notif.type === "emergency") dotColor = "bg-red-500";
+
+                    return (
+                      <div key={notif.id} className="flex items-start gap-2 border-b border-border/40 pb-2 last:border-0 last:pb-0">
+                        <span className={`h-1.5 w-1.5 rounded-full mt-1.5 shrink-0 ${dotColor}`} />
+                        <div className="min-w-0">
+                           <p className="text-xs font-semibold text-foreground/90 leading-tight">{notif.title}</p>
+                           <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{notif.message}</p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+                <div className="pt-2 border-t border-border">
+                  <button
+                    onClick={() => navigate('/dashboard/user/notifications')}
+                    className="text-xs text-primary hover:text-primary/80 transition-colors w-full text-center py-1"
+                  >
+                    View Intelligence Feed
+                  </button>
                 </div>
               </div>
             </DashboardCard>
