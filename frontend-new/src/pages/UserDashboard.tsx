@@ -148,7 +148,11 @@ const UserDashboard = () => {
                       dateStr = '-';
                     }
                     return (
-                      <div key={incident._id || Math.random()} className="flex items-center justify-between text-xs">
+                      <div 
+                        key={incident._id || Math.random()} 
+                        className="flex items-center justify-between text-xs cursor-pointer hover:bg-muted/50 p-1.5 -mx-1.5 rounded-md transition-colors"
+                        onClick={() => navigate('/dashboard/user/map', { state: { focusIncident: incident } })}
+                      >
                         <span className="truncate max-w-[180px]">{incident?.description || `${incident?.type || 'Unknown'} incident`}</span>
                         <span className="text-muted-foreground">{dateStr}</span>
                       </div>

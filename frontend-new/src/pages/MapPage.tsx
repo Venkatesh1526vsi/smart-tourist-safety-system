@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 import {
   MapContainer, TileLayer, Marker, Popup, Circle, Polyline, useMap,
@@ -8,9 +9,10 @@ import "leaflet-gesture-handling";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
 import {
   Loader2, AlertCircle, Locate, MapPin, Route, Plus, X,
-  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check,
+  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, Share2, ExternalLink
 } from "lucide-react";
 import { getAllIncidents, type Incident as ApiIncident } from "@/services/api";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -23,6 +25,7 @@ type RouteType = "fastest" | "safest" | "balanced";
 type MapIncident = {
   id: string; lat: number; lng: number; title: string;
   description: string; severity: "low" | "medium" | "high" | "critical";
+  status: string; timestamp?: string; raw?: ApiIncident;
 };
 type StopInput = { id: string; label: string; coords: Coordinates | null };
 type SafetyBreakdown = {
@@ -44,7 +47,18 @@ const DefaultIcon = L.icon({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, s
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const userIcon = L.divIcon({ html: '<div style="width:16px;height:16px;background:#10b981;border:3px solid white;border-radius:50%;box-shadow:0 0 10px rgba(16,185,129,.8)"></div>', className: "", iconSize: [16, 16], iconAnchor: [8, 8] });
-const incidentIcon = L.divIcon({ html: '<div style="width:14px;height:14px;background:#ef4444;border:2px solid white;border-radius:50%;box-shadow:0 0 8px rgba(239,68,68,.8)"></div>', className: "", iconSize: [14, 14], iconAnchor: [7, 7] });
+const getIncidentIcon = (severity: string, status: string, isFocused: boolean = false) => {
+  if (status === 'resolved') {
+    return L.divIcon({ html: `<div style="width:14px;height:14px;background:#9ca3af;border:2px solid white;border-radius:50%;box-shadow:0 0 8px rgba(156,163,175,.5)"></div>`, className: "", iconSize: [14, 14], iconAnchor: [7, 7] });
+  }
+  let bg = "#f59e0b", shadow = "rgba(245,158,11,.8)", extra = "";
+  if (severity === "critical" || severity === "high") { bg = "#ef4444"; shadow = "rgba(239,68,68,.8)"; }
+  if (severity === "critical" || isFocused) extra = "animation: pulse 2s infinite;";
+  if (severity === "low") { bg = "#10b981"; shadow = "rgba(16,185,129,.8)"; }
+  const size = isFocused ? 18 : 14;
+  const offset = isFocused ? 9 : 7;
+  return L.divIcon({ html: `<div style="width:${size}px;height:${size}px;background:${bg};border:2px solid white;border-radius:50%;box-shadow:0 0 8px ${shadow};${extra}"></div>`, className: "", iconSize: [size, size], iconAnchor: [offset, offset] });
+};
 const suggestionIcon = L.divIcon({ html: '<div style="width:16px;height:16px;background:#06b6d4;border:2px solid white;border-radius:50%;box-shadow:0 0 8px rgba(6,182,212,.8)"></div>', className: "", iconSize: [16, 16], iconAnchor: [8, 8] });
 
 function numberedIcon(n: number) {
@@ -126,6 +140,7 @@ function fallbackIncidents(): MapIncident[] {
     id: `zone-${i}`, lat: z.lat + (Math.random() - .5) * .02, lng: z.lng + (Math.random() - .5) * .02,
     title: `${z.name} Report`, description: `Safety monitoring in ${z.name}`,
     severity: (["high", "medium", "low", "low", "low"][i]) as MapIncident["severity"],
+    status: "pending", timestamp: new Date().toISOString()
   }));
 }
 
@@ -176,8 +191,12 @@ const MapPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [incidents, setIncidents] = useState<MapIncident[]>([]);
-  const [showIncidents, setShowIncidents] = useState(false);
+  const [showIncidents, setShowIncidents] = useState(true);
   const mapRef = useRef<L.Map | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const markerRefs = useRef<Record<string, L.Marker | null>>({});
+  const [focusedIncidentId, setFocusedIncidentId] = useState<string | null>(null);
 
   // Initialise tripMode from localStorage so refresh preserves selection
   const [tripMode, setTripMode] = useState<"planned" | "explore" | null>(() => {
@@ -240,12 +259,20 @@ const MapPage = () => {
       try {
         const res = await getAllIncidents();
         const api: ApiIncident[] = res.data || [];
-        setIncidents(api.length > 0 ? api.map(inc => ({
-          id: inc._id, lat: inc.latitude || 18.5204 + (Math.random() - .5) * .1,
-          lng: inc.longitude || 73.8567 + (Math.random() - .5) * .1,
-          title: inc.type || "Incident", description: inc.description || "",
-          severity: (inc.severity as MapIncident["severity"]) || "medium",
-        })) : fallbackIncidents());
+        setIncidents(api.length > 0 ? api.map(inc => {
+          // Safe coordinate parsing
+          const lat = typeof inc.latitude === 'number' ? inc.latitude : 18.5204 + (Math.random() - .5) * .05;
+          const lng = typeof inc.longitude === 'number' ? inc.longitude : 73.8567 + (Math.random() - .5) * .05;
+          return {
+            id: inc._id, lat, lng,
+            title: inc.type || inc.category || "Incident", 
+            description: inc.description || "",
+            severity: (inc.severity as MapIncident["severity"]) || "medium",
+            status: inc.status || "pending",
+            timestamp: inc.created_at,
+            raw: inc
+          };
+        }) : fallbackIncidents());
       } catch { setIncidents(fallbackIncidents()); }
     })();
   }, []);
@@ -273,6 +300,32 @@ const MapPage = () => {
     }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
     return () => { ok = false; };
   }, []);
+
+  // ── Focus incoming incident from navigation state ──
+  useEffect(() => {
+    if (location.state?.focusIncident && mapRef.current && incidents.length > 0) {
+      const inc = location.state.focusIncident;
+      const targetId = inc._id || inc.id;
+      
+      const found = incidents.find(i => i.id === targetId);
+      if (found) {
+        setFocusedIncidentId(found.id);
+        setShowIncidents(true);
+        // Fly map safely
+        mapRef.current.flyTo([found.lat, found.lng], 16, { animate: true, duration: 1 });
+        
+        // Open popup automatically
+        setTimeout(() => {
+          if (markerRefs.current[found.id]) {
+            markerRefs.current[found.id]?.openPopup();
+          }
+        }, 1100);
+
+        // Clear location state so refresh doesn't refly
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, incidents, navigate, location.pathname]);
 
   // ── MapController ────────────────────────────────────────────────────────
   function MapController() { const map = useMap(); mapRef.current = map; return null; }
@@ -524,14 +577,52 @@ const MapPage = () => {
                 pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: .04, weight: 1, dashArray: "5,10" }} />
             ))}
             {showIncidents && incidents.map(inc => (
-              <Marker key={inc.id} position={[inc.lat, inc.lng]} icon={incidentIcon}>
-                <Popup>
-                  <div className="text-sm max-w-xs">
-                    <strong className="text-destructive">{inc.title}</strong><br />
-                    <span className="text-muted-foreground">{inc.description}</span><br />
-                    <span className={`text-xs font-medium ${inc.severity === "high" || inc.severity === "critical" ? "text-red-500" : inc.severity === "medium" ? "text-amber-500" : "text-emerald-500"}`}>
-                      {inc.severity.toUpperCase()}
-                    </span>
+              <Marker 
+                key={inc.id} 
+                position={[inc.lat, inc.lng]} 
+                icon={getIncidentIcon(inc.severity, inc.status, focusedIncidentId === inc.id)}
+                ref={(r) => markerRefs.current[inc.id] = r}
+                eventHandlers={{
+                  click: () => setFocusedIncidentId(inc.id)
+                }}
+              >
+                <Popup className="operational-popup">
+                  <div className="w-[240px] flex flex-col gap-2 p-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <strong className="text-sm font-display truncate block">{inc.title}</strong>
+                        <span className="text-[10px] text-muted-foreground">
+                          {inc.timestamp ? new Date(inc.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Recent'}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className={`text-[9px] uppercase px-1.5 py-0 shrink-0 ${
+                        inc.severity === 'critical' ? 'border-red-500 text-red-500' :
+                        inc.severity === 'high' ? 'border-orange-500 text-orange-500' :
+                        inc.severity === 'medium' ? 'border-amber-500 text-amber-500' :
+                        'border-emerald-500 text-emerald-500'
+                      }`}>
+                        {inc.severity}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed my-1">
+                      {inc.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between border-t border-border/50 pt-2">
+                      <Badge variant="secondary" className="text-[9px] uppercase font-medium px-1.5 py-0 bg-secondary/50">
+                        {inc.status === 'pending' && inc.severity === 'critical' ? 'Patrol Assigned' : inc.status || 'Pending'}
+                      </Badge>
+                      
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          className="text-xs text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                          onClick={(e) => { e.stopPropagation(); navigate('/dashboard/user/incidents'); }}
+                        >
+                          <ExternalLink className="h-3 w-3" /> View
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </Popup>
               </Marker>

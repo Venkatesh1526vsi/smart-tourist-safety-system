@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getMyIncidents, type Incident } from "@/services/api";
-import { FileText, MapPin, AlertTriangle, CheckCircle2, ShieldAlert, Activity } from "lucide-react";
+import { FileText, MapPin, AlertTriangle, CheckCircle2, ShieldAlert, Activity, Navigation } from "lucide-react";
 import { useOperationalData } from "@/hooks/useOperationalData";
 import { IncidentReportForm } from "@/components/forms/IncidentReportForm";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
@@ -40,6 +41,7 @@ export default function IncidentHistoryPage() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const navigate = useNavigate();
   
   // Intelligence from centralized operations
   const { incidents: globalIncidents, broadcasts, createLocalIncident } = useOperationalData();
@@ -200,6 +202,18 @@ export default function IncidentHistoryPage() {
                                   <p className="bg-muted/30 p-2.5 rounded-md text-foreground/80 leading-relaxed text-xs">
                                     {incident.description || 'No additional details provided.'}
                                   </p>
+                                </div>
+                                
+                                <div className="flex justify-end pt-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate('/dashboard/user/map', { state: { focusIncident: incident } });
+                                    }}
+                                    className="text-[10px] uppercase tracking-wider font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-primary/10 border border-primary/20"
+                                  >
+                                    <Navigation className="h-3 w-3" /> View on Map
+                                  </button>
                                 </div>
                               </div>
                             </motion.div>
