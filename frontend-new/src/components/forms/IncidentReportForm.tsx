@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, AlertTriangle, Upload, Crosshair, Navigation, MapPin } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Upload, Crosshair, Navigation, MapPin, X } from "lucide-react";
 import { LocationInput } from "./LocationInput";
 
 export interface IncidentReportFormProps {
@@ -260,26 +260,44 @@ export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
               </Select>
             </div>
 
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+            <div className="space-y-1.5 col-span-2">
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold flex items-center justify-between">
                 <span>Location</span>
                 {gpsVerified && <span className="text-emerald-500 flex items-center gap-0.5 text-[9px]"><CheckCircle2 className="h-3 w-3" /> GPS</span>}
               </Label>
-              <div className="flex flex-col gap-2">
-                <LocationInput 
-                  value={formData.location}
-                  onChange={handleLocationChange}
-                  placeholder="Search area..."
-                  icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
-                  className={errors.location ? "border-red-500 rounded-md border" : ""}
-                />
+              <div className="relative flex items-center">
+                <div className="flex-1 w-full">
+                  <LocationInput 
+                    value={formData.location}
+                    onChange={handleLocationChange}
+                    placeholder="Search area..."
+                    icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
+                    className={errors.location ? "border-red-500 rounded-md border" : ""}
+                  />
+                </div>
+                {formData.location && (
+                  <button
+                    type="button"
+                    onClick={() => handleLocationChange('', null)}
+                    className="absolute right-2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors z-10"
+                    aria-label="Clear location"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 flex items-end">
+              <div className="w-full space-y-1.5">
+                <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold invisible">GPS</Label>
                 <Button 
                   type="button" 
                   size="sm" 
                   variant="outline" 
                   onClick={handleUseCurrentLocation} 
                   disabled={locationLoading} 
-                  className="h-9 px-3 bg-background/50 w-full text-xs"
+                  className="h-9 px-3 bg-background/50 w-full text-xs font-medium"
                 >
                   <Navigation className="h-3.5 w-3.5 mr-1.5" />
                   {locationLoading ? 'Fetching...' : 'Use Current GPS'}
@@ -312,7 +330,7 @@ export function IncidentReportForm({ onSuccess }: IncidentReportFormProps) {
 
             <div className="space-y-1.5 col-span-2">
               <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Evidence (Optional)</Label>
-              <label className="flex items-center justify-center w-full h-9 px-4 transition border border-dashed rounded-md appearance-none cursor-pointer hover:border-primary border-border/60 bg-background/30">
+              <label className="flex items-center justify-center w-full h-8 px-4 transition border border-dashed rounded-md appearance-none cursor-pointer hover:border-primary border-border/60 bg-background/30">
                 <span className="flex items-center space-x-2">
                   <Upload className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">

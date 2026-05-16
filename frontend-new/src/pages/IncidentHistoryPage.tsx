@@ -23,7 +23,7 @@ const getIncidentLocation = (incident: any) => {
   if (typeof incident.latitude === "number" && typeof incident.longitude === "number") {
     return `Lat: ${incident.latitude.toFixed(4)}, Lng: ${incident.longitude.toFixed(4)}`;
   }
-  return incident.location || "Location unavailable";
+  return incident.location || incident.address || incident.locationName || incident.formattedAddress || "Location unavailable";
 };
 
 const formatIncidentDate = (dateString?: string) => {
@@ -49,8 +49,28 @@ export default function IncidentHistoryPage() {
     try {
       setIsLoading(true);
       const response: any = await getMyIncidents();
-      const finalData = response?.data?.data || [];
-      setIncidents(Array.isArray(finalData) ? finalData : []);
+      const backendData = Array.isArray(response?.data?.data) ? response.data.data : [];
+      
+      let localCreatedIncidents: any[] = [];
+      try {
+        const raw = localStorage.getItem('op_created_incidents');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) localCreatedIncidents = parsed;
+        }
+      } catch (e) {
+        // Safe fallback, ignore parsing errors
+      }
+
+      // Deduplicate: prefer backend over local
+      const mergedMap = new Map();
+      [...backendData, ...localCreatedIncidents].forEach(inc => {
+        if (!mergedMap.has(inc._id)) {
+          mergedMap.set(inc._id, inc);
+        }
+      });
+
+      setIncidents(Array.from(mergedMap.values()));
     } catch (err) {
       console.error("Failed to load personal incidents");
     } finally {
@@ -137,49 +157,54 @@ export default function IncidentHistoryPage() {
                   <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">You have no active or past reports to display.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
                   <AnimatePresence>
                     {incidents.map((incident) => (
-                      <motion.div key={incident._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group h-full">
-                        <Card 
-                          className="cursor-pointer hover:border-primary/50 transition-all overflow-hidden h-full flex flex-col"
+                      <motion.div key={incident._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group">
+                        <div 
+                          className="cursor-pointer hover:bg-muted/30 transition-all overflow-hidden rounded-xl border border-border/40 bg-card flex flex-col"
                           onClick={() => setSelectedIncidentId(prev => prev === incident._id ? null : incident._id)}
                         >
-                          <CardContent className="p-4 flex-1 flex flex-col">
-                            <div className="flex justify-between items-start gap-3 mb-2">
-                              <span className="font-display font-semibold text-sm leading-tight text-foreground/90">{incident.type || incident.category || 'Incident Report'}</span>
-                              <Badge variant="outline" className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0.5 border ${getSeverityBadgeClass(incident.severity)}`}>
-                                {incident.severity}
-                              </Badge>
+                          <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-display font-semibold text-sm truncate text-foreground/90">
+                                  {incident.type || incident.category || 'Incident Report'}
+                                </span>
+                                <Badge variant="outline" className={`text-[9px] uppercase font-bold tracking-widest px-1.5 py-0 border ${getSeverityBadgeClass(incident.severity)}`}>
+                                  {incident.severity}
+                                </Badge>
+                                <Badge variant="secondary" className="text-[9px] uppercase font-medium px-1.5 py-0">
+                                  {incident.status === 'pending' && incident.severity === 'critical' ? 'Patrol Assigned' : incident.status === 'pending' && incident.severity === 'high' ? 'Reviewing' : incident.status || 'Pending'}
+                                </Badge>
+                                {(incident.images?.length > 0 || incident.image) && (
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/20 text-primary">Evidence</Badge>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1 truncate max-w-[250px]">
+                                  <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{getIncidentLocation(incident)}</span>
+                                </span>
+                                <span className="flex items-center gap-1 opacity-80">
+                                  {formatIncidentDate(incident.created_at)}
+                                </span>
+                              </div>
                             </div>
-                            
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3 flex-1">{incident.description}</p>
-                            
-                            <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/30">
-                               <Badge variant="secondary" className="text-[10px] uppercase font-medium">
-                                 {incident.status === 'pending' && incident.severity === 'critical' ? 'Patrol Assigned' : incident.status === 'pending' && incident.severity === 'high' ? 'Reviewing' : incident.status || 'Pending'}
-                               </Badge>
-                               <div className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
-                                 {formatIncidentDate(incident.created_at)}
-                               </div>
-                            </div>
-
-                            {selectedIncidentId === incident._id && (
-                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-4 pt-4 border-t border-border/40 space-y-3 text-sm">
-                                <div>
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-semibold">Location</p>
-                                  <p className="flex items-center gap-1.5 text-xs"><MapPin className="h-3.5 w-3.5 text-primary" /> {getIncidentLocation(incident)}</p>
-                                </div>
+                          </div>
+                          
+                          {selectedIncidentId === incident._id && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="px-4 pb-4 text-sm">
+                              <div className="pt-3 border-t border-border/40 space-y-3">
                                 <div>
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-semibold">Full Description</p>
                                   <p className="bg-muted/30 p-2.5 rounded-md text-foreground/80 leading-relaxed text-xs">
-                                    {incident.description}
+                                    {incident.description || 'No additional details provided.'}
                                   </p>
                                 </div>
-                              </motion.div>
-                            )}
-                          </CardContent>
-                        </Card>
+                              </div>
+                            </motion.div>
+                          )}
+                        </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
