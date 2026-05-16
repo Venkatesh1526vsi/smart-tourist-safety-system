@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { LocationInput } from "@/components/forms/LocationInput";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -35,7 +34,6 @@ type RouteInfo = {
   segments: { from: string; to: string; durationSec: number }[];
 };
 type PlaceSuggestion = { id: string; lat: number; lng: number; name: string; category: string; description: string };
-type NominatimResult = { place_id: number; display_name: string; lat: string; lon: string };
 
 // ─── Leaflet icons ───────────────────────────────────────────────────────────
 import markerIcon from "leaflet/dist/images/marker-icon.png";
