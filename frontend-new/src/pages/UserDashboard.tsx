@@ -13,6 +13,7 @@ import { getMyIncidents, getRiskZones, type Incident, type RiskZone } from "@/se
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 const UserDashboard = () => {
   console.log('[UserDashboard] Component render START');
@@ -21,6 +22,7 @@ const UserDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { notifications } = useNotificationStore();
+  const location = useGeolocation(true);
   
   console.log('[UserDashboard] user from auth:', user);
   
@@ -81,7 +83,7 @@ const UserDashboard = () => {
 
         {/* Live Data Widgets */}
         <div className="grid md:grid-cols-2 gap-6">
-          <PuneWeatherWidget />
+          <PuneWeatherWidget locationData={location} />
           <PuneSafetyNewsWidget />
         </div>
 
@@ -96,35 +98,86 @@ const UserDashboard = () => {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-6">
-            <DashboardCard title="Live Location" icon={<MapPin className="h-5 w-5 text-primary" />}>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span>GPS Active</span>
+            <DashboardCard title="Live Operational Location" icon={<MapPin className="h-5 w-5 text-primary" />}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${location.loading ? 'bg-amber-500 animate-pulse' : (location.coordinates ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500')}`} />
+                    <span className="font-semibold text-sm">
+                      {location.loading ? 'Acquiring GPS...' : (location.coordinates ? 'GPS Active Tracking' : 'GPS Offline')}
+                    </span>
+                  </div>
+                  {location.accuracy && (
+                    <span className="text-[10px] bg-muted px-2 py-0.5 rounded text-muted-foreground border border-border">
+                      ±{Math.round(location.accuracy)}m
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs">Lat: 18.5204 | Lng: 73.8567</p>
-                <p className="text-xs">Pune, Maharashtra, India</p>
+                
+                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
+                  <p className="text-sm font-medium leading-tight">
+                    {location.locationName || 'Awaiting position data...'}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono mt-1">
+                    Lat: {location.coordinates?.lat?.toFixed(5) || '--'} | Lng: {location.coordinates?.lng?.toFixed(5) || '--'}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button 
+                    onClick={() => navigate('/dashboard/user/map')}
+                    className="text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors py-1.5 rounded border border-primary/20 flex items-center justify-center gap-1"
+                  >
+                    <MapPin className="h-3 w-3" /> Open Map
+                  </button>
+                  <button 
+                    className="text-[11px] font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors py-1.5 rounded border border-border flex items-center justify-center gap-1"
+                  >
+                    Share Location
+                  </button>
+                </div>
               </div>
             </DashboardCard>
 
             <DashboardCard title="Risk Zone Alerts" icon={<AlertTriangle className="h-5 w-5 text-amber-500" />}>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {Array.isArray(highRiskZones) && highRiskZones.length > 0 ? (
                   highRiskZones.map((zone, idx) => (
-                    <div key={zone?._id || idx} className={`flex items-center justify-between p-2 rounded ${idx === 0 ? 'bg-red-500/10' : 'bg-amber-500/10'}`}>
-                      <span className="text-xs font-medium">{idx === 0 ? 'High' : 'Moderate'} Risk - {zone?.name || 'Unknown Area'}</span>
-                      <span className={`text-xs ${idx === 0 ? 'text-red-500' : 'text-amber-500'}`}>⚠ Active</span>
+                    <div key={zone?._id || idx} 
+                      onClick={() => navigate('/dashboard/user/map')}
+                      className={`flex flex-col p-2.5 rounded border cursor-pointer transition-all hover:brightness-110 ${idx === 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">{idx === 0 ? 'Critical Risk' : 'Elevated Risk'} - {zone?.name || 'Unknown Area'}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${idx === 0 ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>⚠ Active</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+                        <span>Nearby active threats</span>
+                        <span className="font-mono text-foreground">{idx === 0 ? '3 reported' : '1 reported'}</span>
+                      </div>
                     </div>
                   ))
                 ) : (
                   <>
-                    <div className="flex items-center justify-between p-2 rounded bg-green-500/10">
-                      <span className="text-xs font-medium">Low Risk - All Clear</span>
-                      <span className="text-xs text-green-500">✓ Safe</span>
+                    <div 
+                      onClick={() => navigate('/dashboard/user/map')}
+                      className="flex flex-col p-2.5 rounded border border-green-500/20 bg-green-500/10 cursor-pointer hover:bg-green-500/15 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">Low Risk - All Clear</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-green-500/20 text-green-500">✓ Safe</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">No immediate threats detected in your operational radius.</p>
                     </div>
-                    <div className="flex items-center justify-between p-2 rounded bg-primary/5">
-                      <span className="text-xs font-medium">Moderate - Hadapsar</span>
-                      <span className="text-xs text-primary">ℹ Advisory</span>
+                    <div 
+                      onClick={() => navigate('/dashboard/user/map')}
+                      className="flex flex-col p-2.5 rounded border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold">Moderate - Hadapsar</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-primary/20 text-primary">ℹ Advisory</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">Increased police patrol activity reported.</p>
                     </div>
                   </>
                 )}

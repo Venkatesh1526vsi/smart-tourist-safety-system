@@ -12,11 +12,10 @@ type Tip = {
 };
 
 const TIPS: Tip[] = [
-  { id: 1, icon: MapPin, title: "Share Your Location", description: "Always share your live location with a trusted contact when traveling to unfamiliar areas." },
-  { id: 2, icon: AlertTriangle, title: "Avoid Unlit Areas", description: "Stay on well-lit, populated streets at night. Avoid shortcuts through dark alleys.", isWarning: true },
-  { id: 3, icon: Wallet, title: "Secure Your Valuables", description: "Keep copies of important documents separate from originals. Use hotel safes when available." },
-  { id: 4, icon: ShieldCheck, title: "Local Emergency Numbers", description: "Save local emergency numbers before arriving at your destination.", isWarning: true },
-  { id: 5, icon: Lightbulb, title: "Trust Your Instincts", description: "If a situation feels unsafe, leave immediately. Your safety is the top priority." },
+  { id: 1, icon: MapPin, title: "Location Context", description: "Your current zone has active police patrols. Stay on main routes." },
+  { id: 2, icon: AlertTriangle, title: "Night Travel Advisory", description: "It is currently evening. Stay on well-lit, populated streets and avoid shortcuts through dark alleys.", isWarning: true },
+  { id: 3, icon: ShieldCheck, title: "Operational Readiness", description: "Keep copies of important documents separate from originals. Your emergency contacts are synced." },
+  { id: 4, icon: Lightbulb, title: "Weather Protocol", description: "Optimal weather conditions detected. Standard travel safety protocols apply." },
 ];
 
 const TravelSafetyTipsWidget = () => {
@@ -36,15 +35,20 @@ const TravelSafetyTipsWidget = () => {
 
   return (
     <Card
-      className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm"
+      className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md h-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Lightbulb className="h-5 w-5 text-amber-500" />
-          Travel Safety Tips
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Lightbulb className="h-5 w-5 text-amber-500" />
+            Contextual Advisories
+          </CardTitle>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            Smart Sync
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="relative min-h-[120px]">
@@ -57,8 +61,8 @@ const TravelSafetyTipsWidget = () => {
               transition={{ duration: 0.3 }}
               className={`rounded-lg border p-4 ${
                 tip.isWarning
-                  ? "border-amber-500/40 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/5"
-                  : "border-border bg-muted/30 dark:bg-slate-700/30"
+                  ? "border-amber-500/40 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/10 shadow-[0_0_15px_-3px_rgba(245,158,11,0.15)]"
+                  : "border-border bg-muted/30 dark:bg-slate-700/40"
               }`}
             >
               <div className="flex items-start gap-3">

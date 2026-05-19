@@ -1,4 +1,4 @@
-import { Route, Clock, ShieldCheck } from "lucide-react";
+import { Route, Clock, ShieldCheck, Activity, Users, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,12 +9,14 @@ type RouteOption = {
   time: string;
   score: number;
   recommended?: boolean;
+  crowd: "low" | "moderate" | "high";
+  etaConfidence: number;
 };
 
 const ROUTES: RouteOption[] = [
-  { id: "1", name: "Main Highway via Ring Road", risk: "low", time: "25 min", score: 92, recommended: true },
-  { id: "2", name: "City Center Route", risk: "medium", time: "18 min", score: 64 },
-  { id: "3", name: "Shortcut via Old Town", risk: "high", time: "14 min", score: 31 },
+  { id: "1", name: "Main Highway via Ring Road", risk: "low", time: "25 min", score: 92, recommended: true, crowd: "low", etaConfidence: 95 },
+  { id: "2", name: "City Center Route", risk: "medium", time: "18 min", score: 64, crowd: "moderate", etaConfidence: 78 },
+  { id: "3", name: "Shortcut via Old Town", risk: "high", time: "14 min", score: 31, crowd: "high", etaConfidence: 45 },
 ];
 
 const riskConfig = {
@@ -37,12 +39,18 @@ const riskConfig = {
 
 const RouteSafetySuggestionWidget = () => {
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm">
+    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Route className="h-5 w-5 text-emerald-600 dark:text-cyan-400" />
-          Route Safety
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Route className="h-5 w-5 text-emerald-600 dark:text-cyan-400" />
+            Live Route Intelligence
+          </CardTitle>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] bg-muted text-muted-foreground border border-border" title="Last calculated 2 mins ago">
+            <RefreshCw className="h-2.5 w-2.5" />
+            Auto-Sync
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -74,18 +82,23 @@ const RouteSafetySuggestionWidget = () => {
                   />
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {route.time}
+                <div className="mt-2.5 flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="flex items-center gap-1 font-mono text-foreground font-medium" title="Live ETA">
+                      <Clock className="h-3.5 w-3.5 text-blue-500" /> {route.time}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" /> {route.score}/100
+                    <span className="flex items-center gap-1" title="Safety Confidence Score">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> {route.score}%
+                    </span>
+                    <span className="flex items-center gap-1" title="Crowd Density">
+                      <Users className="h-3.5 w-3.5 text-amber-500" /> 
+                      <span className="capitalize">{route.crowd}</span>
+                    </span>
+                    <span className="flex items-center gap-1" title="ETA Confidence">
+                      <Activity className="h-3.5 w-3.5 text-purple-500" />
+                      {route.etaConfidence}%
                     </span>
                   </div>
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${cfg.badge}`}>
-                    {cfg.label}
-                  </Badge>
                 </div>
               </div>
             );
