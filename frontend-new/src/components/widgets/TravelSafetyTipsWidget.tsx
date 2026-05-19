@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lightbulb, AlertTriangle, MapPin, ShieldCheck, Wallet } from "lucide-react";
+import { Lightbulb, AlertTriangle, MapPin, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Tip = {
