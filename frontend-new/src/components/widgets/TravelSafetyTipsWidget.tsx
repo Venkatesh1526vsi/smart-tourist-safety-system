@@ -31,7 +31,6 @@ const TravelSafetyTipsWidget = () => {
   }, [paused, next]);
 
   const tip = TIPS[current];
-  const Icon = tip.icon;
 
   return (
     <Card
