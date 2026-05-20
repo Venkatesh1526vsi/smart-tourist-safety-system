@@ -184,7 +184,7 @@
     color: hsl(var(--foreground));
   }
   .operational-popup .leaflet-popup-content {
-    @apply m-0 !important;
+    margin: 0 !important;
     width: auto !important;
     max-width: 85vw;
   }
