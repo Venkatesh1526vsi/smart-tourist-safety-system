@@ -211,7 +211,7 @@ const Login = () => {
 
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={role} onValueChange={setRole} disabled={!!lockoutUntil}>
+              <Select value={role} onValueChange={setRole}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
