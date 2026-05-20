@@ -11,6 +11,31 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { notifyError } from "@/utils/notify";
 import { login as loginService } from "@/services/authService";
 
+const validateProfessionalEmail = (email: string) => {
+  const trimmed = email.trim();
+  const basicRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!basicRegex.test(trimmed) || trimmed.includes('..')) {
+    return { isValid: false, message: "Please enter a valid professional email address." };
+  }
+  
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) return { isValid: false, message: "Please enter a valid professional email address." };
+  
+  const domain = parts[1].toLowerCase();
+  const fakeDomains = ['test.com', 'fake.com', 'demo.com', 'temp.com', 'example.com'];
+  if (fakeDomains.includes(domain)) {
+    return { isValid: false, message: "Temporary/demo email domains are not allowed." };
+  }
+  
+  const domainParts = domain.split('.');
+  const tld = domainParts[domainParts.length - 1];
+  if (tld.length < 2) {
+    return { isValid: false, message: "Please enter a valid professional email address." };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
 const Login = () => {
   const [showPass, setShowPass] = useState(false);
   const [role, setRole] = useState("tourist");
@@ -58,11 +83,11 @@ const Login = () => {
     setPasswordError("");
     
     const trimmedEmail = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailValidation = validateProfessionalEmail(trimmedEmail);
     let hasError = false;
 
-    if (!emailRegex.test(trimmedEmail)) {
-      setEmailError("Please enter a valid email address.");
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.message);
       hasError = true;
     }
     if (!password) {

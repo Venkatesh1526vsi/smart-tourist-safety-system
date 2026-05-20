@@ -10,6 +10,31 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Upload, X, Loader2, AlertCircle } from "lucide-react";
 import { register as registerService } from "@/services/authService";
 
+const validateProfessionalEmail = (email: string) => {
+  const trimmed = email.trim();
+  const basicRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!basicRegex.test(trimmed) || trimmed.includes('..')) {
+    return { isValid: false, message: "Please enter a valid professional email address." };
+  }
+  
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) return { isValid: false, message: "Please enter a valid professional email address." };
+  
+  const domain = parts[1].toLowerCase();
+  const fakeDomains = ['test.com', 'fake.com', 'demo.com', 'temp.com', 'example.com'];
+  if (fakeDomains.includes(domain)) {
+    return { isValid: false, message: "Temporary/demo email domains are not allowed." };
+  }
+  
+  const domainParts = domain.split('.');
+  const tld = domainParts[domainParts.length - 1];
+  if (tld.length < 2) {
+    return { isValid: false, message: "Please enter a valid professional email address." };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
 const Register = () => {
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
@@ -106,9 +131,10 @@ const Register = () => {
 
     // Email validation & Duplicate check
     const trimmedEmail = formData.email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      newErrors.email = "Please enter a valid email address.";
+    const emailValidation = validateProfessionalEmail(trimmedEmail);
+    
+    if (!emailValidation.isValid) {
+      newErrors.email = emailValidation.message;
     } else {
       const existingEmails = JSON.parse(localStorage.getItem('registered_emails') || '[]');
       if (existingEmails.includes(trimmedEmail.toLowerCase())) {
