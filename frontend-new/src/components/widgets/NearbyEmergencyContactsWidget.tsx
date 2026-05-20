@@ -78,15 +78,15 @@ const NearbyEmergencyContactsWidget = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-1.5">
-                    <a href={`tel:${c.phone}`}>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-500/10" aria-label="Call">
-                        <Phone className="h-3.5 w-3.5" />
+                  <div className="flex gap-1 sm:gap-1.5 ml-2">
+                    <a href={`tel:${c.phone}`} className="flex-shrink-0">
+                      <Button size="icon" variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-500/10" aria-label="Call">
+                        <Phone className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                       </Button>
                     </a>
-                    <a href={`sms:${c.phone}`}>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-sky-600 hover:bg-sky-50 hover:text-sky-700 dark:text-cyan-400 dark:hover:bg-cyan-500/10" aria-label="Message">
-                        <MessageSquare className="h-3.5 w-3.5" />
+                    <a href={`sms:${c.phone}`} className="flex-shrink-0">
+                      <Button size="icon" variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 text-sky-600 hover:bg-sky-50 hover:text-sky-700 dark:text-cyan-400 dark:hover:bg-cyan-500/10" aria-label="Message">
+                        <MessageSquare className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                       </Button>
                     </a>
                   </div>

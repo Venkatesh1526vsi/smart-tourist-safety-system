@@ -67,14 +67,14 @@ const UserDashboard = () => {
 
   return (
     <UserDashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="font-display text-2xl font-bold">Welcome, {user?.name || 'Traveler'} 👋</h1>
-          <p className="text-muted-foreground text-sm mt-1">Here's your safety overview</p>
+          <h1 className="font-display text-xl sm:text-2xl font-bold">Welcome, {user?.name || 'Traveler'} 👋</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Here's your safety overview</p>
         </div>
 
         {/* Emergency Widgets Row */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <EmergencySOSWidget />
           <NearbyEmergencyContactsWidget />
           <TravelSafetyTipsWidget />
@@ -82,7 +82,7 @@ const UserDashboard = () => {
         </div>
 
         {/* Live Data Widgets */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <PuneWeatherWidget locationData={location} />
           <PuneSafetyNewsWidget />
         </div>
@@ -97,7 +97,7 @@ const UserDashboard = () => {
             {error}
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <DashboardCard title="Live Operational Location" icon={<MapPin className="h-5 w-5 text-primary" />}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -114,24 +114,24 @@ const UserDashboard = () => {
                   )}
                 </div>
                 
-                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
-                  <p className="text-sm font-medium leading-tight">
+                <div className="p-2 sm:p-2.5 rounded-md bg-muted/30 border border-border/50">
+                  <p className="text-xs sm:text-sm font-medium leading-tight break-words">
                     {location.locationName || 'Awaiting position data...'}
                   </p>
-                  <p className="text-xs text-muted-foreground font-mono mt-1">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground font-mono mt-1 break-words">
                     Lat: {location.coordinates?.lat?.toFixed(5) || '--'} | Lng: {location.coordinates?.lng?.toFixed(5) || '--'}
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 pt-1">
                   <button 
                     onClick={() => navigate('/dashboard/user/map')}
-                    className="text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors py-1.5 rounded border border-primary/20 flex items-center justify-center gap-1"
+                    className="text-[11px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors py-2 sm:py-1.5 rounded border border-primary/20 flex items-center justify-center gap-1 min-h-[36px]"
                   >
-                    <MapPin className="h-3 w-3" /> Open Map
+                    <MapPin className="h-3.5 w-3.5 sm:h-3 sm:w-3" /> Open Map
                   </button>
                   <button 
-                    className="text-[11px] font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors py-1.5 rounded border border-border flex items-center justify-center gap-1"
+                    className="text-[11px] font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors py-2 sm:py-1.5 rounded border border-border flex items-center justify-center gap-1 min-h-[36px]"
                   >
                     Share Location
                   </button>
@@ -148,8 +148,8 @@ const UserDashboard = () => {
                       className={`flex flex-col p-2.5 rounded border cursor-pointer transition-all hover:brightness-110 ${idx === 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-amber-500/10 border-amber-500/20'}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">{idx === 0 ? 'Critical Risk' : 'Elevated Risk'} - {zone?.name || 'Unknown Area'}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${idx === 0 ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>⚠ Active</span>
+                        <span className="text-xs font-semibold break-words pr-2">{idx === 0 ? 'Critical Risk' : 'Elevated Risk'} - {zone?.name || 'Unknown Area'}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ${idx === 0 ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>⚠ Active</span>
                       </div>
                       <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
                         <span>Nearby active threats</span>
@@ -164,8 +164,8 @@ const UserDashboard = () => {
                       className="flex flex-col p-2.5 rounded border border-green-500/20 bg-green-500/10 cursor-pointer hover:bg-green-500/15 transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">Low Risk - All Clear</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-green-500/20 text-green-500">✓ Safe</span>
+                        <span className="text-xs font-semibold break-words pr-2">Low Risk - All Clear</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-green-500/20 text-green-500 shrink-0">✓ Safe</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1.5">No immediate threats detected in your operational radius.</p>
                     </div>
@@ -174,8 +174,8 @@ const UserDashboard = () => {
                       className="flex flex-col p-2.5 rounded border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold">Moderate - Hadapsar</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-primary/20 text-primary">ℹ Advisory</span>
+                        <span className="text-xs font-semibold break-words pr-2">Moderate - Hadapsar</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-primary/20 text-primary shrink-0">ℹ Advisory</span>
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-1.5">Increased police patrol activity reported.</p>
                     </div>
@@ -206,8 +206,8 @@ const UserDashboard = () => {
                         className="flex items-center justify-between text-xs cursor-pointer hover:bg-muted/50 p-1.5 -mx-1.5 rounded-md transition-colors"
                         onClick={() => navigate('/dashboard/user/map', { state: { focusIncident: incident } })}
                       >
-                        <span className="truncate max-w-[180px]">{incident?.description || `${incident?.type || 'Unknown'} incident`}</span>
-                        <span className="text-muted-foreground">{dateStr}</span>
+                        <span className="truncate max-w-[150px] sm:max-w-[180px]">{incident?.description || `${incident?.type || 'Unknown'} incident`}</span>
+                        <span className="text-muted-foreground shrink-0">{dateStr}</span>
                       </div>
                     );
                   })
@@ -222,13 +222,13 @@ const UserDashboard = () => {
                 <div className="pt-3 flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => navigate('/dashboard/user/incidents')}
-                    className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md transition-colors"
+                    className="text-[11px] sm:text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 sm:py-1.5 rounded-md transition-colors min-h-[36px]"
                   >
                     Report Incident
                   </button>
                   <button
                     onClick={() => navigate('/dashboard/user/incidents')}
-                    className="text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-1.5 rounded-md transition-colors"
+                    className="text-[11px] sm:text-xs border border-primary text-primary hover:bg-primary/10 px-3 py-2 sm:py-1.5 rounded-md transition-colors min-h-[36px]"
                   >
                     View Reports
                   </button>
@@ -269,7 +269,7 @@ const UserDashboard = () => {
                 <div className="pt-2 border-t border-border">
                   <button
                     onClick={() => navigate('/dashboard/user/notifications')}
-                    className="text-xs text-primary hover:text-primary/80 transition-colors w-full text-center py-1"
+                    className="text-[11px] sm:text-xs text-primary hover:text-primary/80 transition-colors w-full text-center py-2 sm:py-1 min-h-[36px]"
                   >
                     View Intelligence Feed
                   </button>

@@ -66,18 +66,16 @@ const TravelSafetyTipsWidget = () => {
               }`}
             >
               <div className="flex items-start gap-3">
-                <div
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    tip.isWarning
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                      : "bg-emerald-500/10 text-emerald-600 dark:bg-cyan-500/10 dark:text-cyan-400"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
+                <div className="flex h-10 w-10 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-background/50">
+                  <tip.icon className={`h-5 w-5 sm:h-4 sm:w-4 ${tip.isWarning ? "text-amber-500" : "text-primary"}`} />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold">{tip.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{tip.description}</p>
+                <div className="space-y-1 sm:space-y-1.5 pt-0.5">
+                  <h4 className={`text-sm sm:text-base font-semibold leading-none ${tip.isWarning ? "text-amber-700 dark:text-amber-400" : ""}`}>
+                    {tip.title}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    {tip.description}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -85,17 +83,17 @@ const TravelSafetyTipsWidget = () => {
         </div>
 
         {/* Navigation dots */}
-        <div className="mt-4 flex items-center justify-center gap-1.5">
-          {TIPS.map((_, i) => (
+        <div className="mt-4 flex justify-center gap-1.5">
+          {TIPS.map((_, idx) => (
             <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === current
-                  ? "w-4 bg-emerald-500 dark:bg-cyan-400"
-                  : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              key={idx}
+              onClick={() => setCurrent(idx)}
+              className={`h-2.5 sm:h-1.5 rounded-full transition-all duration-300 min-w-[20px] sm:min-w-0 ${
+                idx === current
+                  ? "w-8 sm:w-4 bg-primary"
+                  : "w-2.5 sm:w-1.5 bg-primary/20 hover:bg-primary/40"
               }`}
-              aria-label={`Go to tip ${i + 1}`}
+              aria-label={`Go to tip ${idx + 1}`}
             />
           ))}
         </div>

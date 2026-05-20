@@ -83,18 +83,18 @@ const RouteSafetySuggestionWidget = () => {
                 </div>
 
                 <div className="mt-2.5 flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="flex items-center gap-1 font-mono text-foreground font-medium" title="Live ETA">
+                  <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-2">
+                    <span className="flex items-center gap-1 font-mono text-foreground font-medium bg-muted/50 px-1.5 py-0.5 rounded" title="Live ETA">
                       <Clock className="h-3.5 w-3.5 text-blue-500" /> {route.time}
                     </span>
-                    <span className="flex items-center gap-1" title="Safety Confidence Score">
+                    <span className="flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded" title="Safety Confidence Score">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> {route.score}%
                     </span>
-                    <span className="flex items-center gap-1" title="Crowd Density">
+                    <span className="flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded" title="Crowd Density">
                       <Users className="h-3.5 w-3.5 text-amber-500" /> 
                       <span className="capitalize">{route.crowd}</span>
                     </span>
-                    <span className="flex items-center gap-1" title="ETA Confidence">
+                    <span className="flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded" title="ETA Confidence">
                       <Activity className="h-3.5 w-3.5 text-purple-500" />
                       {route.etaConfidence}%
                     </span>

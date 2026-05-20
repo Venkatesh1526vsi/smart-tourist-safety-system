@@ -108,16 +108,16 @@ const PuneWeatherWidget = ({ locationData }: PuneWeatherWidgetProps) => {
           </Alert>
         )}
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1 relative">
-            <p className="text-4xl font-bold font-mono tracking-tight">{weather.temperature ?? '--'}°C</p>
-            <p className="text-sm font-medium">{weather.condition || 'Unknown'}</p>
-            <p className="text-xs text-muted-foreground line-clamp-2 pr-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="space-y-1 relative flex flex-col justify-center">
+            <p className="text-3xl sm:text-4xl font-bold font-mono tracking-tight">{weather.temperature ?? '--'}°C</p>
+            <p className="text-xs sm:text-sm font-medium">{weather.condition || 'Unknown'}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 pr-2">
               {locationData?.locationName || weather.location || 'Locating...'}
             </p>
           </div>
           
-          <div className="space-y-2.5 bg-muted/30 p-2.5 rounded-lg border border-border/50">
+          <div className="space-y-2.5 bg-muted/30 p-2 sm:p-2.5 rounded-lg border border-border/50">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 text-muted-foreground"><Droplets className="h-3.5 w-3.5 text-blue-500" /> Humidity</span>
               <span className="font-semibold">{weather.humidity ?? '--'}%</span>

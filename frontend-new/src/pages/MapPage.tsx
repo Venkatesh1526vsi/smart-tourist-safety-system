@@ -312,7 +312,9 @@ const MapPage = () => {
         setFocusedIncidentId(found.id);
         setShowIncidents(true);
         // Fly map safely
-        mapRef.current.flyTo([found.lat, found.lng], 16, { animate: true, duration: 1 });
+        const currentZoom = mapRef.current.getZoom() || 13;
+        const targetZoom = currentZoom > 15 ? currentZoom : 15;
+        mapRef.current.flyTo([found.lat, found.lng], targetZoom, { animate: true, duration: 1.5, easeLinearity: 0.25 });
         
         // Open popup automatically
         setTimeout(() => {
@@ -336,7 +338,9 @@ const MapPage = () => {
     navigator.geolocation.getCurrentPosition(pos => {
       const { latitude: lat, longitude: lng } = pos.coords;
       setUserLocation({ lat, lng });
-      mapRef.current?.flyTo([lat, lng], 16, { animate: true, duration: 1.5 });
+      const currentZoom = mapRef.current?.getZoom() || 13;
+      const targetZoom = currentZoom > 15 ? currentZoom : 15;
+      mapRef.current?.flyTo([lat, lng], targetZoom, { animate: true, duration: 1.5, easeLinearity: 0.25 });
     }, () => setError("Could not get location."));
   }, []);
 
@@ -413,7 +417,15 @@ const MapPage = () => {
       const dist = legs.reduce((a, l) => a + l.distance, 0);
       const distKm = dist / 1000; // Convert meters to kilometers
       setRouteInfo({ totalDurationSec: total, totalDistanceM: dist, totalDistanceKm: distKm, segments });
-      if (mapRef.current && coords.length > 0) mapRef.current.fitBounds(L.latLngBounds(coords), { padding: [40, 40] });
+      if (mapRef.current && coords.length > 0) {
+        const isMobile = window.innerWidth < 640;
+        mapRef.current.fitBounds(L.latLngBounds(coords), {
+          paddingTopLeft: isMobile ? [20, 20] : [40, 40],
+          paddingBottomRight: isMobile ? [20, 280] : [40, 40],
+          animate: true,
+          duration: 1.5
+        });
+      }
       // on-route suggestions within 10km
       setOnRoutePlaces(EXPLORE_PLACES.filter(p => routeNear(coords, p.lat, p.lng, 10000)));
     } catch { setRouteError("Network error. Please retry."); }
@@ -587,7 +599,7 @@ const MapPage = () => {
                 }}
               >
                 <Popup className="operational-popup">
-                  <div className="w-[240px] flex flex-col gap-2 p-1">
+                  <div className="w-[220px] sm:w-[260px] max-w-[85vw] flex flex-col gap-2.5 p-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <strong className="text-sm font-display truncate block">{inc.title}</strong>
@@ -913,7 +925,10 @@ const MapPage = () => {
                   <p className="text-xs text-muted-foreground">{exploreSuggestions.length} places — click to zoom, or add to trip</p>
                   {exploreSuggestions.map(p => (
                     <div key={p.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <div className="min-w-0 flex-1 cursor-pointer" onClick={() => mapRef.current?.flyTo([p.lat, p.lng], 16, { animate: true, duration: 1 })}>
+                      <div className="min-w-0 flex-1 cursor-pointer" onClick={() => {
+                        const currentZoom = mapRef.current?.getZoom() || 13;
+                        mapRef.current?.flyTo([p.lat, p.lng], currentZoom > 15 ? currentZoom : 15, { animate: true, duration: 1.2, easeLinearity: 0.25 });
+                      }}>
                         <div className="text-sm font-medium truncate">{p.name}</div>
                         <div className="text-xs text-muted-foreground">{p.description}</div>
                         <div className="text-xs text-cyan-600 font-medium mt-0.5">{p.category}</div>

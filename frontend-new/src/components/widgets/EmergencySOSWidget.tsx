@@ -166,24 +166,24 @@ const EmergencySOSWidget = () => {
                 {/* Main Button */}
                 <motion.div
                   animate={{ scale: isHolding ? 0.92 : 1 }}
-                  className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-500/25 cursor-pointer dark:bg-red-600 dark:shadow-red-900/40"
+                  className="relative z-10 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-500/25 cursor-pointer dark:bg-red-600 dark:shadow-red-900/40"
                 >
                   <div className="flex flex-col items-center gap-1">
-                    <AlertOctagon className="h-6 w-6" />
-                    <span className="text-xl font-extrabold tracking-widest leading-none">SOS</span>
+                    <AlertOctagon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <span className="text-lg sm:text-xl font-extrabold tracking-widest leading-none">SOS</span>
                   </div>
                 </motion.div>
               </div>
               
-              <p className="text-xs text-muted-foreground mt-4 font-medium h-4 transition-opacity duration-200" style={{ opacity: isHolding ? 1 : 0.6 }}>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-4 font-medium h-4 transition-opacity duration-200" style={{ opacity: isHolding ? 1 : 0.6 }}>
                 {isHolding ? "HOLD TO ACTIVATE" : "PRESS & HOLD"}
               </p>
 
               <button 
                 onClick={() => activateSOS(true)} 
-                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-6 flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-6 flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] sm:min-h-0"
               >
-                <EyeOff className="h-3 w-3" /> Silent SOS
+                <EyeOff className="h-3.5 w-3.5 sm:h-3 sm:w-3" /> Silent SOS
               </button>
             </motion.div>
           ) : sosState === 'countdown' ? (
@@ -207,7 +207,7 @@ const EmergencySOSWidget = () => {
                 <p className="text-sm font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">Emergency Triggered</p>
                 <p className="text-xs text-muted-foreground mt-1">Transmitting signal in {countdown}s</p>
               </div>
-              <Button variant="outline" size="sm" onClick={cancelSOS} className="w-full mt-2 border-red-500/30 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10">
+              <Button variant="outline" onClick={cancelSOS} className="w-full mt-2 border-red-500/30 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 min-h-[44px]">
                 <X className="mr-1 h-4 w-4" /> Cancel Trigger
               </Button>
             </motion.div>
@@ -270,7 +270,7 @@ const EmergencySOSWidget = () => {
               </div>
 
               <div className="pt-4 mt-auto">
-                <Button variant="outline" size="sm" onClick={cancelSOS} className="w-full border-red-500/30 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors">
+                <Button variant="outline" onClick={cancelSOS} className="w-full border-red-500/30 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors min-h-[44px]">
                   <X className="mr-2 h-4 w-4" /> Cancel Emergency
                 </Button>
               </div>
