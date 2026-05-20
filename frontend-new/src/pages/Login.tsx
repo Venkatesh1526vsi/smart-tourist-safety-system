@@ -1,5 +1,4 @@
-// import toast from 'react-hot-toast'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,27 +13,70 @@ import { login as loginService } from "@/services/authService";
 
 const Login = () => {
   const [showPass, setShowPass] = useState(false);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState("tourist");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   
+  // Lightweight login protection
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutCountdown, setLockoutCountdown] = useState(0);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (lockoutUntil) {
+      const interval = setInterval(() => {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          setLockoutUntil(null);
+          setLockoutCountdown(0);
+          setFailedAttempts(0);
+          setError("");
+          clearInterval(interval);
+        } else {
+          setLockoutCountdown(remaining);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [lockoutUntil]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent double submission
-    if (isLoading) return;
+    if (isLoading || lockoutUntil) return;
     
     setError("");
+    setEmailError("");
+    setPasswordError("");
+    
+    const trimmedEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let hasError = false;
+
+    if (!emailRegex.test(trimmedEmail)) {
+      setEmailError("Please enter a valid email address.");
+      hasError = true;
+    }
+    if (!password) {
+      setPasswordError("Password is required.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
     setIsLoading(true);
 
     try {
       console.log('[Login] Starting login process...');
-      const response = await loginService({ email, password });
+      const response = await loginService({ email: trimmedEmail, password });
 
       console.log("🔥 LOGIN RESPONSE RAW:", response);
 
@@ -44,7 +86,7 @@ const Login = () => {
 
       if (!newToken) {
         console.error("❌ TOKEN NOT FOUND:", response);
-        return;
+        throw new Error("Invalid server response. Token missing.");
       }
 
       // 🔥 STORE DIRECTLY HERE (CRITICAL FIX)
@@ -56,10 +98,12 @@ const Login = () => {
 
       if (!storedToken) {
         console.error("❌ TOKEN FAILED TO SAVE");
-        return;
+        throw new Error("Failed to save session securely.");
       }
 
       console.log("✅ TOKEN STORED:", storedToken);
+
+      setFailedAttempts(0); // Reset on success
 
       // 🔥 NAVIGATION (SAFE NOW)
       if (newUser?.role === "admin") {
@@ -69,10 +113,22 @@ const Login = () => {
       }
     } catch (err) {
       console.error('[Login] Login error:', err);
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-      notifyError("Invalid credentials or login failed");
-      // toast.error("Invalid credentials or login failed");
-      // // Keep email, only clear password for security
+      
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      
+      if (newAttempts >= 5) {
+        const lockoutTime = Date.now() + 30 * 1000; // 30 seconds lockout
+        setLockoutUntil(lockoutTime);
+        setLockoutCountdown(30);
+        setError("Too many failed attempts. Account temporarily locked for 30 seconds.");
+        notifyError("Account temporarily locked");
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+        notifyError("Invalid credentials or login failed");
+      }
+      
+      // Keep email, only clear password for security
       setPassword("");
     } finally {
       setIsLoading(false);
@@ -97,7 +153,7 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm text-center">
+            <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm text-center font-medium">
               {error}
             </div>
           )}
@@ -110,9 +166,15 @@ const Login = () => {
                 type="email" 
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                className={emailError ? "border-red-500 focus-visible:ring-red-500" : ""}
                 required
+                disabled={!!lockoutUntil}
               />
+              {emailError && <p className="text-xs text-red-500 font-medium">{emailError}</p>}
             </div>
 
             <div className="space-y-2">
@@ -123,8 +185,13 @@ const Login = () => {
                   type={showPass ? "text" : "password"} 
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError("");
+                  }}
+                  className={passwordError ? "border-red-500 focus-visible:ring-red-500 pr-10" : "pr-10"}
                   required
+                  disabled={!!lockoutUntil}
                 />
                 <button
                   type="button"
@@ -134,15 +201,17 @@ const Login = () => {
                     setShowPass(!showPass);
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={!!lockoutUntil}
                 >
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {passwordError && <p className="text-xs text-red-500 font-medium">{passwordError}</p>}
             </div>
 
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={role} onValueChange={setRole}>
+              <Select value={role} onValueChange={setRole} disabled={!!lockoutUntil}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
@@ -158,16 +227,18 @@ const Login = () => {
             </div>
 
             <Button 
-              className="w-full" 
+              className="w-full transition-all duration-300" 
               size="lg"
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !!lockoutUntil}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing In...
                 </>
+              ) : lockoutUntil ? (
+                `Account Locked (${lockoutCountdown}s)`
               ) : (
                 "Sign In"
               )}
@@ -185,3 +256,4 @@ const Login = () => {
 };
 
 export default Login;
+
