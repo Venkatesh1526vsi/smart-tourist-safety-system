@@ -187,8 +187,11 @@ function optimizeOrder(stops: StopInput[]): StopInput[] {
 const SS_MODE_KEY = "tourist_trip_mode"; // localStorage key for mode persistence
 
 const MapPage = () => {
-  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [tripMode, setTripMode] = useState<"planned" | "explore" | "neutral" | null>(() => {
+    const m = localStorage.getItem(SS_MODE_KEY);
+    return (m === "planned" || m === "explore" || m === "neutral") ? m as ("planned" | "explore" | "neutral") : null;
+  });
+  const [overlayVisible, setOverlayVisible] = useState(tripMode === null); const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [incidents, setIncidents] = useState<MapIncident[]>([]);
   const [showIncidents, setShowIncidents] = useState(true);
@@ -521,7 +524,7 @@ const MapPage = () => {
     setShowCatDropdown(false); setTripMode(null); setOverlayVisible(true); setShowTripModal(true);
   }, []);
 
-  const handleModeSelect = useCallback((m: "planned" | "explore") => {
+  const handleModeSelect = useCallback((m: "planned" | "explore" | "neutral") => {
     // Animate overlay out, then set mode
     setOverlayVisible(false);
     setTimeout(() => {
@@ -952,11 +955,22 @@ const MapPage = () => {
         </div>
 
         {/* ── Clear Plan ── */}
-        <div className="pb-6">
-          <Button variant="outline" onClick={clearPlan} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-            <Trash2 className="h-4 w-4 mr-2" />Clear Plan
-          </Button>
-        </div>
+        {tripMode !== "neutral" && tripMode !== null && (
+          <div className="pb-6">
+            <Button variant="outline" onClick={clearPlan} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Trash2 className="h-4 w-4 mr-2" />Clear Plan
+            </Button>
+          </div>
+        )}
+
+        {/* ── Start Journey CTA (Neutral Mode) ── */}
+        {tripMode === "neutral" && (
+          <div className="pb-6 flex justify-center mt-2">
+            <Button onClick={() => { setShowTripModal(true); setOverlayVisible(true); setTripMode(null); }} className="w-full sm:w-auto shadow-lg bg-primary/90 hover:bg-primary text-primary-foreground backdrop-blur-sm border border-primary/20 transition-all hover:scale-[1.02]">
+              <Navigation className="h-4 w-4 mr-2" />Start Journey
+            </Button>
+          </div>
+        )}
 
         {/* ── Trip Mode Selection Overlay ── */}
         {showTripModal && (
@@ -984,8 +998,8 @@ const MapPage = () => {
                 <p className="text-white/70 text-sm">Please choose how you want to start your journey</p>
               </div>
 
-              {/* Two side-by-side cards */}
-              <div className="grid grid-cols-2 gap-5">
+              {/* Options Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {/* Planned Trip */}
                 <button
                   onClick={() => handleModeSelect("planned")}
@@ -1039,6 +1053,34 @@ const MapPage = () => {
                   <p className="text-white/65 text-sm leading-relaxed">Start instantly and add stops dynamically.</p>
                   <div className="mt-4 flex items-center gap-1.5 text-cyan-300 text-xs font-medium">
                     <MapPin className="h-3.5 w-3.5" /> Explore + real-time itinerary
+                  </div>
+                </button>
+
+                {/* Neutral Explore */}
+                <button
+                  onClick={() => handleModeSelect("neutral")}
+                  className="group relative rounded-2xl p-6 text-left cursor-pointer flex flex-col h-full"
+                  style={{
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1.5px solid rgba(255,255,255,0.15)",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1.04)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px rgba(16,185,129,0.55)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(16,185,129,0.8)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+                  }}
+                >
+                  <div className="text-4xl mb-3">🗺️</div>
+                  <h3 className="text-white font-bold text-lg mb-1">Explore Live Map</h3>
+                  <p className="text-white/65 text-sm leading-relaxed flex-1">Free exploration without active trip tracking.</p>
+                  <div className="mt-4 flex items-center gap-1.5 text-emerald-300 text-xs font-medium shrink-0">
+                    <Map className="h-3.5 w-3.5" /> View incidents + locations
                   </div>
                 </button>
               </div>
