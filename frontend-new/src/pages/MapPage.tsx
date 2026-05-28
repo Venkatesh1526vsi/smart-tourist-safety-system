@@ -9,7 +9,7 @@ import "leaflet-gesture-handling";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
 import {
   Loader2, AlertCircle, Locate, MapPin, Route, Plus, X,
-  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, ExternalLink
+  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, ExternalLink, Map
 } from "lucide-react";
 import { getAllIncidents, type Incident as ApiIncident } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
@@ -187,11 +187,8 @@ function optimizeOrder(stops: StopInput[]): StopInput[] {
 const SS_MODE_KEY = "tourist_trip_mode"; // localStorage key for mode persistence
 
 const MapPage = () => {
-  const [tripMode, setTripMode] = useState<"planned" | "explore" | "neutral" | null>(() => {
-    const m = localStorage.getItem(SS_MODE_KEY);
-    return (m === "planned" || m === "explore" || m === "neutral") ? m as ("planned" | "explore" | "neutral") : null;
-  });
-  const [overlayVisible, setOverlayVisible] = useState(tripMode === null); const [error, setError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [incidents, setIncidents] = useState<MapIncident[]>([]);
   const [showIncidents, setShowIncidents] = useState(true);
@@ -202,8 +199,11 @@ const MapPage = () => {
   const [focusedIncidentId, setFocusedIncidentId] = useState<string | null>(null);
 
   // Initialise tripMode from localStorage so refresh preserves selection
-  const [tripMode, setTripMode] = useState<"planned" | "explore" | null>(() => {
-    try { return (localStorage.getItem(SS_MODE_KEY) as "planned" | "explore") || null; } catch { return null; }
+  const [tripMode, setTripMode] = useState<"planned" | "explore" | "neutral" | null>(() => {
+    try {
+      const m = localStorage.getItem(SS_MODE_KEY);
+      return (m === "planned" || m === "explore" || m === "neutral") ? m as ("planned" | "explore" | "neutral") : null;
+    } catch { return null; }
   });
   const [overlayVisible, setOverlayVisible] = useState(tripMode === null);
   const [showTripModal, setShowTripModal] = useState(tripMode === null);
