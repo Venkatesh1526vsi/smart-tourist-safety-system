@@ -29,7 +29,7 @@ type MapIncident = {
 };
 type StopInput = { id: string; label: string; coords: Coordinates | null };
 type SafetyBreakdown = {
-  score: number; riskZonesCrossed: number; highRiskAreas: number;
+  score: number; scoreRange: string; riskZonesCrossed: number; highRiskAreas: number;
   incidentsNearby: number; nightSafetyIndex: "Low" | "Medium" | "High";
 };
 type RouteInfo = {
@@ -389,10 +389,21 @@ const MapPage = () => {
     const hra = incidents.filter(i => (i.severity === "high" || i.severity === "critical") && routeNear(route, i.lat, i.lng, 1000)).length;
     const h = new Date().getHours(), night = h >= 22 || h < 6;
     const nzone = PUNE_ZONES.slice(0, 4).some(z => routeNear(route, z.lat, z.lng, 1000));
+    
+    // Route complexity penalty for realism
+    const routeDistEstimate = route.length * 15;
+    const complexPenalty = routeDistEstimate > 15000 ? 5 : (routeDistEstimate > 5000 ? 2 : 0);
+
     const ni: SafetyBreakdown["nightSafetyIndex"] = night && nzone ? "Low" : night ? "Medium" : "High";
-    let s = 100 - rzc * 8 - hra * 12 - Math.min(inearby, 5) * 3;
+    let s = 100 - rzc * 8 - hra * 12 - Math.min(inearby, 5) * 3 - complexPenalty;
     if (night) s -= 10; if (type === "safest") s += 6; if (type === "balanced") s += 3;
-    return { score: Math.max(10, Math.min(100, s)), riskZonesCrossed: rzc, highRiskAreas: hra, incidentsNearby: inearby, nightSafetyIndex: ni };
+    
+    const baseScore = Math.max(10, Math.min(95, s));
+    const rangeMin = Math.max(0, baseScore - 5);
+    const rangeMax = Math.min(100, baseScore + 6);
+    const scoreRange = `${Math.floor(rangeMin)}–${Math.floor(rangeMax)}%`;
+
+    return { score: baseScore, scoreRange, riskZonesCrossed: rzc, highRiskAreas: hra, incidentsNearby: inearby, nightSafetyIndex: ni };
   }, [incidents]);
 
   // ── OSRM fetch with route type differentiation ───────────────────────────
@@ -438,9 +449,30 @@ const MapPage = () => {
         const speedMps = (speedKmh * 1000) / 3600;
         let legSec = leg.distance / speedMps;
 
-        // Tourist exploration delay: +10 mins per intermediate stop
+        // Apply realistic urban travel multipliers (congestion, parking, signals)
+        const congestionMultiplier = leg.distance < 5000 ? 1.6 : (leg.distance < 10000 ? 1.4 : 1.15);
+        legSec *= congestionMultiplier;
+        
+        // Parking and signal delays
+        legSec += 6 * 60; // 6 min base urban delay
+
+        // Tourist exploration delay based on category
         if (i < legs.length - 1) {
-          legSec += 10 * 60;
+          const stopLabel = names[i + 1] || "";
+          const sl = stopLabel.toLowerCase();
+          let stopDurationSec = 45 * 60; // default realistic urban stop
+          if (sl.includes("historic") || sl.includes("wada") || sl.includes("fort") || sl.includes("palace")) {
+             stopDurationSec = 75 * 60;
+          } else if (sl.includes("cafe") || sl.includes("food") || sl.includes("restaurant") || sl.includes("camp")) {
+             stopDurationSec = 45 * 60;
+          } else if (sl.includes("temple") || sl.includes("dagdusheth") || sl.includes("ashram")) {
+             stopDurationSec = 30 * 60;
+          } else if (sl.includes("mall") || sl.includes("shopping") || sl.includes("market") || sl.includes("fc road")) {
+             stopDurationSec = 90 * 60;
+          } else if (sl.includes("park") || sl.includes("garden") || sl.includes("lake") || sl.includes("zoo")) {
+             stopDurationSec = 60 * 60;
+          }
+          legSec += stopDurationSec;
         }
 
         // Safety delay factor
@@ -478,8 +510,16 @@ const MapPage = () => {
       prevTypeRef.current = routeType;
       handleGetRoute();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeType]);
+  }, [routeType, handleGetRoute]);
+
+  // Re-calc when isRoundTrip changes
+  const prevRoundTripRef = useRef(isRoundTrip);
+  useEffect(() => {
+    if (prevRoundTripRef.current !== isRoundTrip && routePolyRef.current) {
+      prevRoundTripRef.current = isRoundTrip;
+      handleGetRoute();
+    }
+  }, [isRoundTrip, handleGetRoute]);
 
   // ── Stop management ──────────────────────────────────────────────────────
   const addStop = useCallback(() => setExtraStops(p => [...p, { id: `stop-${Date.now()}`, label: "", coords: null }]), []);
@@ -813,8 +853,8 @@ const MapPage = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow" style={{ background: scoreColor }}>
-                  {safetyBreakdown.score}%
+                <div className="w-[88px] h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shadow px-2" style={{ background: scoreColor }}>
+                  {safetyBreakdown.scoreRange}
                 </div>
                 Safety Breakdown
               </CardTitle>
@@ -822,8 +862,8 @@ const MapPage = () => {
             <CardContent className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1.5">
-                  <span className="font-medium">Safety Score</span>
-                  <span className="font-bold" style={{ color: scoreColor }}>{safetyBreakdown.score}%</span>
+                  <span className="font-medium">Safety Score Range</span>
+                  <span className="font-bold" style={{ color: scoreColor }}>{safetyBreakdown.scoreRange}</span>
                 </div>
                 <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all duration-700" style={{ width: `${safetyBreakdown.score}%`, background: scoreColor }} />
@@ -877,7 +917,7 @@ const MapPage = () => {
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-muted-foreground">Leg-by-leg breakdown</p>
                     {extraStops.length > 0 && (
-                      <span className="text-xs text-amber-500 font-medium">+10 min/stop (tourist delay)</span>
+                      <span className="text-xs text-amber-500 font-medium">+ category delays</span>
                     )}
                   </div>
                   {routeInfo.segments.map((seg, i) => (
