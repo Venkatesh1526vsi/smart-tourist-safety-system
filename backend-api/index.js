@@ -489,6 +489,30 @@ app.post('/api/login', validateMongoConnection, async (req, res) => {
   }
 });
 
+// USER PASSWORD RESET
+app.post('/api/reset-password', validateMongoConnection, validatePasswordStrength, async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return ResponseHandler.validationError(res, [
+        { path: 'email', message: 'Email is required' },
+        { path: 'password', message: 'Password is required' }
+      ]);
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return ResponseHandler.notFound(res, 'User not found');
+    }
+    const saltRounds = 10;
+    user.password = await bcrypt.hash(password, saltRounds);
+    await user.save();
+    return ResponseHandler.success(res, 200, {}, 'Password reset successfully!');
+  } catch (err) {
+    console.error('Reset password error:', err);
+    return ResponseHandler.error(res, 500, 'Server error during password reset.', err.message);
+  }
+});
+
 // JWT authentication middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];

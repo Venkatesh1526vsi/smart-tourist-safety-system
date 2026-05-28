@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2, ArrowRight, ShieldCheck, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { notifySuccess } from "@/utils/notify";
+import { apiPost } from "@/services/api";
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;
@@ -161,23 +162,14 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      // 1. UPDATE PERSISTENT AUTH SOURCE (User Record)
-      const userStr = localStorage.getItem("user");
-      let currentUser = userStr ? JSON.parse(userStr) : null;
-      
-      // If no user exists in storage or it's a different email, create a mock user object
-      if (!currentUser || currentUser.email !== email) {
-        currentUser = { id: `mock-${Date.now()}`, name: "Tourist", email: email, role: "tourist" };
-      }
-      
-      // Inject password for local login mock interception
-      currentUser.password = newPassword;
-      localStorage.setItem("user", JSON.stringify(currentUser));
-
+    try {
+      await apiPost('/api/reset-password', { email, password: newPassword });
       setStep("success");
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const renderStep = () => {
