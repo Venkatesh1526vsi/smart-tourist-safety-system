@@ -162,6 +162,19 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
     setIsLoading(true);
 
     setTimeout(() => {
+      // 1. UPDATE PERSISTENT AUTH SOURCE (User Record)
+      const userStr = localStorage.getItem("user");
+      let currentUser = userStr ? JSON.parse(userStr) : null;
+      
+      // If no user exists in storage or it's a different email, create a mock user object
+      if (!currentUser || currentUser.email !== email) {
+        currentUser = { id: `mock-${Date.now()}`, name: "Tourist", email: email, role: "tourist" };
+      }
+      
+      // Inject password for local login mock interception
+      currentUser.password = newPassword;
+      localStorage.setItem("user", JSON.stringify(currentUser));
+
       setStep("success");
       setIsLoading(false);
     }, 1500);
@@ -228,6 +241,17 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                 />
               </div>
               <p className="text-xs text-muted-foreground">Code sent to {email}</p>
+              
+              {/* Testing Helper - Safe Realistic Mode */}
+              {generatedOtp && (
+                <div className="mt-4 p-3 bg-slate-900 border border-slate-800 rounded-md flex items-center justify-between shadow-inner">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    <span>Testing Mode Code:</span>
+                  </div>
+                  <span className="font-mono font-bold text-emerald-500 tracking-widest">{generatedOtp}</span>
+                </div>
+              )}
             </div>
             {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
             <div className="flex flex-col gap-2">

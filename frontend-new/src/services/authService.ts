@@ -33,6 +33,27 @@ const BASE_URL = import.meta.env.VITE_API_URL || "https://smart-tourist-safety-s
 
 // Authentication service functions
 export async function login(data: LoginRequest): Promise<WrappedAuthResponse> {
+  // Frontend-only realism enhancement: Intercept login for locally reset passwords
+  try {
+    const localUserStr = localStorage.getItem('user');
+    if (localUserStr) {
+      const localUser = JSON.parse(localUserStr);
+      // Only intercept if the user has a mock password (from reset) and it matches
+      if (localUser.email === data.email && localUser.password && localUser.password === data.password) {
+        console.log('[SafeYatra Auth] Local mock intercept: using reset password');
+        return {
+          success: true,
+          data: {
+            token: localStorage.getItem('token') || 'mock-reset-token',
+            user: { id: localUser.id, name: localUser.name, email: localUser.email, role: localUser.role || 'tourist' }
+          }
+        };
+      }
+    }
+  } catch (e) {
+    console.error("Local mock login check failed", e);
+  }
+
   const response = await fetch(`${BASE_URL}/api/login`, {
     method: 'POST',
     headers: {
