@@ -576,7 +576,6 @@ const MapPage = () => {
     }, 380);
   }, []);
 
-  const allPoints = [origin, ...extraStops, (isRoundTrip ? origin : destination)];
   const mapMarkers = [origin, ...extraStops];
   if (!isRoundTrip && destination.coords) {
     mapMarkers.push(destination);
@@ -585,8 +584,6 @@ const MapPage = () => {
   const scoreColor = (safetyBreakdown?.score ?? 100) >= 80 ? "#10b981" : (safetyBreakdown?.score ?? 100) >= 60 ? "#f59e0b" : "#ef4444";
   const mapCenter = userLocation || { lat: 18.5204, lng: 73.8567 };
 
-  const dot = (color: string) => <div className="w-3 h-3 rounded-full shrink-0 border-2 border-white shadow" style={{ background: color }} />;
-  
   const numberedBadge = (num: number, color: string) => (
     <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm border border-white shrink-0" style={{ background: color }}>
       {num}
