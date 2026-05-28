@@ -146,37 +146,71 @@ function fallbackIncidents(): MapIncident[] {
 
 // ─── Detour helper for Safest/Balanced routes ─────────────────────────────────
 // Nudges waypoints perpendicularly away from high-risk zone centroids
-function buildDetourWaypoints(points: Coordinates[], scale: number): Coordinates[] {
+function buildDetourWaypoints(points: Coordinates[], scale: number, incidents: MapIncident[]): Coordinates[] {
   if (points.length < 2 || scale === 0) return points;
-  const result = [...points];
-  for (const hz of HIGH_RISK_ZONES) {
-    // insert a mid-waypoint that veers away from hz
-    const mid: Coordinates = {
-      lat: (points[0].lat + points[points.length - 1].lat) / 2 + (points[0].lat - hz.lat) * scale * 0.15,
-      lng: (points[0].lng + points[points.length - 1].lng) / 2 + (points[0].lng - hz.lng) * scale * 0.15,
-    };
-    result.splice(1, 0, mid);
+  const result: Coordinates[] = [points[0]];
+  
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    
+    // Find if segment passes near high risk zones or critical incidents
+    let avoidLat = 0, avoidLng = 0, avoidCount = 0;
+    
+    for (const hz of HIGH_RISK_ZONES) {
+      if (routeNear([ [p1.lat, p1.lng], [p2.lat, p2.lng] ], hz.lat, hz.lng, 1500)) {
+        avoidLat += hz.lat; avoidLng += hz.lng; avoidCount++;
+      }
+    }
+    
+    for (const inc of incidents) {
+      if ((inc.severity === "high" || inc.severity === "critical") && 
+          routeNear([ [p1.lat, p1.lng], [p2.lat, p2.lng] ], inc.lat, inc.lng, 1000)) {
+        avoidLat += inc.lat; avoidLng += inc.lng; avoidCount++;
+      }
+    }
+    
+    if (avoidCount > 0) {
+      const cLat = avoidLat / avoidCount;
+      const cLng = avoidLng / avoidCount;
+      
+      const midLat = (p1.lat + p2.lat) / 2;
+      const midLng = (p1.lng + p2.lng) / 2;
+      
+      const dx = midLng - cLng;
+      const dy = midLat - cLat;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
+      
+      // Push out by scale * 0.05 degrees (~5km)
+      const push = scale * 0.05;
+      result.push({
+        lat: midLat + (dy / dist) * push,
+        lng: midLng + (dx / dist) * push
+      });
+    }
+    
+    result.push(p2);
   }
   return result;
 }
 
 // ─── Nearest-neighbour reorder ────────────────────────────────────────────────
-function optimizeOrder(stops: StopInput[]): StopInput[] {
-  if (stops.length <= 1) return stops;
+function optimizeOrder(originCoords: Coordinates, stops: StopInput[]): StopInput[] {
+  if (stops.length === 0) return stops;
   const remaining = [...stops];
   const ordered: StopInput[] = [];
-  let current = remaining.shift()!;
-  ordered.push(current);
+  let currentCoords = originCoords;
+  
   while (remaining.length > 0) {
-    const c = current.coords;
     let best = 0, bestD = Infinity;
     remaining.forEach((s, i) => {
-      if (!s.coords || !c) return;
-      const d = haversine(c.lat, c.lng, s.coords.lat, s.coords.lng);
+      if (!s.coords) return;
+      const d = haversine(currentCoords.lat, currentCoords.lng, s.coords.lat, s.coords.lng);
       if (d < bestD) { bestD = d; best = i; }
     });
-    current = remaining.splice(best, 1)[0];
-    ordered.push(current);
+    const nextStop = remaining.splice(best, 1)[0];
+    ordered.push(nextStop);
+    if (nextStop.coords) currentCoords = nextStop.coords;
   }
   return ordered;
 }
@@ -363,7 +397,7 @@ const MapPage = () => {
   // ── OSRM fetch with route type differentiation ───────────────────────────
   const fetchOSRM = useCallback(async (basePoints: Coordinates[], type: RouteType): Promise<{ coords: [number, number][]; legs: Array<{ duration: number; distance: number }> } | null> => {
     const detourScale = type === "fastest" ? 0 : type === "safest" ? 1 : 0.4;
-    const pts = buildDetourWaypoints(basePoints, detourScale);
+    const pts = buildDetourWaypoints(basePoints, detourScale, incidents);
     const coordStr = pts.map(p => `${p.lng},${p.lat}`).join(";");
     const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson&steps=false`);
     const data = await res.json();
@@ -371,7 +405,7 @@ const MapPage = () => {
     const coords: [number, number][] = data.routes[0].geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number]);
     const legs = data.routes[0].legs as Array<{ duration: number; distance: number }>;
     return { coords, legs };
-  }, []);
+  }, [incidents]);
 
   const handleGetRoute = useCallback(async (pts?: Coordinates[]) => {
     const allBase: Coordinates[] = pts || [
@@ -478,9 +512,10 @@ const MapPage = () => {
     const all = [origin, ...extraStops, destination].filter(s => s.coords);
     if (all.length < 2) { setRouteError("Need at least origin and destination to optimize."); return; }
     const inner = all.slice(1, all.length - 1);
-    setOptimizedOrder(optimizeOrder(inner));
+    const startCoords = origin.coords || (userLocation || { lat: 18.5204, lng: 73.8567 });
+    setOptimizedOrder(optimizeOrder(startCoords, inner));
     setShowOptimizeDialog(true);
-  }, [origin, extraStops, destination]);
+  }, [origin, extraStops, destination, userLocation]);
 
   const applyOptimize = useCallback(() => {
     setExtraStops(optimizedOrder);
