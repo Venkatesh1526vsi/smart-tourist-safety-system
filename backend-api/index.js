@@ -108,7 +108,7 @@ const validatePasswordStrength = (req, res, next) => {
   }
 
   // Minimum 8 characters, at least one uppercase, one lowercase, one number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!@#$%^&*?]{8,}$/;
 
   if (!passwordRegex.test(password)) {
     return res.status(400).json({
