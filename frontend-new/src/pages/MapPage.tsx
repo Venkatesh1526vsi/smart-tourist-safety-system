@@ -246,6 +246,7 @@ const MapPage = () => {
   const [origin, setOrigin] = useState<StopInput>({ id: "origin", label: "", coords: null });
   const [destination, setDestination] = useState<StopInput>({ id: "dest", label: "", coords: null });
   const [extraStops, setExtraStops] = useState<StopInput[]>([]);
+  const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [routeType, setRouteType] = useState<RouteType>("fastest");
   const [routePolyline, setRoutePolyline] = useState<[number, number][] | null>(null);
   const routePolyRef = useRef<[number, number][] | null>(null);
@@ -408,10 +409,11 @@ const MapPage = () => {
   }, [incidents]);
 
   const handleGetRoute = useCallback(async (pts?: Coordinates[]) => {
+    const finalDest = isRoundTrip ? origin : destination;
     const allBase: Coordinates[] = pts || [
       ...(origin.coords ? [origin.coords] : []),
       ...extraStops.filter(s => s.coords).map(s => s.coords!),
-      ...(destination.coords ? [destination.coords] : []),
+      ...(finalDest.coords ? [finalDest.coords] : []),
     ];
     if (allBase.length < 2) { setRouteError("Please select origin and destination from autocomplete."); return; }
     setRouteError(null); setIsFetching(true); setRoutePolyline(null); setSafetyBreakdown(null); setRouteInfo(null); setOnRoutePlaces([]);
@@ -424,7 +426,7 @@ const MapPage = () => {
       const safetyBreakdownData = calcSafety(coords, routeType);
       setSafetyBreakdown(safetyBreakdownData);
 
-      const names = [origin.label || "Origin", ...extraStops.filter(s => s.coords).map(s => s.label || "Stop"), destination.label || "Destination"];
+      const names = [origin.label || "Origin", ...extraStops.filter(s => s.coords).map(s => s.label || "Stop"), finalDest.label || (isRoundTrip ? "Origin" : "Destination")];
 
       const numSegments = legs.length;
       const safetyDelayTotalSec = safetyBreakdownData.riskZonesCrossed * 5 * 60;
@@ -467,7 +469,7 @@ const MapPage = () => {
       setOnRoutePlaces(EXPLORE_PLACES.filter(p => routeNear(coords, p.lat, p.lng, 10000)));
     } catch { setRouteError("Network error. Please retry."); }
     finally { setIsFetching(false); }
-  }, [origin, extraStops, destination, routeType, fetchOSRM, calcSafety]);
+  }, [origin, extraStops, destination, isRoundTrip, routeType, fetchOSRM, calcSafety]);
 
   // Re-calc when route type changes (re-fetch for visual difference)
   const prevTypeRef = useRef<RouteType>(routeType);
@@ -525,8 +527,13 @@ const MapPage = () => {
 
   // ── Explore / itinerary ──────────────────────────────────────────────────
   const findPlaces = useCallback(() => {
-    setExploreSuggestions(selectedCategories.length === 0 ? EXPLORE_PLACES : EXPLORE_PLACES.filter(p => selectedCategories.includes(p.category)));
-  }, [selectedCategories]);
+    const catFiltered = selectedCategories.length === 0 ? EXPLORE_PLACES : EXPLORE_PLACES.filter(p => selectedCategories.includes(p.category));
+    // Filter geographically within ~15km (15000m) for realism
+    const refLat = exploreLoc.coords?.lat || userLocation?.lat || 18.5204;
+    const refLng = exploreLoc.coords?.lng || userLocation?.lng || 73.8567;
+    const geoFiltered = catFiltered.filter(p => haversine(refLat, refLng, p.lat, p.lng) <= 15000);
+    setExploreSuggestions(geoFiltered);
+  }, [selectedCategories, exploreLoc, userLocation]);
 
   const addToItinerary = useCallback((p: PlaceSuggestion) => {
     setItinerary(prev => prev.find(x => x.id === p.id) ? prev : [...prev, p]);
@@ -569,11 +576,23 @@ const MapPage = () => {
     }, 380);
   }, []);
 
-  const allPoints = [origin, ...extraStops, destination];
+  const allPoints = [origin, ...extraStops, (isRoundTrip ? origin : destination)];
   const scoreColor = (safetyBreakdown?.score ?? 100) >= 80 ? "#10b981" : (safetyBreakdown?.score ?? 100) >= 60 ? "#f59e0b" : "#ef4444";
   const mapCenter = userLocation || { lat: 18.5204, lng: 73.8567 };
 
   const dot = (color: string) => <div className="w-3 h-3 rounded-full shrink-0 border-2 border-white shadow" style={{ background: color }} />;
+
+  // Synchronization filters for realistic UIs
+  const visibleExploreSuggestions = exploreSuggestions.filter(s => 
+    !itinerary.some(i => i.id === s.id || (i.lat === s.lat && i.lng === s.lng)) &&
+    (!exploreLoc.coords || (Math.abs(s.lat - exploreLoc.coords.lat) > 0.001 || Math.abs(s.lng - exploreLoc.coords.lng) > 0.001))
+  );
+
+  const visibleOnRoutePlaces = onRoutePlaces.filter(p => 
+    !extraStops.some(s => s.coords && Math.abs(s.coords.lat - p.lat) < 0.001 && Math.abs(s.coords.lng - p.lng) < 0.001) &&
+    !(origin.coords && Math.abs(origin.coords.lat - p.lat) < 0.001 && Math.abs(origin.coords.lng - p.lng) < 0.001) &&
+    !(destination.coords && Math.abs(destination.coords.lat - p.lat) < 0.001 && Math.abs(destination.coords.lng - p.lng) < 0.001)
+  );
 
   return (
     <UserDashboardLayout>
@@ -684,7 +703,7 @@ const MapPage = () => {
               </Marker>
             ))}
             {/* Explore suggestion markers */}
-            {exploreSuggestions.map(s => (
+            {visibleExploreSuggestions.map(s => (
               <Marker key={s.id} position={[s.lat, s.lng]} icon={suggestionIcon}>
                 <Popup>
                   <div className="text-sm max-w-xs">
@@ -748,8 +767,17 @@ const MapPage = () => {
                   </div>
                 </div>
               ))}
-              <LocationInput value={destination.label} placeholder="Destination" icon={dot("#ef4444")}
-                onChange={(l, c) => setDestination(d => ({ ...d, label: l, coords: c ?? d.coords }))} />
+              {!isRoundTrip && (
+                <LocationInput value={destination.label} placeholder="Destination" icon={dot("#ef4444")}
+                  onChange={(l, c) => setDestination(d => ({ ...d, label: l, coords: c ?? d.coords }))} />
+              )}
+
+              <div className="flex items-center gap-2 pt-1 pb-1">
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input type="checkbox" checked={isRoundTrip} onChange={e => setIsRoundTrip(e.target.checked)} className="rounded accent-primary h-4 w-4" />
+                  Return to starting location
+                </label>
+              </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={addStop} className="flex items-center gap-1.5 text-sm text-primary hover:underline">
@@ -866,7 +894,7 @@ const MapPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {onRoutePlaces.map(p => (
+              {visibleOnRoutePlaces.map(p => (
                 <div key={p.id} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg">
                   <div className="min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>
@@ -958,10 +986,10 @@ const MapPage = () => {
               )}
 
               {/* Suggestion results */}
-              {exploreSuggestions.length > 0 && (
+              {visibleExploreSuggestions.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">{exploreSuggestions.length} places — click to zoom, or add to trip</p>
-                  {exploreSuggestions.map(p => (
+                  <p className="text-xs text-muted-foreground">{visibleExploreSuggestions.length} places — click to zoom, or add to trip</p>
+                  {visibleExploreSuggestions.map(p => (
                     <div key={p.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                       <div className="min-w-0 flex-1 cursor-pointer" onClick={() => {
                         const currentZoom = mapRef.current?.getZoom() || 13;
