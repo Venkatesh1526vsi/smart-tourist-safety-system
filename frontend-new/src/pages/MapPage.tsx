@@ -9,7 +9,7 @@ import "leaflet-gesture-handling";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
 import {
   Loader2, AlertCircle, Locate, MapPin, Route, Plus, X,
-  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, ExternalLink, Map
+  Trash2, ChevronDown, ChevronUp, Navigation, Shuffle, Check, ExternalLink, Map, RefreshCw
 } from "lucide-react";
 import { getAllIncidents, type Incident as ApiIncident } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
@@ -577,10 +577,21 @@ const MapPage = () => {
   }, []);
 
   const allPoints = [origin, ...extraStops, (isRoundTrip ? origin : destination)];
+  const mapMarkers = [origin, ...extraStops];
+  if (!isRoundTrip && destination.coords) {
+    mapMarkers.push(destination);
+  }
+
   const scoreColor = (safetyBreakdown?.score ?? 100) >= 80 ? "#10b981" : (safetyBreakdown?.score ?? 100) >= 60 ? "#f59e0b" : "#ef4444";
   const mapCenter = userLocation || { lat: 18.5204, lng: 73.8567 };
 
   const dot = (color: string) => <div className="w-3 h-3 rounded-full shrink-0 border-2 border-white shadow" style={{ background: color }} />;
+  
+  const numberedBadge = (num: number, color: string) => (
+    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm border border-white shrink-0" style={{ background: color }}>
+      {num}
+    </div>
+  );
 
   // Synchronization filters for realistic UIs
   const visibleExploreSuggestions = exploreSuggestions.filter(s => 
@@ -697,8 +708,8 @@ const MapPage = () => {
               </Marker>
             ))}
             {/* Numbered stop markers */}
-            {allPoints.filter(s => s.coords).map((s, i) => (
-              <Marker key={s.id} position={[s.coords!.lat, s.coords!.lng]} icon={numberedIcon(i + 1)}>
+            {mapMarkers.filter(s => s.coords).map((s, i) => (
+              <Marker key={`${s.id}-${i}`} position={[s.coords!.lat, s.coords!.lng]} icon={numberedIcon(i + 1)}>
                 <Popup><div className="text-sm font-medium">{i + 1}. {s.label || `Stop ${i + 1}`}</div></Popup>
               </Marker>
             ))}
@@ -737,7 +748,7 @@ const MapPage = () => {
               <CardTitle className="flex items-center gap-2 text-base"><Route className="h-4 w-4" />Plan Your Route</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <LocationInput value={origin.label} placeholder="Your Location" icon={dot("#10b981")}
+              <LocationInput value={origin.label} placeholder="Your Location" icon={numberedBadge(1, "#10b981")}
                 onChange={(l, c) => setOrigin(o => ({ ...o, label: l, coords: c ?? o.coords }))} />
               {extraStops.map((s, idx) => (
                 <div key={s.id} className="flex items-start gap-2">
@@ -761,15 +772,20 @@ const MapPage = () => {
                     </button>
                   </div>
                   <div className="flex-1">
-                    <LocationInput key={s.id} value={s.label} placeholder={`Stop ${idx + 1}`} icon={dot("#8b5cf6")}
+                    <LocationInput key={s.id} value={s.label} placeholder={`Stop ${idx + 1}`} icon={numberedBadge(idx + 2, "#8b5cf6")}
                       onChange={(l, c) => setExtraStops(p => p.map(x => x.id === s.id ? { ...x, label: l, coords: c ?? x.coords } : x))}
                       onRemove={() => removeStop(s.id)} />
                   </div>
                 </div>
               ))}
-              {!isRoundTrip && (
-                <LocationInput value={destination.label} placeholder="Destination" icon={dot("#ef4444")}
+              {!isRoundTrip ? (
+                <LocationInput value={destination.label} placeholder="Destination" icon={numberedBadge(extraStops.length + 2, "#ef4444")}
                   onChange={(l, c) => setDestination(d => ({ ...d, label: l, coords: c ?? d.coords }))} />
+              ) : (
+                <div className="flex items-center gap-2.5 p-3 bg-muted/40 rounded-lg border border-border/50 border-dashed text-sm font-medium text-emerald-600/90 ml-[36px]">
+                  <RefreshCw className="h-4 w-4 shrink-0" />
+                  <span>↺ Return to {origin.label || "Start"}</span>
+                </div>
               )}
 
               <div className="flex items-center gap-2 pt-1 pb-1">
@@ -925,7 +941,7 @@ const MapPage = () => {
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Your current location</p>
                 <LocationInput value={exploreLoc.label} placeholder="Your Location"
-                  icon={dot("#10b981")} onChange={(l, c) => setExploreLoc(o => ({ ...o, label: l, coords: c ?? o.coords }))} />
+                  icon={numberedBadge(1, "#10b981")} onChange={(l, c) => setExploreLoc(o => ({ ...o, label: l, coords: c ?? o.coords }))} />
               </div>
 
               {/* Category selector */}
@@ -960,7 +976,7 @@ const MapPage = () => {
                   </div>
                   {itinerary.map((p, i) => (
                     <div key={p.id} className="flex items-center gap-2 p-2.5 bg-background rounded-lg border border-border/60 shadow-sm">
-                      <div className="w-6 h-6 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center shrink-0 font-bold">{i + 1}</div>
+                      <div className="w-6 h-6 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center shrink-0 font-bold">{i + 2}</div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium truncate">{p.name}</div>
                         <div className="text-xs text-muted-foreground">{p.description} · <span className="text-cyan-600 font-medium">{p.category}</span></div>
