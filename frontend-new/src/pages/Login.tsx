@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { notifyError } from "@/utils/notify";
 import { login as loginService } from "@/services/authService";
+import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 
 const validateProfessionalEmail = (email: string) => {
   const trimmed = email.trim();
@@ -42,6 +43,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -248,7 +251,16 @@ const Login = () => {
             </div>
 
             <div className="text-right">
-              <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+              <button 
+                type="button" 
+                className="text-xs text-primary hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsForgotModalOpen(true);
+                }}
+              >
+                Forgot password?
+              </button>
             </div>
 
             <Button 
@@ -276,6 +288,11 @@ const Login = () => {
           </p>
         </div>
       </motion.div>
+
+      <ForgotPasswordModal 
+        isOpen={isForgotModalOpen} 
+        onClose={() => setIsForgotModalOpen(false)} 
+      />
     </div>
   );
 };
