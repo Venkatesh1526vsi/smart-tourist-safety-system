@@ -392,9 +392,13 @@ app.post('/api/register', validateMongoConnection, validatePasswordStrength, asy
     }
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const user = new User({ name, email, password: hashedPassword });
+    
+    // SAFE DOMAIN-BASED ADMIN ROLE ASSIGNMENT
+    const role = email.toLowerCase().endsWith('@safeyatra.in') ? 'admin' : 'tourist';
+    
+    const user = new User({ name, email, password: hashedPassword, role });
     await user.save();
-    console.log('User registered successfully:', { id: user._id, email: user.email });
+    console.log('User registered successfully:', { id: user._id, email: user.email, role: user.role });
 
     // Issue JWT token for immediate login
     const token = jwt.sign(

@@ -88,3 +88,4 @@
 {"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:53:27.151Z"}
 {"endpoint":"/api/login","level":"warn","message":"API Warning: Invalid email or password.","method":"POST","service":"response-handler","statusCode":401,"timestamp":"2026-03-27T06:55:58.128Z"}
 {"endpoint":"/api/login","level":"info","message":"API Success: Login successful!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-03-28T02:52:42.717Z"}
+{"endpoint":"/api/reset-password","level":"info","message":"API Success: Password reset successfully!","method":"POST","service":"response-handler","statusCode":200,"timestamp":"2026-05-28T07:21:23.411Z"}
