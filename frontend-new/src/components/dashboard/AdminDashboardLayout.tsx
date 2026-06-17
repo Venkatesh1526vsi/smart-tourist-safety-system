@@ -91,11 +91,12 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div className="relative">
               <button 
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-bold border border-accent/30 transition-transform hover:scale-105 active:scale-95"
+                className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent text-sm font-bold border border-accent/20 transition-all hover:scale-105 active:scale-95 shadow-sm"
               >
                 {getInitials(user?.name || "Admin")}
               </button>
@@ -103,18 +104,16 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-56 rounded-md border border-border bg-popover text-popover-foreground shadow-md z-50 animate-in slide-in-from-top-2">
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-medium leading-none">{user?.name || "Admin User"}</p>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">{user?.email || "admin@safeyatra.com"}</p>
-                      <p className="text-[10px] uppercase font-bold text-accent mt-1.5">{user?.role || "Admin"}</p>
-                    </div>
-                    <div className="p-1">
-                      <div className="px-3 py-2 text-sm flex items-center justify-between">
-                        <span className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-accent/20" /> Theme</span>
-                        <div onClick={(e) => e.stopPropagation()}><ThemeToggle /></div>
+                  <div className="absolute right-0 mt-3 w-72 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl z-50 animate-in slide-in-from-top-2 fade-in overflow-hidden">
+                    <div className="px-5 py-4 bg-muted/30 border-b border-border">
+                      <p className="text-base font-semibold leading-none text-foreground">{user?.name || "Admin User"}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5 truncate">{user?.email || "admin@safeyatra.com"}</p>
+                      <div className="mt-2.5 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-accent/10 text-accent border-accent/20">
+                        {user?.role || "Admin"}
                       </div>
-                      <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left rounded-sm hover:bg-muted text-destructive transition-colors">
+                    </div>
+                    <div className="p-2 border-t border-border bg-muted/10">
+                      <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-left rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
                         <LogOut className="h-4 w-4" /> Logout
                       </button>
                     </div>

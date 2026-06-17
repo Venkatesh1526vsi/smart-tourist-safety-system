@@ -463,17 +463,40 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
             <div className="space-y-3 pt-2 border-t">
                <div className="flex items-start gap-3">
                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                 <div>
-                   <p className="text-xs font-semibold">Primary Contact</p>
-                   <p className="text-sm">{selectedTourist.emergencyContact}</p>
-                   {selectedTourist.sosActive && selectedTourist.emergencyContacts && selectedTourist.emergencyContacts.length > 0 && (
-                     <p className="text-[10px] mt-1 text-green-500 font-bold flex items-center gap-1 animate-pulse">
-                       <ShieldCheck className="h-3 w-3" /> 
-                       {selectedTourist.emergencyContacts.length > 1 
-                          ? `✓ ${selectedTourist.emergencyContacts.length}/${selectedTourist.emergencyContacts.length} notified`
-                          : `✓ Primary Contact notified`
-                       }
-                     </p>
+                 <div className="w-full pr-4">
+                   <p className="text-xs font-semibold mb-1">Emergency Contacts Status</p>
+                   {selectedTourist.sosActive ? (
+                     <div className="space-y-2 mt-2 bg-muted/30 p-2 rounded border border-border w-full">
+                       {selectedTourist.emergencyContacts && selectedTourist.emergencyContacts.length > 0 ? (
+                         <>
+                           <div className="flex justify-between items-center text-xs">
+                             <span className="text-muted-foreground">Primary Contact:</span>
+                             <span className="text-green-500 font-medium">✓ Notified</span>
+                           </div>
+                           {selectedTourist.emergencyContacts.length > 1 && (
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="text-muted-foreground">Additional Contacts:</span>
+                               <span className="text-green-500 font-medium">{selectedTourist.emergencyContacts.length - 1} / {selectedTourist.emergencyContacts.length - 1} Notified</span>
+                             </div>
+                           )}
+                           <div className="flex justify-between items-center text-xs">
+                             <span className="text-muted-foreground">Live Location:</span>
+                             <span className="text-blue-500 font-medium">Shared</span>
+                           </div>
+                           <div className="flex justify-between items-center text-xs">
+                             <span className="text-muted-foreground">Last Notification:</span>
+                             <span className="text-foreground">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                           </div>
+                         </>
+                       ) : (
+                         <div className="text-xs text-amber-500 font-medium flex items-center gap-1">
+                           <AlertOctagon className="h-3 w-3" />
+                           No Contacts Configured
+                         </div>
+                       )}
+                     </div>
+                   ) : (
+                     <p className="text-sm">{selectedTourist.emergencyContact}</p>
                    )}
                  </div>
                </div>

@@ -102,11 +102,12 @@ export function UserDashboardLayout({ children }: { children: React.ReactNode })
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div className="relative">
               <button 
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold border border-primary/30 transition-transform hover:scale-105 active:scale-95"
+                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold border border-primary/20 transition-all hover:scale-105 active:scale-95 shadow-sm"
               >
                 {getInitials(user?.name || "User")}
               </button>
@@ -114,24 +115,21 @@ export function UserDashboardLayout({ children }: { children: React.ReactNode })
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 mt-2 w-56 rounded-md border border-border bg-popover text-popover-foreground shadow-md z-50 animate-in slide-in-from-top-2">
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">{user?.email || "No email"}</p>
-                      <p className="text-[10px] uppercase font-bold text-primary mt-1.5">{user?.role || "Tourist"}</p>
-                    </div>
-                    <div className="p-1">
-                      <Link to="/dashboard/user/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left rounded-sm hover:bg-muted transition-colors">
-                        <Settings className="h-4 w-4" /> My Profile
-                      </Link>
-                      <Link to="/dashboard/user/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left rounded-sm hover:bg-muted transition-colors">
-                        <Settings className="h-4 w-4" /> Settings
-                      </Link>
-                      <div className="px-3 py-2 text-sm flex items-center justify-between">
-                        <span className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-primary/20" /> Theme</span>
-                        <div onClick={(e) => e.stopPropagation()}><ThemeToggle /></div>
+                  <div className="absolute right-0 mt-3 w-72 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl z-50 animate-in slide-in-from-top-2 fade-in overflow-hidden">
+                    <div className="px-5 py-4 bg-muted/30 border-b border-border">
+                      <p className="text-base font-semibold leading-none text-foreground">{user?.name || "User"}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5 truncate">{user?.email || "No email"}</p>
+                      <div className="mt-2.5 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border-primary/20">
+                        {user?.role || "Tourist"}
                       </div>
-                      <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left rounded-sm hover:bg-muted text-destructive transition-colors">
+                    </div>
+                    <div className="p-2">
+                      <Link to="/dashboard/user/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-left rounded-lg hover:bg-muted text-foreground transition-colors">
+                        <Settings className="h-4 w-4 text-muted-foreground" /> Settings
+                      </Link>
+                    </div>
+                    <div className="p-2 border-t border-border bg-muted/10">
+                      <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-left rounded-lg hover:bg-destructive/10 text-destructive transition-colors">
                         <LogOut className="h-4 w-4" /> Logout
                       </button>
                     </div>

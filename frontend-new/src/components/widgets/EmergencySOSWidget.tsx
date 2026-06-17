@@ -102,8 +102,9 @@ const EmergencySOSWidget = () => {
     const t1 = setTimeout(() => setEscalationStage(1), 2500); // Signal transmitted
     const t2 = setTimeout(() => setEscalationStage(2), 5500); // Authorities notified
     const t3 = setTimeout(() => setEscalationStage(3), 9000); // Patrol assigned
-    const t4 = setTimeout(() => setEscalationStage(4), 12000); // Primary Contact Notified
+    const t4 = setTimeout(() => setEscalationStage(4), 12000); // Primary Contact Notified / Warning
     const t5 = setTimeout(() => setEscalationStage(5), 15000); // Additional Contacts Notified
+    const t6 = setTimeout(() => setEscalationStage(6), 18000); // Live Location Shared
     
     const timeInterval = setInterval(() => {
       setActiveTime((prev) => prev + 1);
@@ -115,6 +116,7 @@ const EmergencySOSWidget = () => {
       clearTimeout(t3);
       clearTimeout(t4);
       clearTimeout(t5);
+      clearTimeout(t6);
       clearInterval(timeInterval);
     };
   }, [sosState]);
@@ -295,6 +297,18 @@ const EmergencySOSWidget = () => {
                       </span>
                     </motion.div>
                   )}
+                  {escalationStage >= 3 && numContacts === 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <AlertOctagon className={`h-4 w-4 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                      <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                        {escalationStage >= 4 ? '⚠ No Emergency Contacts Configured' : 'Checking Emergency Contacts...'}
+                      </span>
+                    </motion.div>
+                  )}
                   {escalationStage >= 3 && numContacts > 0 && (
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }} 
@@ -303,7 +317,7 @@ const EmergencySOSWidget = () => {
                     >
                       <Phone className={`h-4 w-4 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
                       <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 4 ? `Primary Contact Notified (${primaryContact?.name})` : 'Notifying Primary Contact...'}
+                        {escalationStage >= 4 ? `✓ Primary Contact Notified (${primaryContact?.name})` : 'Notifying Primary Contact...'}
                       </span>
                     </motion.div>
                   )}
@@ -315,7 +329,19 @@ const EmergencySOSWidget = () => {
                     >
                       <Users className={`h-4 w-4 ${escalationStage >= 5 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
                       <span className={escalationStage >= 5 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 5 ? `Additional Contacts Notified (${numContacts}/${numContacts})` : `Notifying Contacts (1/${numContacts})...`}
+                        {escalationStage >= 5 ? `✓ Additional Contacts Notified (${numContacts - 1})` : `Notifying Contacts...`}
+                      </span>
+                    </motion.div>
+                  )}
+                  {escalationStage >= (numContacts > 1 ? 5 : 4) && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <Navigation2 className={`h-4 w-4 ${escalationStage >= 6 ? 'text-blue-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                      <span className={escalationStage >= 6 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                        {escalationStage >= 6 ? '✓ Live Location Shared' : 'Preparing Live Location Share...'}
                       </span>
                     </motion.div>
                   )}
