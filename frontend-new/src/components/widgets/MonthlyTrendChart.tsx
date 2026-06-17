@@ -176,7 +176,7 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-slate-800/90 border-slate-700/50 text-slate-200' : 'bg-white/90 border-slate-200 text-slate-800'} backdrop-blur-md`}>
+                        <div className="p-3 rounded-lg shadow-lg border border-border bg-popover/90 text-popover-foreground backdrop-blur-md">
                           <p className="font-bold mb-1">{label}</p>
                           {contextId === 'users' ? (
                             <p className="text-sm">Active Users: {data.users}</p>

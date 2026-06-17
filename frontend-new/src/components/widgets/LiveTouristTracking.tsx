@@ -512,7 +512,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                      <div 
                        key={t.id} 
                        onClick={() => setSelectedTourist(t)}
-                       className="flex items-center justify-between p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer border border-transparent hover:border-border transition-colors"
+                       className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer border border-transparent hover:border-border transition-colors"
                      >
                         <div className="flex items-center gap-2">
                            <div className={`w-2 h-2 rounded-full ${t.riskLevel === 'critical' ? 'bg-red-500 animate-pulse' : t.riskLevel === 'high' ? 'bg-orange-500' : t.riskLevel === 'moderate' ? 'bg-yellow-400' : 'bg-emerald-500'}`} />
@@ -531,7 +531,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
       </div>
       
       {/* Smart Live Activity Feed (Replaces Popups for Safe/Moderate) */}
-      <div className="hidden md:flex w-full md:w-1/4 flex-col bg-slate-900/5 border-l border-border p-3 overflow-hidden">
+      <div className="hidden md:flex w-full md:w-1/4 flex-col bg-muted/30 border-l border-border p-3 overflow-hidden">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
           <Clock className="h-3 w-3" /> Live Operations Feed
         </h3>

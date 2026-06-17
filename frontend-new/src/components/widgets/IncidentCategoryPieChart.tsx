@@ -93,7 +93,7 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
                       const data = payload[0].payload;
                       const percentage = ((data.value / totalIncidents) * 100).toFixed(1);
                       return (
-                        <div className={`p-3 rounded-lg shadow-lg ${isDark ? 'bg-slate-800 border border-slate-700 text-slate-200' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                        <div className="p-3 rounded-lg shadow-lg bg-popover border border-border text-popover-foreground">
                           <p className="font-bold mb-1">{data.name}</p>
                           <p className="text-sm">Total: {data.value}</p>
                           <p className="text-sm text-primary">{percentage}% of total</p>

@@ -240,7 +240,7 @@ const Login = () => {
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="w-full bg-background border border-input text-foreground font-semibold shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-800 focus:ring-2 focus:ring-primary/50 transition-colors cursor-pointer">
+                <SelectTrigger className="w-full bg-background border border-input text-foreground font-semibold shadow-sm hover:bg-muted focus:ring-2 focus:ring-ring transition-colors cursor-pointer">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
