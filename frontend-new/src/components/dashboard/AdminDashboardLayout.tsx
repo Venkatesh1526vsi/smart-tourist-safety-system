@@ -5,6 +5,7 @@ import { Radar, AlertTriangle, Radio, Users, BarChart3, LogOut, Menu, X } from "
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Settings } from "lucide-react";
 
 const navItems = [
   { title: "Live Tracking", icon: Radar, path: "/dashboard/admin" },
@@ -16,13 +17,21 @@ const navItems = [
 
 export function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return "A";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -84,9 +93,35 @@ export function AdminDashboardLayout({ children }: { children: React.ReactNode }
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-bold">
-              A
+            <div className="relative">
+              <button 
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-bold border border-accent/30 transition-transform hover:scale-105 active:scale-95"
+              >
+                {getInitials(user?.name || "Admin")}
+              </button>
+              
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-56 rounded-md border border-border bg-popover text-popover-foreground shadow-md z-50 animate-in slide-in-from-top-2">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-sm font-medium leading-none">{user?.name || "Admin User"}</p>
+                      <p className="text-xs text-muted-foreground mt-1 truncate">{user?.email || "admin@safeyatra.com"}</p>
+                      <p className="text-[10px] uppercase font-bold text-accent mt-1.5">{user?.role || "Admin"}</p>
+                    </div>
+                    <div className="p-1">
+                      <div className="px-3 py-2 text-sm flex items-center justify-between">
+                        <span className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-accent/20" /> Theme</span>
+                        <div onClick={(e) => e.stopPropagation()}><ThemeToggle /></div>
+                      </div>
+                      <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left rounded-sm hover:bg-muted text-destructive transition-colors">
+                        <LogOut className="h-4 w-4" /> Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>

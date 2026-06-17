@@ -1,11 +1,21 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 // TypeScript Interfaces
-interface User {
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  isPrimary: boolean;
+}
+
+export interface User {
   id: string;
   name: string;
   email: string;
   role?: string;
+  phone?: string;
+  emergencyContacts?: EmergencyContact[];
 }
 
 interface AuthContextType {
@@ -13,6 +23,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 // Create Context
@@ -88,11 +99,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const updateUser = (updates: Partial<User>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    
+    // Also update in the simulated users db for admin tracking
+    try {
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const userIndex = users.findIndex((u: any) => u.id === updatedUser.id || u.email === updatedUser.email);
+      if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], ...updatedUser };
+        localStorage.setItem("users", JSON.stringify(users));
+      }
+    } catch (e) {
+      console.error("Failed to sync users db:", e);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
     isAuthenticated: !!token, // Primary check based on token existence
     logout,
+    updateUser,
   };
 
   return (

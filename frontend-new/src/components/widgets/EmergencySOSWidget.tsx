@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldAlert, X, AlertOctagon, Radio, ShieldCheck, Navigation2, EyeOff, Activity } from "lucide-react";
+import { ShieldAlert, X, AlertOctagon, Radio, ShieldCheck, Navigation2, EyeOff, Activity, Phone, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const COUNTDOWN_SECONDS = 5;
 const HOLD_DURATION_MS = 1500;
@@ -13,6 +14,11 @@ const EmergencySOSWidget = () => {
   const [isSilent, setIsSilent] = useState(false);
   const [escalationStage, setEscalationStage] = useState(0);
   const [activeTime, setActiveTime] = useState(0);
+  
+  const { user } = useAuth();
+  const contacts = user?.emergencyContacts || [];
+  const primaryContact = contacts.find(c => c.isPrimary) || contacts[0];
+  const numContacts = contacts.length;
 
   // Hold-to-activate state
   const [isHolding, setIsHolding] = useState(false);
@@ -96,6 +102,8 @@ const EmergencySOSWidget = () => {
     const t1 = setTimeout(() => setEscalationStage(1), 2500); // Signal transmitted
     const t2 = setTimeout(() => setEscalationStage(2), 5500); // Authorities notified
     const t3 = setTimeout(() => setEscalationStage(3), 9000); // Patrol assigned
+    const t4 = setTimeout(() => setEscalationStage(4), 12000); // Primary Contact Notified
+    const t5 = setTimeout(() => setEscalationStage(5), 15000); // Additional Contacts Notified
     
     const timeInterval = setInterval(() => {
       setActiveTime((prev) => prev + 1);
@@ -105,6 +113,8 @@ const EmergencySOSWidget = () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
+      clearTimeout(t5);
       clearInterval(timeInterval);
     };
   }, [sosState]);
@@ -118,7 +128,8 @@ const EmergencySOSWidget = () => {
   const getPhaseInfo = () => {
     if (escalationStage === 0) return { phase: 1, text: "SOS Activated" };
     if (escalationStage < 3) return { phase: 2, text: "Response Team Assigned" };
-    return { phase: 3, text: "Response In Progress" };
+    if (escalationStage < 5 && numContacts > 0) return { phase: 3, text: "Notifying Contacts" };
+    return { phase: numContacts > 0 ? 4 : 3, text: "Response In Progress" };
   };
 
   // SVG parameters for progress ring
@@ -281,6 +292,30 @@ const EmergencySOSWidget = () => {
                       <span className="text-foreground font-medium flex items-center gap-2">
                         Live Tracking Active
                         <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-ping"></span>
+                      </span>
+                    </motion.div>
+                  )}
+                  {escalationStage >= 3 && numContacts > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <Phone className={`h-4 w-4 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                      <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                        {escalationStage >= 4 ? `Primary Contact Notified (${primaryContact?.name})` : 'Notifying Primary Contact...'}
+                      </span>
+                    </motion.div>
+                  )}
+                  {escalationStage >= 4 && numContacts > 1 && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <Users className={`h-4 w-4 ${escalationStage >= 5 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                      <span className={escalationStage >= 5 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                        {escalationStage >= 5 ? `Additional Contacts Notified (${numContacts}/${numContacts})` : `Notifying Contacts (1/${numContacts})...`}
                       </span>
                     </motion.div>
                   )}

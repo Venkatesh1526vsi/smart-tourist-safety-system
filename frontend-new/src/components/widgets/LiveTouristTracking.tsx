@@ -18,6 +18,7 @@ interface LiveTourist {
   riskLevel: 'safe' | 'moderate' | 'high' | 'critical';
   lastActive: number;
   emergencyContact: string;
+  emergencyContacts?: any[];
   sosActive: boolean;
   travelStatus: string;
   recentAlerts: string[];
@@ -158,6 +159,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                riskLevel: f.risk as any,
                lastActive: Date.now(),
                emergencyContact: "112 (Emergency)",
+               emergencyContacts: [],
                sosActive: false,
                travelStatus: "Active in Pune",
                recentAlerts: [],
@@ -176,6 +178,9 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
           if (!exists) {
             const jitterLat = (Math.random() - 0.5) * 0.05;
             const jitterLng = (Math.random() - 0.5) * 0.05;
+            const primary = rt.emergencyContacts?.find((c:any) => c.isPrimary) || rt.emergencyContacts?.[0];
+            const contactStr = primary ? `${primary.name} (${primary.phone})` : (rt.email || "No contact");
+            
             updated.push({
               id: rt.id || rt._id || `U-${Date.now()}-${Math.random()}`,
               name: rt.name || "Unknown User",
@@ -185,7 +190,8 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
               safetyScore: 100,
               riskLevel: 'safe',
               lastActive: Date.now(),
-              emergencyContact: rt.email || "No contact",
+              emergencyContact: contactStr,
+              emergencyContacts: rt.emergencyContacts || [],
               sosActive: false,
               travelStatus: "Active in Pune",
               recentAlerts: [],
@@ -458,8 +464,17 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                <div className="flex items-start gap-3">
                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
                  <div>
-                   <p className="text-xs font-semibold">Contact / Email</p>
+                   <p className="text-xs font-semibold">Primary Contact</p>
                    <p className="text-sm">{selectedTourist.emergencyContact}</p>
+                   {selectedTourist.sosActive && selectedTourist.emergencyContacts && selectedTourist.emergencyContacts.length > 0 && (
+                     <p className="text-[10px] mt-1 text-green-500 font-bold flex items-center gap-1 animate-pulse">
+                       <ShieldCheck className="h-3 w-3" /> 
+                       {selectedTourist.emergencyContacts.length > 1 
+                          ? `✓ ${selectedTourist.emergencyContacts.length}/${selectedTourist.emergencyContacts.length} notified`
+                          : `✓ Primary Contact notified`
+                       }
+                     </p>
+                   )}
                  </div>
                </div>
                <div className="flex items-start gap-3">
