@@ -35,7 +35,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 220 14% 96%;
     --foreground: 220 20% 15%;
     --card: 0 0% 100%;
     --card-foreground: 220 20% 15%;
@@ -46,13 +46,13 @@
     --secondary: 199 89% 48%;
     --secondary-foreground: 0 0% 100%;
     --muted: 210 20% 95%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 20% 40%;
     --accent: 40 96% 53%;
     --accent-foreground: 0 0% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
     --ring: 152 60% 40%;
     --radius: 0.5rem;
 
@@ -85,8 +85,8 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --glass-bg: 0 0% 100% / 0.7;
-    --glass-border: 0 0% 100% / 0.2;
+    --glass-bg: 0 0% 100% / 0.95;
+    --glass-border: 220 13% 85% / 0.8;
     --hero-overlay: 0 0% 0% / 0.45;
   }
 
@@ -149,7 +149,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-white text-gray-900 dark:bg-black dark:text-white font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -159,7 +159,7 @@
 
 @layer components {
   .glass-card {
-    @apply rounded-xl border backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply rounded-xl border backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 shadow-sm dark:shadow-none;
     background: hsl(var(--glass-bg));
     border-color: hsl(var(--glass-border));
   }
