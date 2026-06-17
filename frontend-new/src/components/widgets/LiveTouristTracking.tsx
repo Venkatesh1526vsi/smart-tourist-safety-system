@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Radar, AlertTriangle, ShieldCheck, Phone, Navigation, Clock, LocateFixed } from "lucide-react";
+import { Radar, AlertTriangle, ShieldCheck, Phone, Navigation, Clock, LocateFixed, AlertOctagon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { Button } from "@/components/ui/button";
