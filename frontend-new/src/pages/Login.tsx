@@ -240,12 +240,12 @@ const Login = () => {
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full bg-background border border-input text-foreground font-semibold shadow-sm hover:bg-accent hover:text-accent-foreground focus:ring-2 focus:ring-primary/50 transition-colors">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tourist">Tourist</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                <SelectContent className="bg-popover border-border shadow-md">
+                  <SelectItem value="tourist" className="font-medium cursor-pointer">Tourist</SelectItem>
+                  <SelectItem value="admin" className="font-medium cursor-pointer">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

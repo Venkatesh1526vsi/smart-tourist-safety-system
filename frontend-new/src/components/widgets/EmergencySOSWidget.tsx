@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldAlert, X, AlertOctagon, Radio, ShieldCheck, Navigation2, EyeOff } from "lucide-react";
+import { ShieldAlert, X, AlertOctagon, Radio, ShieldCheck, Navigation2, EyeOff, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +12,7 @@ const EmergencySOSWidget = () => {
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [isSilent, setIsSilent] = useState(false);
   const [escalationStage, setEscalationStage] = useState(0);
+  const [activeTime, setActiveTime] = useState(0);
 
   // Hold-to-activate state
   const [isHolding, setIsHolding] = useState(false);
@@ -33,6 +34,7 @@ const EmergencySOSWidget = () => {
     setSosState('idle');
     setIsSilent(false);
     setEscalationStage(0);
+    setActiveTime(0);
     setHoldProgress(0);
     setIsHolding(false);
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -89,17 +91,35 @@ const EmergencySOSWidget = () => {
   useEffect(() => {
     if (sosState !== 'active') return;
     setEscalationStage(0);
+    setActiveTime(0);
     
     const t1 = setTimeout(() => setEscalationStage(1), 2500); // Signal transmitted
     const t2 = setTimeout(() => setEscalationStage(2), 5500); // Authorities notified
     const t3 = setTimeout(() => setEscalationStage(3), 9000); // Patrol assigned
     
+    const timeInterval = setInterval(() => {
+      setActiveTime((prev) => prev + 1);
+    }, 1000);
+
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearInterval(timeInterval);
     };
   }, [sosState]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const getPhaseInfo = () => {
+    if (escalationStage === 0) return { phase: 1, text: "SOS Activated" };
+    if (escalationStage < 3) return { phase: 2, text: "Response Team Assigned" };
+    return { phase: 3, text: "Response In Progress" };
+  };
 
   // SVG parameters for progress ring
   const circleRadius = 54;
@@ -229,41 +249,62 @@ const EmergencySOSWidget = () => {
                       Emergency Channel Open
                     </span>
                   </div>
-                  <span className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-muted-foreground">
-                    {new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
+                  <div className="flex flex-col items-end text-right bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1.5 rounded min-w-[120px] border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 tracking-wider">Phase {getPhaseInfo().phase}</span>
+                    <span className="text-[10px] uppercase text-muted-foreground">{getPhaseInfo().text}</span>
+                    <span className="text-xs font-mono text-foreground font-semibold mt-0.5">Elapsed: {formatTime(activeTime)}</span>
+                  </div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-sm">
                     <Radio className={`h-4 w-4 ${escalationStage >= 1 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                    <span className={escalationStage >= 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}>Location Transmitted</span>
+                    <span className={escalationStage >= 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}>GPS Location Verified</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <ShieldCheck className={`h-4 w-4 ${escalationStage >= 2 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                    <span className={escalationStage >= 2 ? 'text-foreground font-medium' : 'text-muted-foreground'}>Control Room Notified</span>
+                    <span className={escalationStage >= 2 ? 'text-foreground font-medium' : 'text-muted-foreground'}>Emergency Control Center Alerted</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <Navigation2 className={`h-4 w-4 ${escalationStage >= 3 ? 'text-amber-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'}`} />
                     <span className={escalationStage >= 3 ? 'text-foreground font-bold' : 'text-muted-foreground'}>
-                      {escalationStage >= 3 ? 'Nearby Patrol Assigned' : 'Awaiting Assignment'}
+                      {escalationStage >= 3 ? 'Nearest Patrol Unit Assigned' : 'Awaiting Assignment'}
                     </span>
                   </div>
+                  {escalationStage >= 3 && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <Activity className="h-4 w-4 text-blue-500" />
+                      <span className="text-foreground font-medium flex items-center gap-2">
+                        Live Tracking Active
+                        <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-ping"></span>
+                      </span>
+                    </motion.div>
+                  )}
                 </div>
 
                 {escalationStage >= 3 && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }} 
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-md mt-4 space-y-2"
+                    className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-md mt-4 space-y-2 relative overflow-hidden"
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-500 uppercase tracking-wider">Response ETA</span>
-                      <span className="text-sm font-bold text-amber-600 dark:text-amber-400">~6 mins</span>
+                    <div className="flex justify-between items-center relative z-10">
+                      <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Nearest Patrol</span>
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-400">Distance: ~3.2 km</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-500 uppercase tracking-wider">Live Tracking</span>
-                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">ACTIVE</span>
+                    <div className="flex justify-between items-center relative z-10">
+                      <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Response ETA</span>
+                      <span className="text-sm font-bold text-amber-800 dark:text-amber-400">~{Math.max(1, 6 - Math.floor(activeTime / 60))} min</span>
+                    </div>
+                    <div className="flex justify-between items-center relative z-10 mt-1.5 pt-1.5 border-t border-amber-500/20">
+                      <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-500 flex items-center gap-1.5 uppercase tracking-wider">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        Dispatch Active
+                      </span>
                     </div>
                   </motion.div>
                 )}

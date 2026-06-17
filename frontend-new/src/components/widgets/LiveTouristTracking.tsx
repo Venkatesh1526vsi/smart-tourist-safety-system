@@ -128,13 +128,13 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
   useEffect(() => {
     const loadRealUsers = () => {
       const storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-      const realTourists = storedUsers.filter((u: any) => u.role === "user");
+      const realTourists = storedUsers;
 
       setTourists(prev => {
         const updated = [...prev];
         
-        // Ensure fallback tourists exist if no real users are found and no previous tourists exist
-        if (realTourists.length === 0 && updated.length === 0) {
+        // Always ensure fallback tourists exist alongside real users
+        if (!updated.some(u => u.id.startsWith('F-'))) {
            const fallbacks = Array.from({ length: 25 }).map((_, i) => {
              const isCritical = Math.random() > 0.85;
              const isHigh = !isCritical && Math.random() > 0.7;
@@ -178,8 +178,8 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
             const jitterLng = (Math.random() - 0.5) * 0.05;
             updated.push({
               id: rt.id || rt._id || `U-${Date.now()}-${Math.random()}`,
-              name: rt.name || "Unknown Tourist",
-              role: "Tourist",
+              name: rt.name || "Unknown User",
+              role: rt.role || "Tourist",
               latitude: PUNE_CENTER[0] + jitterLat,
               longitude: PUNE_CENTER[1] + jitterLng,
               safetyScore: 100,
@@ -336,6 +336,16 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
     }
   }, [tourists, selectedTourist?.id]);
 
+  const sortedTourists = useMemo(() => {
+    return [...tourists].sort((a, b) => {
+      const aReal = !a.id.startsWith('F-');
+      const bReal = !b.id.startsWith('F-');
+      if (aReal && !bReal) return -1;
+      if (!aReal && bReal) return 1;
+      return 0;
+    });
+  }, [tourists]);
+
   return (
     <div className="space-y-4">
       {/* Persistent Critical Alert Cards (Replaces Popups) */}
@@ -409,11 +419,17 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
         </div>
 
         {selectedTourist ? (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col">
+            <Button variant="ghost" size="sm" onClick={() => setSelectedTourist(null)} className="self-start h-6 px-2 text-[10px] -ml-2 text-muted-foreground hover:text-foreground mb-1">
+              ← Back to List
+            </Button>
             <div className="flex justify-between items-start">
                <div>
-                  <h4 className="font-bold text-lg">{selectedTourist.name}</h4>
-                  <p className="text-xs text-muted-foreground">ID: {selectedTourist.id} • Pune Zone Tracking</p>
+                  <h4 className="font-bold text-lg flex items-center gap-2">
+                    {selectedTourist.name}
+                    {!selectedTourist.id.startsWith('F-') && <Badge variant="outline" className="text-[9px] h-4 px-1 py-0 border-emerald-500/50 text-emerald-600 bg-emerald-500/10">VERIFIED</Badge>}
+                  </h4>
+                  <p className="text-xs text-muted-foreground capitalize">Role: {selectedTourist.role} • ID: {selectedTourist.id.slice(0, 8)}</p>
                </div>
                <Badge variant={selectedTourist.riskLevel === 'safe' ? 'default' : selectedTourist.riskLevel === 'moderate' ? 'secondary' : 'destructive'} className={`capitalize ${selectedTourist.riskLevel === 'critical' || selectedTourist.riskLevel === 'high' ? 'animate-pulse' : ''}`}>
                  {selectedTourist.riskLevel}
@@ -442,7 +458,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
                <div className="flex items-start gap-3">
                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
                  <div>
-                   <p className="text-xs font-semibold">Emergency Contact</p>
+                   <p className="text-xs font-semibold">Contact / Email</p>
                    <p className="text-sm">{selectedTourist.emergencyContact}</p>
                  </div>
                </div>
@@ -484,9 +500,32 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
             )}
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-3 opacity-50 p-6">
-             <Radar className="h-12 w-12 text-muted-foreground" />
-             <p className="text-sm">Select a tourist marker on the map to view live telemetry and safety status.</p>
+          <div className="h-full flex flex-col overflow-hidden">
+             <div className="flex flex-col items-center justify-center text-center space-y-2 opacity-70 p-4 border-b shrink-0">
+               <Radar className="h-8 w-8 text-muted-foreground" />
+               <p className="text-xs">Select a user from the map or tracking list to view live telemetry.</p>
+             </div>
+             <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                {sortedTourists.map(t => {
+                   const isReal = !t.id.startsWith('F-');
+                   return (
+                     <div 
+                       key={t.id} 
+                       onClick={() => setSelectedTourist(t)}
+                       className="flex items-center justify-between p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer border border-transparent hover:border-border transition-colors"
+                     >
+                        <div className="flex items-center gap-2">
+                           <div className={`w-2 h-2 rounded-full ${t.riskLevel === 'critical' ? 'bg-red-500 animate-pulse' : t.riskLevel === 'high' ? 'bg-orange-500' : t.riskLevel === 'moderate' ? 'bg-yellow-400' : 'bg-emerald-500'}`} />
+                           <span className={`text-sm font-medium ${isReal ? 'text-primary' : 'text-foreground'}`}>
+                             {isReal && <span className="text-emerald-500 mr-1 font-bold">✓</span>}
+                             {t.name}
+                           </span>
+                        </div>
+                        {isReal && <Badge variant="outline" className="text-[9px] h-4 px-1 py-0 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">VERIFIED</Badge>}
+                     </div>
+                   );
+                })}
+             </div>
           </div>
         )}
       </div>
