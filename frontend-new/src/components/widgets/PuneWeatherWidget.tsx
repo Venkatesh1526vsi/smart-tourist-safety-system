@@ -67,7 +67,7 @@ const PuneWeatherWidget = ({ locationData }: PuneWeatherWidgetProps) => {
 
   if (loading) {
     return (
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50">
+      <Card className="bg-card border-border shadow-sm">
         <CardContent className="p-6 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="ml-2 text-sm text-muted-foreground">Loading weather...</span>
@@ -78,7 +78,7 @@ const PuneWeatherWidget = ({ locationData }: PuneWeatherWidgetProps) => {
 
   if (error || !weather) {
     return (
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50">
+      <Card className="bg-card border-border shadow-sm">
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">Weather data unavailable</p>
         </CardContent>
@@ -87,7 +87,7 @@ const PuneWeatherWidget = ({ locationData }: PuneWeatherWidgetProps) => {
   }
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md">
+    <Card className="bg-card border-border shadow-sm transition-all hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">

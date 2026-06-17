@@ -370,7 +370,7 @@ export const LiveTouristTracking = ({ filter }: { filter?: { severity?: string, 
         </div>
       )}
 
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm overflow-hidden flex flex-col md:flex-row h-[500px]">
+      <Card className="bg-card border-border shadow-sm overflow-hidden flex flex-col md:flex-row h-[500px]">
       <div className="w-full md:w-1/2 h-1/2 md:h-full relative border-r border-border shrink-0">
         <MapContainer center={PUNE_CENTER} zoom={12} scrollWheelZoom={true} className="h-full w-full z-0">
           <TileLayer

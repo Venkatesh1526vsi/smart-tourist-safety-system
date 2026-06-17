@@ -127,7 +127,7 @@ const EmergencySOSWidget = () => {
   const strokeDashoffset = circumference - (holdProgress / 100) * circumference;
 
   return (
-    <Card className="relative overflow-hidden dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm flex flex-col h-full">
+    <Card className="relative overflow-hidden bg-card border-border shadow-sm flex flex-col h-full">
       <CardHeader className="pb-2 flex-none">
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldAlert className="h-5 w-5 text-red-500" />
@@ -201,7 +201,7 @@ const EmergencySOSWidget = () => {
 
               <button 
                 onClick={() => activateSOS(true)} 
-                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-6 flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] sm:min-h-0"
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-6 flex items-center justify-center gap-1.5 px-4 py-2 sm:py-1.5 rounded-full hover:bg-muted min-h-[44px] sm:min-h-0"
               >
                 <EyeOff className="h-3.5 w-3.5 sm:h-3 sm:w-3" /> Silent SOS
               </button>
@@ -249,7 +249,7 @@ const EmergencySOSWidget = () => {
                       Emergency Channel Open
                     </span>
                   </div>
-                  <div className="flex flex-col items-end text-right bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1.5 rounded min-w-[120px] border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                  <div className="flex flex-col items-end text-right bg-muted/50 px-2.5 py-1.5 rounded min-w-[120px] border border-border shadow-sm">
                     <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 tracking-wider">Phase {getPhaseInfo().phase}</span>
                     <span className="text-[10px] uppercase text-muted-foreground">{getPhaseInfo().text}</span>
                     <span className="text-xs font-mono text-foreground font-semibold mt-0.5">Elapsed: {formatTime(activeTime)}</span>

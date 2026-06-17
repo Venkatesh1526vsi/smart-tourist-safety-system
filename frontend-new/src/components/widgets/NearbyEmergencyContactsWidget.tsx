@@ -37,7 +37,7 @@ const distanceColor = (d: number) => {
 
 const NearbyEmergencyContactsWidget = () => {
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md h-full">
+    <Card className="bg-card border-border shadow-sm transition-all hover:shadow-md h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">

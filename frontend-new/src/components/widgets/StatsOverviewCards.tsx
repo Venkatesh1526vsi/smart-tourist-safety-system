@@ -86,7 +86,7 @@ const StatsOverviewCards = ({ summary, filter, onFilterChange }: StatsOverviewCa
             className={`cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 ${
               isActive 
                 ? "ring-2 ring-primary bg-primary/5 dark:bg-primary/10 border-primary" 
-                : "dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm"
+                : "bg-card border-border shadow-sm"
             }`}
           >
             <CardContent className="flex items-start gap-3 p-4">

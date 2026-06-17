@@ -34,7 +34,7 @@ const TravelSafetyTipsWidget = () => {
 
   return (
     <Card
-      className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md h-full"
+      className="bg-card border-border shadow-sm transition-all hover:shadow-md h-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -61,7 +61,7 @@ const TravelSafetyTipsWidget = () => {
               className={`rounded-lg border p-4 ${
                 tip.isWarning
                   ? "border-amber-500/40 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/10 shadow-[0_0_15px_-3px_rgba(245,158,11,0.15)]"
-                  : "border-border bg-muted/30 dark:bg-slate-700/40"
+                  : "border-border bg-muted/30 "
               }`}
             >
               <div className="flex items-start gap-3">

@@ -67,7 +67,7 @@ const PuneSafetyNewsWidget = () => {
 
   if (loading) {
     return (
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50">
+      <Card className="bg-card border-border shadow-sm">
         <CardContent className="p-6 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="ml-2 text-sm text-muted-foreground">Loading safety alerts...</span>
@@ -78,7 +78,7 @@ const PuneSafetyNewsWidget = () => {
 
   if (error) {
     return (
-      <Card className="dark:bg-slate-800/60 dark:border-slate-700/50">
+      <Card className="bg-card border-border shadow-sm">
         <CardContent className="p-4 flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-amber-500" />
           <p className="text-sm text-muted-foreground">Unable to load safety alerts</p>
@@ -88,7 +88,7 @@ const PuneSafetyNewsWidget = () => {
   }
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm">
+    <Card className="bg-card border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Newspaper className="h-5 w-5 text-blue-500" />
@@ -106,7 +106,7 @@ const PuneSafetyNewsWidget = () => {
               articles.map((article, index) => (
                 <div
                   key={index}
-                  className="p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  className="p-3 rounded-lg bg-slate-50  hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-sm font-medium line-clamp-2 flex-1">

@@ -39,7 +39,7 @@ const riskConfig = {
 
 const RouteSafetySuggestionWidget = () => {
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm transition-all hover:shadow-md h-full">
+    <Card className="bg-card border-border shadow-sm transition-all hover:shadow-md h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -75,7 +75,7 @@ const RouteSafetySuggestionWidget = () => {
                 </div>
 
                 {/* Safety bar */}
-                <div className="mt-2 h-1.5 w-full rounded-full bg-muted dark:bg-slate-700/50">
+                <div className="mt-2 h-1.5 w-full rounded-full bg-muted ">
                   <div
                     className={`h-full rounded-full transition-all ${cfg.bar}`}
                     style={{ width: `${route.score}%` }}
