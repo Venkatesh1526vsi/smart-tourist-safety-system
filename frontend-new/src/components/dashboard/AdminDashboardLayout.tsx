@@ -5,7 +5,6 @@ import { Radar, AlertTriangle, Radio, Users, BarChart3, LogOut, Menu, X } from "
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Settings } from "lucide-react";
 
 const navItems = [
   { title: "Live Tracking", icon: Radar, path: "/dashboard/admin" },

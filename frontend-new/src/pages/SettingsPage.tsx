@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { UserDashboardLayout } from "@/components/dashboard/UserDashboardLayout";
-import { useAuth, EmergencyContact } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import type { EmergencyContact } from "@/contexts/AuthContext";
 import { Trash2, Star, Plus } from "lucide-react";
 
 const SettingsPage = () => {
