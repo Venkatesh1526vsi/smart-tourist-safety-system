@@ -51,7 +51,7 @@ const IncidentCategoryPieChart = ({ incidents, filter, onFilterChange }: Inciden
   };
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative h-full flex flex-col">
+    <Card className="bg-card border-border shadow-sm relative h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldAlert className="h-5 w-5 text-sky-600 dark:text-cyan-400" />

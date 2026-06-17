@@ -128,7 +128,7 @@ const MonthlyTrendChart = ({ incidents, filter, onFilterChange }: MonthlyTrendCh
   }
 
   return (
-    <Card className="dark:bg-slate-800/60 dark:border-slate-700/50 dark:backdrop-blur-sm relative">
+    <Card className="bg-card border-border shadow-sm relative">
       <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 text-lg">
           <TrendingUp className={`h-5 w-5 ${iconColor}`} />
