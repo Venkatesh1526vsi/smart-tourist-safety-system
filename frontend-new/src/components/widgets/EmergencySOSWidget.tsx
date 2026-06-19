@@ -140,14 +140,14 @@ const EmergencySOSWidget = () => {
   const strokeDashoffset = circumference - (holdProgress / 100) * circumference;
 
   return (
-    <Card className="relative overflow-hidden bg-card border-border shadow-sm flex flex-col h-[380px]">
+    <Card className="relative overflow-hidden bg-card border-border shadow-sm flex flex-col h-full">
       <CardHeader className="pb-2 flex-none">
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldAlert className="h-5 w-5 text-red-500" />
           Emergency SOS
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center justify-center py-4">
+      <CardContent className="flex-1 relative min-h-0 p-0">
         <AnimatePresence mode="wait">
           {sosState === 'idle' ? (
             <motion.div
@@ -155,7 +155,7 @@ const EmergencySOSWidget = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="flex flex-col items-center justify-center w-full"
+              className="flex flex-col items-center justify-center w-full h-full p-4"
             >
               <div 
                 className="relative flex items-center justify-center w-32 h-32 select-none"
@@ -225,7 +225,7 @@ const EmergencySOSWidget = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="flex flex-col items-center gap-4 w-full"
+              className="flex flex-col items-center justify-center gap-4 w-full h-full p-4"
             >
               <motion.div
                 animate={{ scale: [1, 1.08, 1] }}
@@ -249,7 +249,7 @@ const EmergencySOSWidget = () => {
               key="active"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col w-full h-full overflow-hidden"
+              className="absolute inset-0 flex flex-col overflow-hidden p-4"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border pb-3 shrink-0">
