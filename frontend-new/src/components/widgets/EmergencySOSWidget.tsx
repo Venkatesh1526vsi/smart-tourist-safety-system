@@ -249,109 +249,112 @@ const EmergencySOSWidget = () => {
               key="active"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col w-full h-full justify-between"
+              className="flex flex-col w-full h-full overflow-hidden"
             >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="flex flex-col">
-                    <span className={`font-bold flex items-center gap-2 ${isSilent ? 'text-amber-500' : 'text-red-500'}`}>
-                      <span className={`h-2.5 w-2.5 rounded-full animate-pulse ${isSilent ? 'bg-amber-500' : 'bg-red-500'}`} />
-                      {isSilent ? "SILENT MODE" : "SOS ACTIVE"}
-                    </span>
-                    <span className="text-[10px] uppercase text-muted-foreground tracking-wider mt-0.5">
-                      Emergency Channel Open
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end text-right bg-muted/50 px-2.5 py-1.5 rounded min-w-[120px] border border-border shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 tracking-wider">Phase {getPhaseInfo().phase}</span>
-                    <span className="text-[10px] uppercase text-muted-foreground">{getPhaseInfo().text}</span>
-                    <span className="text-xs font-mono text-foreground font-semibold mt-0.5">Elapsed: {formatTime(activeTime)}</span>
-                  </div>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-border pb-3 shrink-0">
+                <div className="flex flex-col">
+                  <span className={`font-bold flex items-center gap-2 ${isSilent ? 'text-amber-500' : 'text-red-500'}`}>
+                    <span className={`h-2.5 w-2.5 rounded-full animate-pulse ${isSilent ? 'bg-amber-500' : 'bg-red-500'}`} />
+                    {isSilent ? "SILENT MODE" : "SOS ACTIVE"}
+                  </span>
+                  <span className="text-[10px] uppercase text-muted-foreground tracking-wider mt-0.5">
+                    Emergency Channel Open
+                  </span>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Radio className={`h-4 w-4 ${escalationStage >= 1 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                    <span className={escalationStage >= 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}>GPS Location Verified</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <ShieldCheck className={`h-4 w-4 ${escalationStage >= 2 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                    <span className={escalationStage >= 2 ? 'text-foreground font-medium' : 'text-muted-foreground'}>Emergency Control Center Alerted</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <Navigation2 className={`h-4 w-4 ${escalationStage >= 3 ? 'text-amber-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'}`} />
-                    <span className={escalationStage >= 3 ? 'text-foreground font-bold' : 'text-muted-foreground'}>
-                      {escalationStage >= 3 ? 'Nearest Patrol Unit Assigned' : 'Awaiting Assignment'}
-                    </span>
-                  </div>
-                  {escalationStage >= 3 && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      <Activity className="h-4 w-4 text-blue-500" />
-                      <span className="text-foreground font-medium flex items-center gap-2">
-                        Live Tracking Active
-                        <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-ping"></span>
-                      </span>
-                    </motion.div>
-                  )}
-                  {escalationStage >= 3 && numContacts === 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      <AlertOctagon className={`h-4 w-4 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                      <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 4 ? '⚠ No Emergency Contacts Configured' : 'Checking Emergency Contacts...'}
-                      </span>
-                    </motion.div>
-                  )}
-                  {escalationStage >= 3 && numContacts > 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      <Phone className={`h-4 w-4 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                      <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 4 ? `✓ Primary Contact Notified (${primaryContact?.name})` : 'Notifying Primary Contact...'}
-                      </span>
-                    </motion.div>
-                  )}
-                  {escalationStage >= 4 && numContacts > 1 && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      <Users className={`h-4 w-4 ${escalationStage >= 5 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                      <span className={escalationStage >= 5 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 5 ? `✓ Additional Contacts Notified (${numContacts - 1})` : `Notifying Contacts...`}
-                      </span>
-                    </motion.div>
-                  )}
-                  {escalationStage >= (numContacts > 1 ? 5 : 4) && (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 text-sm"
-                    >
-                      <Navigation2 className={`h-4 w-4 ${escalationStage >= 6 ? 'text-blue-500' : 'text-slate-400 dark:text-slate-600'}`} />
-                      <span className={escalationStage >= 6 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                        {escalationStage >= 6 ? '✓ Live Location Shared' : 'Preparing Live Location Share...'}
-                      </span>
-                    </motion.div>
-                  )}
+                <div className="flex flex-col items-end text-right bg-muted/50 px-2.5 py-1.5 rounded min-w-[120px] border border-border shadow-sm shrink-0">
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 tracking-wider">Phase {getPhaseInfo().phase}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground">{getPhaseInfo().text}</span>
+                  <span className="text-xs font-mono text-foreground font-semibold mt-0.5">Elapsed: {formatTime(activeTime)}</span>
                 </div>
+              </div>
+              
+              {/* Scrollable Status Area */}
+              <div className="flex-1 overflow-y-auto min-h-0 space-y-3 py-3 pr-2 scrollbar-thin">
+                <div className="flex items-center gap-3 text-sm">
+                  <Radio className={`h-4 w-4 shrink-0 ${escalationStage >= 1 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                  <span className={escalationStage >= 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}>GPS Location Verified</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <ShieldCheck className={`h-4 w-4 shrink-0 ${escalationStage >= 2 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                  <span className={escalationStage >= 2 ? 'text-foreground font-medium' : 'text-muted-foreground'}>Emergency Control Center Alerted</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Navigation2 className={`h-4 w-4 shrink-0 ${escalationStage >= 3 ? 'text-amber-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'}`} />
+                  <span className={escalationStage >= 3 ? 'text-foreground font-bold' : 'text-muted-foreground'}>
+                    {escalationStage >= 3 ? 'Nearest Patrol Unit Assigned' : 'Awaiting Assignment'}
+                  </span>
+                </div>
+                {escalationStage >= 3 && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }} 
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <Activity className="h-4 w-4 shrink-0 text-blue-500" />
+                    <span className="text-foreground font-medium flex items-center gap-2">
+                      Live Tracking Active
+                      <span className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-ping"></span>
+                    </span>
+                  </motion.div>
+                )}
+                {escalationStage >= 3 && numContacts === 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }} 
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <AlertOctagon className={`h-4 w-4 shrink-0 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                    <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                      {escalationStage >= 4 ? '⚠ No Emergency Contacts Configured' : 'Checking Emergency Contacts...'}
+                    </span>
+                  </motion.div>
+                )}
+                {escalationStage >= 3 && numContacts > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }} 
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <Phone className={`h-4 w-4 shrink-0 ${escalationStage >= 4 ? 'text-amber-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                    <span className={escalationStage >= 4 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                      {escalationStage >= 4 ? `✓ Primary Contact Notified (${primaryContact?.name})` : 'Notifying Primary Contact...'}
+                    </span>
+                  </motion.div>
+                )}
+                {escalationStage >= 4 && numContacts > 1 && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }} 
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <Users className={`h-4 w-4 shrink-0 ${escalationStage >= 5 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                    <span className={escalationStage >= 5 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                      {escalationStage >= 5 ? `✓ Additional Contacts Notified (${numContacts - 1})` : `Notifying Contacts...`}
+                    </span>
+                  </motion.div>
+                )}
+                {escalationStage >= (numContacts > 1 ? 5 : 4) && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }} 
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <Navigation2 className={`h-4 w-4 shrink-0 ${escalationStage >= 6 ? 'text-blue-500' : 'text-slate-400 dark:text-slate-600'}`} />
+                    <span className={escalationStage >= 6 ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                      {escalationStage >= 6 ? '✓ Live Location Shared' : 'Preparing Live Location Share...'}
+                    </span>
+                  </motion.div>
+                )}
+              </div>
 
+              {/* Fixed Bottom Area */}
+              <div className="shrink-0 pt-2 border-t border-border mt-auto">
                 {escalationStage >= 3 && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }} 
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-md mt-4 space-y-2 relative overflow-hidden"
+                    className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-md mb-4 space-y-2 relative overflow-hidden shrink-0"
                   >
                     <div className="flex justify-between items-center relative z-10">
                       <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Nearest Patrol</span>
@@ -369,11 +372,9 @@ const EmergencySOSWidget = () => {
                     </div>
                   </motion.div>
                 )}
-              </div>
 
-              <div className="pt-4 mt-auto">
                 <Button variant="outline" onClick={cancelSOS} className="w-full border-red-500/30 text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors min-h-[44px]">
-                  <X className="mr-2 h-4 w-4" /> Cancel Emergency
+                  <X className="mr-2 h-4 w-4 shrink-0" /> Cancel Emergency
                 </Button>
               </div>
             </motion.div>
