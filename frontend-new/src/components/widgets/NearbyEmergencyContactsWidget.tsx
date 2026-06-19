@@ -50,8 +50,8 @@ const NearbyEmergencyContactsWidget = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 flex-1 flex flex-col justify-between">
-        <ScrollArea className="flex-1 px-6 pb-4">
+      <CardContent className="p-0 h-full flex flex-col justify-between">
+        <ScrollArea className="h-full px-6 pb-4 flex flex-col justify-between">
           <div className="space-y-3 pt-1">
             {CONTACTS.map((c) => {
               const Icon = iconMap[c.type];

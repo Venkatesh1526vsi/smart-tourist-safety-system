@@ -49,8 +49,8 @@ const TravelSafetyTipsWidget = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-between">
-        <div className="relative min-h-[120px]">
+      <CardContent className="h-full flex flex-col justify-between">
+        <div className="relative min-h-[120px] h-full flex flex-col justify-between">
           <AnimatePresence mode="wait">
             <motion.div
               key={tip.id}

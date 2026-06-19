@@ -52,8 +52,8 @@ const RouteSafetySuggestionWidget = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-between">
-        <div className="space-y-3 flex-1 flex flex-col justify-between">
+      <CardContent className="h-full flex flex-col justify-between">
+        <div className="space-y-3 h-full flex flex-col justify-between">
           {ROUTES.map((route) => {
             const cfg = riskConfig[route.risk];
             return (
