@@ -114,8 +114,8 @@ export function UserDashboardLayout({ children }: { children: React.ReactNode })
               
               {profileOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 mt-3 w-72 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl z-50 animate-in slide-in-from-top-2 fade-in overflow-hidden">
+                  <div className="fixed inset-0 z-[90]" onClick={() => setProfileOpen(false)} />
+                  <div className="fixed right-4 top-[72px] w-72 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-xl z-[100] animate-in slide-in-from-top-2 fade-in overflow-hidden">
                     <div className="px-5 py-4 bg-muted/30 border-b border-border">
                       <p className="text-base font-semibold leading-none text-foreground">{user?.name || "User"}</p>
                       <p className="text-xs text-muted-foreground mt-1.5 truncate">{user?.email || "No email"}</p>

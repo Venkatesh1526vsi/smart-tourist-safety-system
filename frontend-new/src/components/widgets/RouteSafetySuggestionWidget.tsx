@@ -39,7 +39,7 @@ const riskConfig = {
 
 const RouteSafetySuggestionWidget = () => {
   return (
-    <Card className="bg-card border-border shadow-sm transition-all hover:shadow-md h-full">
+    <Card className="bg-card border-border shadow-sm transition-all hover:shadow-md flex flex-col justify-between h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -52,8 +52,8 @@ const RouteSafetySuggestionWidget = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="flex-1 flex flex-col justify-between">
+        <div className="space-y-3 flex-1 flex flex-col justify-between">
           {ROUTES.map((route) => {
             const cfg = riskConfig[route.risk];
             return (

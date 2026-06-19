@@ -69,7 +69,9 @@ const UserDashboard = () => {
     <UserDashboardLayout>
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold">Welcome, {user?.name || 'Traveler'} 👋</h1>
+          <h1 className="font-display text-xl sm:text-2xl font-bold">
+            {user?.name ? `Welcome, ${user.name}` : 'Welcome'} 👋
+          </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">Here's your safety overview</p>
         </div>
 

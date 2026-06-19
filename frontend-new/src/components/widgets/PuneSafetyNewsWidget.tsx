@@ -106,7 +106,7 @@ const PuneSafetyNewsWidget = () => {
               articles.map((article, index) => (
                 <div
                   key={index}
-                  className="p-3 rounded-lg bg-slate-50  hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  className="p-3 rounded-lg bg-card border border-border hover:bg-muted transition-colors text-foreground"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-sm font-medium line-clamp-2 flex-1">
@@ -127,8 +127,8 @@ const PuneSafetyNewsWidget = () => {
                     {article.description || 'No description available'}
                   </p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-slate-500">{article.source || 'Unknown'}</span>
-                    <span className="text-xs text-slate-400">{formatDate(article.publishedAt)}</span>
+                    <span className="text-xs text-foreground">{article.source || 'Unknown'}</span>
+                    <span className="text-xs text-muted-foreground">{formatDate(article.publishedAt)}</span>
                   </div>
                 </div>
               ))

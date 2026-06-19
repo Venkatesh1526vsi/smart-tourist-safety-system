@@ -34,7 +34,7 @@ const TravelSafetyTipsWidget = () => {
 
   return (
     <Card
-      className="bg-card border-border shadow-sm transition-all hover:shadow-md h-full"
+      className="bg-card border-border shadow-sm transition-all hover:shadow-md flex flex-col justify-between h-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -49,7 +49,7 @@ const TravelSafetyTipsWidget = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col justify-between">
         <div className="relative min-h-[120px]">
           <AnimatePresence mode="wait">
             <motion.div
