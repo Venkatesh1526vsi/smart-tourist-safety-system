@@ -140,7 +140,7 @@ const EmergencySOSWidget = () => {
   const strokeDashoffset = circumference - (holdProgress / 100) * circumference;
 
   return (
-    <Card className="relative overflow-hidden bg-card border-border shadow-sm flex flex-col h-full">
+    <Card className="relative overflow-hidden bg-card border-border shadow-sm flex flex-col h-[380px]">
       <CardHeader className="pb-2 flex-none">
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldAlert className="h-5 w-5 text-red-500" />
@@ -352,8 +352,8 @@ const EmergencySOSWidget = () => {
               <div className="shrink-0 pt-2 border-t border-border mt-auto">
                 {escalationStage >= 3 && (
                   <motion.div 
-                    initial={{ opacity: 0, height: 0 }} 
-                    animate={{ opacity: 1, height: 'auto' }}
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }}
                     className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-md mb-4 space-y-2 relative overflow-hidden shrink-0"
                   >
                     <div className="flex justify-between items-center relative z-10">
