@@ -270,7 +270,7 @@ const EmergencySOSWidget = () => {
               </div>
               
               {/* Scrollable Status Area */}
-              <div className="flex-1 overflow-y-auto min-h-0 space-y-3 py-3 pr-2 scrollbar-thin">
+              <div className="flex-1 overflow-y-auto min-h-0 space-y-3 py-3 pr-3 scroll-smooth [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-200 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb:hover]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb:hover]:bg-slate-600">
                 <div className="flex items-center gap-3 text-sm">
                   <Radio className={`h-4 w-4 shrink-0 ${escalationStage >= 1 ? 'text-green-500' : 'text-slate-400 dark:text-slate-600'}`} />
                   <span className={escalationStage >= 1 ? 'text-foreground font-medium' : 'text-muted-foreground'}>GPS Location Verified</span>
