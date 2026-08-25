@@ -1,48 +1,68 @@
-# 🛡️ Smart Tourist Safety System
+# 🛡️ SafeYatra — Smart Tourist Safety System
 
-A full-stack tourist safety platform designed to help travelers monitor their surroundings, report incidents, visualize risk zones, and access safety information through a centralized web application.
+SafeYatra is a full-stack tourist safety platform designed to help travelers monitor their surroundings, report incidents, and access safety information. It features a centralized web application with incident reporting, risk-zone visualization, emergency assistance, live tourist tracking, and AI-based safety analysis.
 
-The system combines a React + TypeScript frontend, Node.js/Express backend, MongoDB, real-time communication, and a FastAPI-based AI service for risk assessment and incident classification.
+## 📸 Application Preview
 
----
+### 🌐 Landing Page
+![Landing Page](docs/screenshots/Safeyatra%20langing%20page.png)
 
-## 🚀 Key Features
+### 👤 Tourist Dashboard
+![Tourist Dashboard](docs/screenshots/Safeyatra%20dashboard%20%282%29.png)
 
-### 👤 Authentication & User Management
-- User registration and login
-- JWT-based authentication
+### 🗺️ Safety Map
+![Safety Map](docs/screenshots/Safeyatra%20map%20page.png)
+
+### 🧭 Route Planning
+![Route Planning](docs/screenshots/Safteyatra%20Route%20mapping.png)
+
+### 🚨 Incident Reporting
+![Incident Reporting](docs/screenshots/Safeyatra%20incident%20reporting.png)
+
+### 🛡️ Admin Control Center
+![Admin Control Center](docs/screenshots/Safeyatra%20admin%20dashboard.png)
+
+### 📍 Live Tourist Tracking
+![Live Tourist Tracking](docs/screenshots/Safeyatra%20user%20tracking%20page.png)
+
+### 📊 Analytics Dashboard
+![Analytics Dashboard](docs/screenshots/Safeyatra%20Analytics%20page.png)
+
+## 🚀 Features
+
+### Authentication & User Management
+- User registration and login with JWT-based authentication
 - Protected user and administrator routes
 - User profile and notification preferences
 - Role-based admin access
 
-### 🚨 Incident Reporting
+### Incident Reporting
 - Report safety incidents with location details
 - Incident categorization and severity information
-- Evidence/image upload support
+- Evidence and image upload support
 - Incident management for administrators
 - Incident history and status tracking
 
-### 🗺️ Risk Zones & Maps
+### Safety Maps & Risk Zones
 - Interactive maps using Leaflet
 - Visualization of reported incidents and risk zones
 - Location-based safety information
-- Tourist location tracking
 - Risk-zone visualization based on incident data
 
-### 📍 Live Tourist Tracking
+### Live Tourist Tracking
 - GPS-based location updates
 - Real-time communication using Socket.IO
 - Active tourist monitoring for administrators
 - Live tracking interface for safety monitoring
 
-### 🆘 Emergency & Safety Features
+### Emergency & Safety Assistance
 - Emergency SOS functionality
 - Safety status monitoring
 - Nearby emergency information
 - Safety recommendations and travel tips
 - Route safety suggestions
 
-### 📊 Admin Dashboard
+### Administrator Dashboard
 - Monitor registered users
 - Manage reported incidents
 - View safety statistics and analytics
@@ -50,9 +70,7 @@ The system combines a React + TypeScript frontend, Node.js/Express backend, Mong
 - Review risk zones
 - Manage emergency-related information
 
-### 🤖 AI Safety Services
-The project includes a separate FastAPI service providing:
-
+### AI Safety Services
 - Location-based risk assessment
 - Risk score and risk-level calculation
 - Historical incident proximity analysis
@@ -60,51 +78,15 @@ The project includes a separate FastAPI service providing:
 - Incident category classification
 - Confidence estimation and safety recommendations
 
-### 🌦️ Safety Information
-The application also provides additional contextual information such as:
-
+### Contextual Safety Information
 - Local weather information
 - Safety-related news
 - Emergency contacts
 - Travel safety recommendations
 
----
-
-## 🏗️ System Architecture
-
-```text
-┌──────────────────────────────┐
-│        React Frontend        │
-│     TypeScript + Vite        │
-│                              │
-│  Dashboards • Maps • SOS     │
-│  Incidents • Tracking        │
-└──────────────┬───────────────┘
-               │ REST API
-               │ WebSocket
-               ▼
-┌──────────────────────────────┐
-│     Node.js + Express API    │
-│                              │
-│ Authentication • Incidents   │
-│ Users • Profiles • Analytics │
-│ Location • Admin Operations  │
-└──────────────┬───────────────┘
-               │
-       ┌───────┴────────┐
-       ▼                ▼
-┌─────────────┐   ┌──────────────────┐
-│   MongoDB   │   │  FastAPI AI      │
-│             │   │     Service      │
-│ Users       │   │ Risk Assessment  │
-│ Incidents   │   │ Classification   │
-│ Profiles    │   │ Safety Analysis  │
-└─────────────┘   └──────────────────┘
-
 ## 🛠️ Tech Stack
 
 ### Frontend
-
 - React 19
 - TypeScript
 - Vite
@@ -118,7 +100,6 @@ The application also provides additional contextual information such as:
 - PWA Support
 
 ### Backend
-
 - Node.js
 - Express.js
 - MongoDB
@@ -132,7 +113,6 @@ The application also provides additional contextual information such as:
 - Dotenv
 
 ### AI Service
-
 - Python
 - FastAPI
 - Uvicorn
@@ -142,7 +122,6 @@ The application also provides additional contextual information such as:
 - NumPy
 
 ### Development & Deployment
-
 - Git
 - GitHub
 - Docker
@@ -150,296 +129,142 @@ The application also provides additional contextual information such as:
 - Vercel
 - Render
 
-
 ## 📁 Project Structure
 
+```text
 smart-tourist-safety-system/
-│
 ├── frontend-new/                 
 │   ├── public/
 │   └── src/
-│       ├── components/
-│       ├── contexts/
-│       ├── hooks/
-│       ├── pages/
-│       ├── services/
-│       ├── types/
-│       └── utils/
-│
 ├── backend-api/                 
 │   ├── middleware/
 │   ├── models/
 │   ├── routes/
-│   ├── utils/
-│   ├── config.js
-│   └── index.js
-│
+│   └── utils/
 ├── ai-services/                 
 │   ├── app.py
 │   ├── requirements.txt
 │   └── test_ai.py
-│
 ├── docker/                      
 │   └── docker-compose.yml
-│
 ├── scripts/                     
-│
 ├── docs/                        
-│   ├── architecture/
-│   ├── reference/
-│   ├── setup/
 │   └── screenshots/
-│
 ├── PROJECT_KNOWLEDGE_BASE/      
-│
 ├── .gitignore
 └── README.md
+```
 
 ## ⚙️ Installation
 
 ### Prerequisites
-
-Make sure the following are installed:
-
 - Node.js and npm
 - Python 3
 - MongoDB or Docker
 - Git
 
 ### 1. Clone the Repository
-
-    git clone https://github.com/Venkatesh1526vsi/smart-tourist-safety-system.git
-    cd smart-tourist-safety-system
+```bash
+git clone https://github.com/Venkatesh1526vsi/smart-tourist-safety-system.git
+cd smart-tourist-safety-system
+```
 
 ### 2. Install Backend Dependencies
+```bash
+cd backend-api
+npm install
+```
 
-    cd backend-api
-    npm install
+### 3. Install Frontend Dependencies
+```bash
+cd ../frontend-new
+npm install
+```
 
-### 3. Configure Backend Environment
+### 4. Install AI Service Dependencies
+```bash
+cd ../ai-services
+pip install -r requirements.txt
+```
 
-Create:
+## 🔐 Environment Variables
 
-    backend-api/.env
+The backend uses environment variables for configuration. Create a `.env` file in `backend-api/` using `.env.example` as a reference.
 
-Use the provided example file as the configuration reference:
-
-    backend-api/.env.example
-
-The backend uses environment variables for configuration such as:
-
-- PORT
-- MONGO_URI
-- JWT_SECRET
-- TWILIO_ACCOUNT_SID
-- TWILIO_AUTH_TOKEN
-- ADMIN_EMAILS
-- External API keys where applicable
-
-Never commit .env files, database credentials, JWT secrets, API keys, or other sensitive values.
-
-### 4. Install Frontend Dependencies
-
-    cd ../frontend-new
-    npm install
-
-### 5. Install AI Service Dependencies
-
-    cd ../ai-services
-    pip install -r requirements.txt
-
----
+Sensitive configuration must remain outside version control. Never commit `.env` files, database credentials, JWT secrets, API keys, or other sensitive values to the repository.
 
 ## ▶️ Running the Application
 
-The application consists of three main services.
-
 ### Backend
-
-From backend-api/:
-
-    npm start
-
-Default backend port:
-
-    http://localhost:5000
+From `backend-api/`:
+```bash
+npm start
+```
+Runs by default on `http://localhost:5000`.
 
 ### Frontend
-
-From frontend-new/:
-
-    npm run dev
-
-Vite will display the local development URL in the terminal.
+From `frontend-new/`:
+```bash
+npm run dev
+```
+Vite will display the local development URL.
 
 ### AI Service
-
-From ai-services/:
-
-    python app.py
-
-Default AI service port:
-
-    http://localhost:8000
-
-For local development, run the backend, frontend, and AI service in separate terminals.
-
----
-
-## 🐳 Docker
-
-The repository also contains Docker Compose configuration for running the multi-service environment.
-
-Configuration:
-
-    docker/docker-compose.yml
-
-The Compose setup defines containers for:
-
-- MongoDB
-- Backend API
-- AI service
-- frontend-new
-
-To start the configured Docker environment:
-
-    cd docker
-    docker compose up --build
-
-> Note: The current Docker Compose configuration should be reviewed before use because some of its paths still reference the older frontend directory rather than frontend-new.
-
----
+From `ai-services/`:
+```bash
+python app.py
+```
+Runs by default on `http://localhost:8000`.
 
 ## 🧪 Testing & Code Quality
 
 ### Frontend
-
-The frontend uses TypeScript and ESLint.
-
 Build the frontend:
-
-    cd frontend-new
-    npm run build
-
+```bash
+cd frontend-new
+npm run build
+```
 Run linting:
-
-    npm run lint
-
-### Backend
-
-The backend currently contains manual/API-oriented test scripts. Its package.json does not currently define an automated test suite.
+```bash
+npm run lint
+```
 
 ### AI Service
+Run the service-level test script:
+```bash
+python ai-services/test_ai.py
+```
 
-A service-level test script is available at:
+## 🐳 Docker
 
-    ai-services/test_ai.py
+The repository includes a Docker Compose configuration (`docker/docker-compose.yml`) for running the multi-service environment (MongoDB, Backend API, AI service, Frontend).
 
-It exercises the AI service endpoints when the FastAPI server is running.
+To start the configured Docker environment:
+```bash
+cd docker
+docker compose up --build
+```
 
----
-
-## 🔐 Security
-
-Sensitive configuration must remain outside version control.
-
-The repository excludes environment files and generated/local data through .gitignore.
-
-Never commit:
-
-- MongoDB connection strings
-- JWT secrets
-- API keys
-- Passwords
-- Authentication tokens
-- Email credentials
-- Third-party service credentials
-
-Use .env.example files containing only placeholder configuration.
-
----
-
-## 📸 Screenshots
-
-The project includes a dedicated screenshots directory:
-
-    docs/screenshots/
-
-Recommended README screenshots include:
-
-- Landing page
-- User dashboard
-- Incident reporting
-- Risk zone map
-- Admin dashboard
-- Live tourist tracking
-- Emergency SOS
-- Analytics
-
-Screenshots should focus on the strongest and most representative parts of the application without unnecessarily duplicating similar screens.
-
----
+Note: The current Docker Compose configuration should be reviewed before use as some paths may reference an older frontend directory instead of `frontend-new`.
 
 ## 📚 Documentation
 
-Additional technical documentation is available under:
-
-    docs/
-
-It includes:
-
-- Architecture documentation
-- Setup and deployment guides
-- Troubleshooting references
-- Quick references
-
-A detailed internal project knowledge base is also maintained under:
-
-    PROJECT_KNOWLEDGE_BASE/
-
----
+Additional technical documentation is available under `docs/`. A detailed internal project knowledge base is maintained under `PROJECT_KNOWLEDGE_BASE/`.
 
 ## 📊 Project Status
 
-The current application includes:
-
-- User and administrator authentication
-- Incident reporting and management
-- Interactive risk-zone mapping
-- Tourist location tracking
-- Real-time Socket.IO communication
-- Emergency SOS functionality
-- Safety dashboards
-- Incident analytics
-- AI-based risk assessment
-- Incident classification
-- Weather and safety information
-- PWA support
-- Docker configuration
-- Separate frontend, backend, and AI services
-
-The project can be further improved with stronger automated testing, production monitoring, deployment consistency, and expanded safety intelligence.
-
----
+The current application supports user and administrator authentication, incident reporting, interactive risk-zone mapping, tourist tracking, real-time communication, emergency SOS, analytics, and AI-based risk assessment. The project is split into separate frontend, backend, and AI services with Docker configuration and PWA support.
 
 ## 🔮 Future Improvements
 
-- Expand automated frontend and backend test coverage
-- Improve AI risk prediction using larger real-world datasets
-- Improve real-time tracking reliability and scalability
-- Add stronger production monitoring and observability
-- Improve notification and emergency communication workflows
-- Enhance route-level safety analysis
-- Improve deployment configuration consistency
-- Add comprehensive API documentation
-- Improve production security and environment validation
-
----
+- Expand automated test coverage for frontend and backend
+- Improve AI risk prediction with real-world datasets
+- Enhance tracking reliability and scalability
+- Add stronger production monitoring
+- Improve API documentation and deployment consistency
 
 ## 👨‍💻 Author
 
-**Venkatesh Inamdar**
+Venkatesh Inamdar
 
 GitHub: https://github.com/Venkatesh1526vsi
-
-Project Repository: https://github.com/Venkatesh1526vsi/smart-tourist-safety-system
