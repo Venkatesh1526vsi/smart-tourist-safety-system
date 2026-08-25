@@ -1,491 +1,445 @@
-# Smart Tourist Safety System
+# 🛡️ Smart Tourist Safety System
 
-**A comprehensive safety platform for tourists with real-time incident reporting, risk zone mapping, and emergency notifications.**
+A full-stack tourist safety platform designed to help travelers monitor their surroundings, report incidents, visualize risk zones, and access safety information through a centralized web application.
 
-![Status](https://img.shields.io/badge/status-production--ready-green)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+The system combines a React + TypeScript frontend, Node.js/Express backend, MongoDB, real-time communication, and a FastAPI-based AI service for risk assessment and incident classification.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Key Features
 
-### Prerequisites
-- Node.js 16+, npm
-- Python 3.9+
-- MongoDB 5.0+
-- Docker & Docker Compose (optional)
+### 👤 Authentication & User Management
+- User registration and login
+- JWT-based authentication
+- Protected user and administrator routes
+- User profile and notification preferences
+- Role-based admin access
 
-### Option 1: Docker (Recommended - 2 minutes)
+### 🚨 Incident Reporting
+- Report safety incidents with location details
+- Incident categorization and severity information
+- Evidence/image upload support
+- Incident management for administrators
+- Incident history and status tracking
 
-```bash
-# Clone repository
-git clone <repo> && cd smart-tourist-safety
+### 🗺️ Risk Zones & Maps
+- Interactive maps using Leaflet
+- Visualization of reported incidents and risk zones
+- Location-based safety information
+- Tourist location tracking
+- Risk-zone visualization based on incident data
 
-# Setup environment
-cp backend-api/.env.example backend-api/.env
-# Edit backend-api/.env with your credentials
+### 📍 Live Tourist Tracking
+- GPS-based location updates
+- Real-time communication using Socket.IO
+- Active tourist monitoring for administrators
+- Live tracking interface for safety monitoring
 
-# Start all services
-cd docker
-docker-compose up
-```
+### 🆘 Emergency & Safety Features
+- Emergency SOS functionality
+- Safety status monitoring
+- Nearby emergency information
+- Safety recommendations and travel tips
+- Route safety suggestions
 
-**Access**:
-- Frontend: http://localhost:3000
-- API: http://localhost:5000
-- AI: http://localhost:8000
+### 📊 Admin Dashboard
+- Monitor registered users
+- Manage reported incidents
+- View safety statistics and analytics
+- Monitor active tourists
+- Review risk zones
+- Manage emergency-related information
 
-### Option 2: Local Setup (5 minutes)
+### 🤖 AI Safety Services
+The project includes a separate FastAPI service providing:
 
-```bash
-# Backend (Terminal 1)
-cd backend-api
-npm install
-npm start
+- Location-based risk assessment
+- Risk score and risk-level calculation
+- Historical incident proximity analysis
+- Time-based safety factors
+- Incident category classification
+- Confidence estimation and safety recommendations
 
-# Frontend (Terminal 2)
-cd frontend
-npm install
-npm start
+### 🌦️ Safety Information
+The application also provides additional contextual information such as:
 
-# AI Services (Terminal 3)
-cd ai-services
-pip install -r requirements.txt
-python app.py
-```
-
-**Full setup guide**: See [SETUP.md](SETUP.md)
-
----
-
-## 📋 Features
-
-### ✅ Core Features
-- **User Authentication**: JWT-based secure login/register
-- **Real-time Location Tracking**: GPS-based user location updates
-- **Incident Reporting**: Report safety incidents with location and details
-- **Risk Zone Mapping**: Visual map display of dangerous areas
-- **Emergency Notifications**: Email/SMS alerts to admins
-- **Admin Dashboard**: Monitor incidents and manage users
-- **User Dashboard**: View personal incidents and profile
-
-### 🔄 Integrations
-- **AI Risk Prediction**: ML-based incident classification
-- **Email Notifications**: Nodemailer integration
-- **SMS Alerts**: Twilio integration
-- **Location Services**: Leaflet maps with real-time zones
-
-### 📱 Multi-Platform
-- **Web App**: React.js responsive dashboard
-- **Mobile App**: React Native with Expo
-- **Admin Panel**: Full incident management
+- Local weather information
+- Safety-related news
+- Emergency contacts
+- Travel safety recommendations
 
 ---
+
+## 🏗️ System Architecture
+
+```text
+┌──────────────────────────────┐
+│        React Frontend        │
+│     TypeScript + Vite        │
+│                              │
+│  Dashboards • Maps • SOS     │
+│  Incidents • Tracking        │
+└──────────────┬───────────────┘
+               │ REST API
+               │ WebSocket
+               ▼
+┌──────────────────────────────┐
+│     Node.js + Express API    │
+│                              │
+│ Authentication • Incidents   │
+│ Users • Profiles • Analytics │
+│ Location • Admin Operations  │
+└──────────────┬───────────────┘
+               │
+       ┌───────┴────────┐
+       ▼                ▼
+┌─────────────┐   ┌──────────────────┐
+│   MongoDB   │   │  FastAPI AI      │
+│             │   │     Service      │
+│ Users       │   │ Risk Assessment  │
+│ Incidents   │   │ Classification   │
+│ Profiles    │   │ Safety Analysis  │
+└─────────────┘   └──────────────────┘
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- React Leaflet / Leaflet
+- Recharts
+- Framer Motion
+- Lucide React
+- Socket.IO Client
+- PWA Support
+
+### Backend
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- Bcrypt
+- Socket.IO
+- Multer
+- Winston
+- Express Rate Limit
+- Dotenv
+
+### AI Service
+
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- Scikit-learn
+- Pandas
+- NumPy
+
+### Development & Deployment
+
+- Git
+- GitHub
+- Docker
+- Docker Compose
+- Vercel
+- Render
+
 
 ## 📁 Project Structure
 
-```
 smart-tourist-safety-system/
-├── 📄 SETUP.md                 # Complete setup guide
-├── 📄 TROUBLESHOOTING.md       # Common issues & solutions
-├── 📄 DEPLOYMENT.md            # Production deployment
-├── 📄 PROJECT_STATUS.md        # Detailed status
 │
-├── backend-api/                # Node.js/Express API
-│   ├── index.js               # Server entry point
-│   ├── models/                # MongoDB schemas
-│   ├── routes/                # API endpoints
-│   ├── package.json           # Dependencies
-│   └── .env.example           # Config template
+├── frontend-new/                 
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── contexts/
+│       ├── hooks/
+│       ├── pages/
+│       ├── services/
+│       ├── types/
+│       └── utils/
 │
-├── frontend/                   # React Web App
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   ├── contexts/          # Auth context
-│   │   ├── services/          # API service
-│   │   └── App.js
-│   ├── package.json
-│   ├── Dockerfile
-│   └── .env.example
-│
-├── mobile-app/                # React Native App
-│   ├── src/
-│   │   ├── screens/
-│   │   ├── services/
-│   │   └── contexts/
-│   ├── app.json
-│   └── package.json
-│
-├── ai-services/               # Python FastAPI
-│   ├── app.py
+├── backend-api/                 
+│   ├── middleware/
 │   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   ├── config.js
+│   └── index.js
+│
+├── ai-services/                 
+│   ├── app.py
 │   ├── requirements.txt
-│   └── Dockerfile
+│   └── test_ai.py
 │
-├── docker/                     # Docker configuration
-│   ├── docker-compose.yml     # All services
-│   └── data/                  # MongoDB volume
+├── docker/                      
+│   └── docker-compose.yml
 │
-├── scripts/                    # Utility scripts
-│   ├── setup-env.js           # Environment setup
-│   ├── test_backend_auth.js   # Auth testing
-│   └── start-all.bat          # Startup script
+├── scripts/                     
 │
-└── docs/                       # Documentation
-```
+├── docs/                        
+│   ├── architecture/
+│   ├── reference/
+│   ├── setup/
+│   └── screenshots/
+│
+├── PROJECT_KNOWLEDGE_BASE/      
+│
+├── .gitignore
+└── README.md
+
+## ⚙️ Installation
+
+### Prerequisites
+
+Make sure the following are installed:
+
+- Node.js and npm
+- Python 3
+- MongoDB or Docker
+- Git
+
+### 1. Clone the Repository
+
+    git clone https://github.com/Venkatesh1526vsi/smart-tourist-safety-system.git
+    cd smart-tourist-safety-system
+
+### 2. Install Backend Dependencies
+
+    cd backend-api
+    npm install
+
+### 3. Configure Backend Environment
+
+Create:
+
+    backend-api/.env
+
+Use the provided example file as the configuration reference:
+
+    backend-api/.env.example
+
+The backend uses environment variables for configuration such as:
+
+- PORT
+- MONGO_URI
+- JWT_SECRET
+- TWILIO_ACCOUNT_SID
+- TWILIO_AUTH_TOKEN
+- ADMIN_EMAILS
+- External API keys where applicable
+
+Never commit .env files, database credentials, JWT secrets, API keys, or other sensitive values.
+
+### 4. Install Frontend Dependencies
+
+    cd ../frontend-new
+    npm install
+
+### 5. Install AI Service Dependencies
+
+    cd ../ai-services
+    pip install -r requirements.txt
 
 ---
 
-## 🔐 Authentication
+## ▶️ Running the Application
 
-### JWT Flow
-1. User registers/logs in
-2. Backend returns JWT token (2-hour expiry)
-3. Frontend stores token in localStorage
-4. Token auto-added to all API requests
-5. Backend validates token on protected routes
+The application consists of three main services.
 
-### Protected Routes (Require Token)
-- `GET /profile` - User profile
-- `POST /location/update` - Update location
-- `POST /incident/report` - Report incident
-- `GET /incident/my` - User's incidents
-- `GET /notifications` - Notifications
-- `GET /admin/*` - Admin routes
+### Backend
 
-### Admin Routes (Require Admin Role)
-- `GET /admin/users` - List all users
-- `GET /admin/incidents` - All incidents
-- `PATCH /admin/incidents/:id` - Update status
+From backend-api/:
 
----
+    npm start
 
-## 🌍 API Endpoints
+Default backend port:
 
-### Authentication
-```
-POST   /api/register          Register new user
-POST   /api/login             Login & get token
-POST   /change-password       Change password
-```
+    http://localhost:5000
 
-### User Profile
-```
-GET    /profile               Get user profile
-PATCH  /profile               Update profile
-```
+### Frontend
 
-### Location
-```
-POST   /location/update       Update user location
-GET    /location/:userId      Get user location
-```
+From frontend-new/:
 
-### Incidents
-```
-POST   /incident/report       Report incident
-GET    /incident/my           User's incidents
-GET    /incident/all          All incidents (admin)
-GET    /admin/incidents       All incidents (admin)
-PATCH  /admin/incidents/:id   Update incident status
-```
+    npm run dev
 
-### Risk Zones
-```
-GET    /api/risk-zones        Get all risk zones
-POST   /api/risk-zones        Create risk zone (admin)
-```
+Vite will display the local development URL in the terminal.
 
-### Notifications
-```
-GET    /notifications         Get user notifications
-```
+### AI Service
+
+From ai-services/:
+
+    python app.py
+
+Default AI service port:
+
+    http://localhost:8000
+
+For local development, run the backend, frontend, and AI service in separate terminals.
 
 ---
 
-## 🛠️ Configuration
+## 🐳 Docker
 
-### Backend Environment Variables
+The repository also contains Docker Compose configuration for running the multi-service environment.
 
-```env
-# Database
-MONGO_URI=mongodb://127.0.0.1:27017/touristdb
+Configuration:
 
-# Security
-JWT_SECRET=your_32_char_secret_key_here
+    docker/docker-compose.yml
 
-# Email (optional - for notifications)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=app-specific-password
+The Compose setup defines containers for:
 
-# SMS (optional - Twilio)
-TWILIO_SID=your_sid
-TWILIO_AUTH=your_token
-TWILIO_PHONE=+1234567890
+- MongoDB
+- Backend API
+- AI service
+- frontend-new
 
-# Admin
-ADMIN_EMAILS=admin1@example.com,admin2@example.com
-NODE_ENV=development
-```
+To start the configured Docker environment:
 
-### Frontend Environment Variables
+    cd docker
+    docker compose up --build
 
-```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_AI_URL=http://localhost:8000
-REACT_APP_ENABLE_NOTIFICATIONS=true
-```
+> Note: The current Docker Compose configuration should be reviewed before use because some of its paths still reference the older frontend directory rather than frontend-new.
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing & Code Quality
 
-### Test Authentication
-```bash
-node scripts/test_backend_auth.js
-```
+### Frontend
 
-### Test Frontend
-1. Open http://localhost:3000
-2. Register account
-3. Login
-4. Navigate dashboard
-5. Test location update
-6. Report incident
+The frontend uses TypeScript and ESLint.
 
-### Test API Directly
-```bash
-# Register
-curl -X POST http://localhost:5000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","email":"test@example.com","password":"Pass123!"}'
+Build the frontend:
 
-# Login
-curl -X POST http://localhost:5000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Pass123!"}'
+    cd frontend-new
+    npm run build
 
-# Get profile (with token)
-curl -X GET http://localhost:5000/profile \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+Run linting:
+
+    npm run lint
+
+### Backend
+
+The backend currently contains manual/API-oriented test scripts. Its package.json does not currently define an automated test suite.
+
+### AI Service
+
+A service-level test script is available at:
+
+    ai-services/test_ai.py
+
+It exercises the AI service endpoints when the FastAPI server is running.
 
 ---
 
-## 🐛 Troubleshooting
+## 🔐 Security
 
-### Common Issues
+Sensitive configuration must remain outside version control.
 
-**Backend won't start**
-- Check MongoDB is running: `mongosh` or `mongo`
-- Check port 5000 is free: `lsof -i :5000`
-- Check `.env` file exists
+The repository excludes environment files and generated/local data through .gitignore.
 
-**Frontend shows blank page**
-- Check browser console for errors (F12)
-- Run: `window.diagnoseToken()` in console
-- Clear browser cache: Ctrl+Shift+Delete
+Never commit:
 
-**Login not working**
-- Check backend is running: `curl http://localhost:5000/`
-- Check CORS errors in browser console
-- Check MongoDB connection
+- MongoDB connection strings
+- JWT secrets
+- API keys
+- Passwords
+- Authentication tokens
+- Email credentials
+- Third-party service credentials
 
-**See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed solutions**
+Use .env.example files containing only placeholder configuration.
 
 ---
 
-## 📊 Monitoring & Debugging
+## 📸 Screenshots
 
-### View Logs
-```bash
-# All services
-docker-compose logs -f
+The project includes a dedicated screenshots directory:
 
-# Specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
+    docs/screenshots/
 
-# Application logs
-tail -f backend-api/logs/error.log
-```
+Recommended README screenshots include:
 
-### Browser Diagnostics
-```javascript
-// Run in browser console
-window.diagnoseToken()  // Check token status
-```
+- Landing page
+- User dashboard
+- Incident reporting
+- Risk zone map
+- Admin dashboard
+- Live tourist tracking
+- Emergency SOS
+- Analytics
 
-### Health Checks
-```bash
-# Backend health
-curl http://localhost:5000/
-
-# Frontend health
-curl http://localhost:3000/
-
-# AI health
-curl http://localhost:8000/docs
-```
-
----
-
-## 🚀 Deployment
-
-### Docker Compose (Recommended)
-```bash
-cd docker
-docker-compose build
-docker-compose up -d
-```
-
-### Production Checklist
-- [ ] Strong JWT_SECRET (32+ chars)
-- [ ] Real MongoDB connection (not localhost)
-- [ ] Email credentials configured
-- [ ] HTTPS enabled
-- [ ] Environment variables set
-- [ ] Database backups enabled
-- [ ] Monitoring setup
-- [ ] Error logging enabled
-
-**Full deployment guide**: See [DEPLOYMENT.md](DEPLOYMENT.md)
-
----
-
-## 📈 Performance
-
-### Optimization Tips
-- Add database indexes for common queries
-- Enable Redis caching for risk zones
-- Optimize React components (memo, lazy load)
-- Compress images and assets
-- Enable gzip on backend
-
-### Scaling
-- **Small**: Docker Compose on single server
-- **Medium**: Kubernetes or AWS ECS
-- **Large**: Multi-region deployment with CDN
-
----
-
-## 🔒 Security
-
-### Best Practices Implemented
-✅ JWT token validation  
-✅ Password hashing (bcrypt)  
-✅ CORS headers configured  
-✅ Input validation  
-✅ SQL injection protection (MongoDB schemas)  
-✅ XSS protection (React escaping)  
-✅ Rate limiting ready (can be added)  
-
-### Recommendations
-- Use HTTPS in production
-- Implement rate limiting
-- Add request logging
-- Enable database backups
-- Regular security audits
-- Keep dependencies updated
+Screenshots should focus on the strongest and most representative parts of the application without unnecessarily duplicating similar screens.
 
 ---
 
 ## 📚 Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [SETUP.md](SETUP.md) | Complete setup instructions |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues & fixes |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Detailed feature status |
+Additional technical documentation is available under:
+
+    docs/
+
+It includes:
+
+- Architecture documentation
+- Setup and deployment guides
+- Troubleshooting references
+- Quick references
+
+A detailed internal project knowledge base is also maintained under:
+
+    PROJECT_KNOWLEDGE_BASE/
 
 ---
 
-## 🤝 Contributing
+## 📊 Project Status
 
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Commit changes: `git commit -am 'Add feature'`
-3. Push branch: `git push origin feature/your-feature`
-4. Create Pull Request
+The current application includes:
 
----
+- User and administrator authentication
+- Incident reporting and management
+- Interactive risk-zone mapping
+- Tourist location tracking
+- Real-time Socket.IO communication
+- Emergency SOS functionality
+- Safety dashboards
+- Incident analytics
+- AI-based risk assessment
+- Incident classification
+- Weather and safety information
+- PWA support
+- Docker configuration
+- Separate frontend, backend, and AI services
 
-## 📝 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
----
-
-## 👥 Team & Support
-
-For issues or questions:
-1. Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-2. Review [SETUP.md](SETUP.md)
-3. Check project logs
-4. Open GitHub issue
+The project can be further improved with stronger automated testing, production monitoring, deployment consistency, and expanded safety intelligence.
 
 ---
 
-## 🎯 Roadmap
+## 🔮 Future Improvements
 
-### Phase 2 (Upcoming)
-- [ ] Blockchain incident logging
-- [ ] IoT wearable integration
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] Offline mode
-- [ ] Push notifications
-
-### Phase 3 (Future)
-- [ ] AI-powered threat detection
-- [ ] Integration with city services
-- [ ] Advanced reporting
-- [ ] Community features
+- Expand automated frontend and backend test coverage
+- Improve AI risk prediction using larger real-world datasets
+- Improve real-time tracking reliability and scalability
+- Add stronger production monitoring and observability
+- Improve notification and emergency communication workflows
+- Enhance route-level safety analysis
+- Improve deployment configuration consistency
+- Add comprehensive API documentation
+- Improve production security and environment validation
 
 ---
 
-## 📊 Stats
+## 👨‍💻 Author
 
-- **Backend**: Node.js/Express, 464 lines
-- **Frontend**: React.js, 20+ components
-- **Mobile**: React Native, Full featured
-- **AI**: Python/FastAPI with ML models
-- **Database**: MongoDB with 5+ schemas
-- **Features**: 50+ API endpoints
-- **Completion**: 60% (Core features done)
+**Venkatesh Inamdar**
 
----
+GitHub: https://github.com/Venkatesh1526vsi
 
-**Last Updated**: February 7, 2026  
-**Version**: 1.0.0  
-**Status**: Production Ready
-
----
-
-## Quick Commands
-
-```bash
-# Setup
-npm run setup         # Setup all environments
-
-# Start
-npm run start:all     # Start all services
-docker-compose up    # Docker startup
-
-# Test
-npm run test          # Test authentication
-npm run lint          # Code linting
-
-# Deploy
-npm run build         # Build for production
-npm run deploy        # Deploy to production
-
-# Clean
-npm run clean         # Remove all data
-docker system prune   # Docker cleanup
-```
-
----
-
-**Get started now**: [SETUP.md](SETUP.md)
+Project Repository: https://github.com/Venkatesh1526vsi/smart-tourist-safety-system
