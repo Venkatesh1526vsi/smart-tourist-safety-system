@@ -1,345 +1,225 @@
-**# 🛡️ SafeYatra — Smart Tourist Safety System**
+# 🛡️ SafeYatra — Smart Tourist Safety System
 
 SafeYatra is a full-stack tourist safety platform designed to help travelers monitor their surroundings, report safety incidents, identify risk zones, access emergency assistance, and receive contextual safety information through a centralized web application.
 
-The platform combines a modern React and TypeScript frontend with a Node.js and Express backend, MongoDB database, real-time Socket.IO communication, and a separate FastAPI-based AI service for safety risk assessment and incident classification.
+The platform combines a React and TypeScript frontend, Node.js and Express backend, MongoDB database, real-time Socket.IO communication, and a separate FastAPI-based AI service for safety risk assessment and incident classification.
 
-**---**
+---
 
-**## 📸 Application Preview**
+## 📸 Application Preview
 
-SafeYatra provides separate interfaces for tourists and administrators, covering real-time safety monitoring, incident reporting, safety mapping, route planning, emergency assistance, live tourist tracking, and analytics.
+SafeYatra provides dedicated interfaces for tourists and administrators, covering safety monitoring, incident reporting, mapping, route planning, emergency assistance, live tourist tracking, and analytics.
 
-**### 🌐 Landing Page**
+### 🌐 Landing Page
 
-![SafeYatra Landing Page]\(docs/screenshots/Safeyatra%20langing%20page.png)
+![SafeYatra Landing Page](docs/screenshots/Safeyatra%20langing%20page.png)
 
-**### 👤 Tourist Dashboard**
+### 👤 Tourist Dashboard
 
-![SafeYatra Tourist Dashboard]\(docs/screenshots/Safeyatra%20dashboard%20%282%29.png)
+![SafeYatra Tourist Dashboard](docs/screenshots/Safeyatra%20dashboard%20%282%29.png)
 
-**### 🗺️ Safety Map**
+### 🗺️ Safety Map
 
-![SafeYatra Safety Map]\(docs/screenshots/Safeyatra%20map%20page.png)
+![SafeYatra Safety Map](docs/screenshots/Safeyatra%20map%20page.png)
 
-**### 🧭 Route Planning**
+### 🧭 Route Planning
 
-![SafeYatra Route Planning]\(docs/screenshots/Safteyatra%20Route%20mapping.png)
+![SafeYatra Route Planning](docs/screenshots/Safteyatra%20Route%20mapping.png)
 
-**### 🚨 Incident Reporting**
+### 🚨 Incident Reporting
 
-![SafeYatra Incident Reporting]\(docs/screenshots/Safeyatra%20incident%20reporting.png)
+![SafeYatra Incident Reporting](docs/screenshots/Safeyatra%20incident%20reporting.png)
 
-**### 🛡️ Admin Control Center**
+### 🛡️ Admin Control Center
 
-![SafeYatra Admin Dashboard]\(docs/screenshots/Safeyatra%20admin%20dashboard.png)
+![SafeYatra Admin Dashboard](docs/screenshots/Safeyatra%20admin%20dashboard.png)
 
-**### 📍 Live Tourist Tracking**
+### 📍 Live Tourist Tracking
 
-![SafeYatra Live Tourist Tracking]\(docs/screenshots/Safeyatra%20user%20tracking%20page.png)
+![SafeYatra Live Tourist Tracking](docs/screenshots/Safeyatra%20user%20tracking%20page.png)
 
-**### 📊 Analytics Dashboard**
+### 📊 Analytics Dashboard
 
-![SafeYatra Analytics Dashboard]\(docs/screenshots/Safeyatra%20Analytics%20page.png)
+![SafeYatra Analytics Dashboard](docs/screenshots/Safeyatra%20Analytics%20page.png)
 
-**## 🚀 Features**
+---
 
-**### 👤 Authentication & User Management**
+## 🚀 Features
 
-\- User registration and login
+### 👤 Authentication & User Management
 
-\- JWT-based authentication
+- User registration and login
+- JWT-based authentication
+- Protected application routes
+- Role-based user and administrator access
+- User profile management
+- Notification preferences
 
-\- Protected application routes
+### 🚨 Incident Reporting
 
-\- Role-based user and administrator access
+- Report safety incidents with location information
+- Incident category and severity selection
+- Evidence and image upload support
+- Emergency and escalated incident reporting
+- Incident history and status tracking
+- Administrative incident management
 
-\- User profile management
+### 🗺️ Safety Maps & Risk Zones
 
-\- Notification preferences
+- Interactive maps using Leaflet
+- Tourist location visualization
+- Reported incident visualization
+- Risk-zone identification
+- Safety score information
+- Route safety analysis
+- Fastest, balanced, and safest route options
 
-**### 🚨 Incident Reporting**
+### 📍 Live Tourist Tracking
 
-\- Report safety incidents with location information
+- GPS-based location updates
+- Real-time communication using Socket.IO
+- Active tourist monitoring
+- Tourist safety status
+- Current coordinates and travel status
+- Recent safety alerts and operational activity
 
-\- Incident category and severity selection
+### 🆘 Emergency & Safety Assistance
 
-\- Optional evidence/image uploads
+- Emergency SOS functionality
+- Nearby emergency contacts
+- Police, hospital, and fire/rescue information
+- Emergency status monitoring
+- Safety recommendations
+- Context-aware travel advisories
 
-\- Emergency and escalated incident reporting
+### 📊 Administrator Dashboard
 
-\- Incident history and status tracking
+- Centralized safety operations dashboard
+- Incident monitoring and management
+- Registered user statistics
+- Critical case monitoring
+- Live tourist tracking
+- Broadcast functionality
+- Analytics and safety metrics
 
-\- Administrative incident management
-
-**### 🗺️ Safety Maps & Risk Zones**
-
-\- Interactive maps using Leaflet and OpenStreetMap
-
-\- Tourist location visualization
-
-\- Reported incident visualization
-
-\- Risk-zone identification
-
-\- Safety score information
-
-\- Route safety analysis
-
-\- Fastest, balanced, and safest route options
-
-**### 📍 Live Tourist Tracking**
-
-\- GPS-based location updates
-
-\- Real-time communication using Socket.IO
-
-\- Active tourist monitoring
-
-\- Tourist safety status
-
-\- Current coordinates and travel status
-
-\- Recent safety alerts and operational activity
-
-**### 🆘 Emergency & Safety Assistance**
-
-\- Emergency SOS functionality
-
-\- Nearby emergency contacts
-
-\- Police, hospital, and fire/rescue information
-
-\- Emergency status monitoring
-
-\- Safety recommendations
-
-\- Context-aware travel advisories
-
-**### 📊 Administrator Dashboard**
-
-\- Centralized safety operations dashboard
-
-\- Total and active incident monitoring
-
-\- Registered user statistics
-
-\- Critical case monitoring
-
-\- Live tourist tracking
-
-\- Incident management
-
-\- Broadcast functionality
-
-\- Analytics and safety metrics
-
-**### 🤖 AI Safety Services**
+### 🤖 AI Safety Services
 
 SafeYatra includes a dedicated FastAPI-based AI service providing:
 
-\- Location-based risk assessment
+- Location-based risk assessment
+- Risk score calculation
+- Risk-level classification
+- Historical incident analysis
+- Time-based safety factors
+- Incident category classification
+- Confidence estimation
+- Safety recommendations
 
-\- Risk score calculation
+### 🌦️ Contextual Safety Information
 
-\- Risk-level classification
+- Local weather information
+- Weather risk information
+- Safety alerts
+- Emergency information
+- Travel safety recommendations
+- Route-level safety insights
 
-\- Historical incident analysis
+---
 
-\- Time-based safety factors
+## 🛠️ Tech Stack
 
-\- Incident category classification
+### Frontend
 
-\- Confidence estimation
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- React Leaflet
+- Leaflet
+- Recharts
+- Framer Motion
+- Lucide React
+- Socket.IO Client
+- PWA Support
 
-\- Safety recommendations
+### Backend
 
-**### 🌦️ Contextual Safety Information**
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT Authentication
+- Bcrypt
+- Socket.IO
+- Multer
+- Winston
+- Express Rate Limit
+- Dotenv
 
-The application can provide additional safety information including:
+### AI Service
 
-\- Local weather conditions
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- Scikit-learn
+- Pandas
+- NumPy
 
-\- Weather risk information
+### Development & Deployment
 
-\- Safety alerts
+- Git
+- GitHub
+- Docker
+- Docker Compose
+- Vercel
+- Render
 
-\- Emergency information
+---
 
-\- Travel safety recommendations
+## 📁 Project Structure
 
-\- Route-level safety insights
-
-**---**
-
-**## 🛠️ Tech Stack**
-
-**### Frontend**
-
-\- React
-
-\- TypeScript
-
-\- Vite
-
-\- Tailwind CSS
-
-\- React Router
-
-\- React Leaflet
-
-\- Leaflet
-
-\- Recharts
-
-\- Framer Motion
-
-\- Lucide React
-
-\- Socket.IO Client
-
-\- PWA Support
-
-**### Backend**
-
-\- Node.js
-
-\- Express.js
-
-\- MongoDB
-
-\- Mongoose
-
-\- JWT Authentication
-
-\- Bcrypt
-
-\- Socket.IO
-
-\- Multer
-
-\- Winston
-
-\- Express Rate Limit
-
-\- Dotenv
-
-**### AI Service**
-
-\- Python
-
-\- FastAPI
-
-\- Uvicorn
-
-\- Pydantic
-
-\- Scikit-learn
-
-\- Pandas
-
-\- NumPy
-
-**### Development & Deployment**
-
-\- Git
-
-\- GitHub
-
-\- Docker
-
-\- Docker Compose
-
-\- Vercel
-
-\- Render
-
-**---**
-
-**## 📁 Project Structure**
-
-\`\`\`text
-
+```text
 smart-tourist-safety-system/
-
 │
-
 ├── frontend-new/
-
-│   ├── public/
-
-│   └── src/
-
-│       ├── components/
-
-│       ├── contexts/
-
-│       ├── hooks/
-
-│       ├── pages/
-
-│       ├── services/
-
-│       ├── types/
-
-│       └── utils/
-
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── contexts/
+│       ├── hooks/
+│       ├── pages/
+│       ├── services/
+│       ├── types/
+│       └── utils/
 │
-
 ├── backend-api/
-
-│   ├── middleware/
-
-│   ├── models/
-
-│   ├── routes/
-
-│   ├── utils/
-
-│   ├── config.js
-
-│   └── index.js
-
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   ├── config.js
+│   └── index.js
 │
-
 ├── ai-services/
-
-│   ├── app.py
-
-│   ├── requirements.txt
-
-│   └── test\_ai.py
-
+│   ├── app.py
+│   ├── requirements.txt
+│   └── test_ai.py
 │
-
 ├── docker/
-
-│   └── docker-compose.yml
-
+│   └── docker-compose.yml
 │
-
 ├── scripts/
-
 │
-
 ├── docs/
-
-│   ├── architecture/
-
-│   ├── reference/
-
-│   ├── setup/
-
-│   └── screenshots/
-
+│   ├── architecture/
+│   ├── reference/
+│   ├── setup/
+│   └── screenshots/
 │
-
-├── PROJECT\_KNOWLEDGE\_BASE/
-
+├── PROJECT_KNOWLEDGE_BASE/
 │
-
 ├── .gitignore
-
 └── README.md
-
-
+```
